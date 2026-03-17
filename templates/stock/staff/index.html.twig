@@ -1,0 +1,292 @@
+{# templates/stock/staff/index.html.twig #}
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Stock Management - SMSol Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('staff_products') }}">Products</a></li>
+<li class="breadcrumb-item active">Stock</li>
+{% endblock %}
+
+{% block page_title %}Stock Management{% endblock %}
+{% block page_description %}Manage product inventory levels{% endblock %}
+
+{% block page_actions %}
+<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importStockModal">
+    <i class="bi bi-upload me-2"></i>Import Stock
+</button>
+{% endblock %}
+
+{% block admin_content %}
+<!-- Stock Filters -->
+<div class="card admin-chart mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Product</label>
+                <input type="text" class="form-control" name="search" placeholder="Search products..." 
+                       value="{{ app.request.get('search') }}">
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Stock Status</label>
+                <select name="status" class="form-select">
+                    <option value="">All Status</option>
+                    <option value="in_stock" {{ app.request.get('status') == 'in_stock' ? 'selected' : '' }}>In Stock</option>
+                    <option value="low_stock" {{ app.request.get('status') == 'low_stock' ? 'selected' : '' }}>Low Stock</option>
+                    <option value="out_of_stock" {{ app.request.get('status') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Sort By</label>
+                <select name="sort" class="form-select">
+                    <option value="quantity_asc" {{ app.request.get('sort') == 'quantity_asc' ? 'selected' : '' }}>Quantity (Low to High)</option>
+                    <option value="quantity_desc" {{ app.request.get('sort') == 'quantity_desc' ? 'selected' : '' }}>Quantity (High to Low)</option>
+                    <option value="name_asc" {{ app.request.get('sort') == 'name_asc' ? 'selected' : '' }}>Product Name A-Z</option>
+                    <option value="name_desc" {{ app.request.get('sort') == 'name_desc' ? 'selected' : '' }}>Product Name Z-A</option>
+                    <option value="updated_desc" {{ app.request.get('sort') == 'updated_desc' ? 'selected' : '' }}>Recently Updated</option>
+                </select>
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-2"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Stock Statistics -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card border-left-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Total Items</h6>
+                        <h3 class="fw-bold">{{ totalItems|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-primary">
+                        <i class="bi bi-box-seam text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Total Stock Value</h6>
+                        <h3 class="fw-bold">₱{{ totalValue|default(0)|number_format(2) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-success">
+                        <i class="bi bi-currency-dollar text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Low Stock Items</h6>
+                        <h3 class="fw-bold">{{ lowStockItems|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-warning">
+                        <i class="bi bi-exclamation-triangle text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Out of Stock</h6>
+                        <h3 class="fw-bold">{{ outOfStockItems|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-danger">
+                        <i class="bi bi-x-circle text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stock Table -->
+<div class="card admin-chart">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Inventory</h5>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="exportStock()">
+                <i class="bi bi-download me-1"></i>Export
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="printStockReport()">
+                <i class="bi bi-printer me-1"></i>Print Report
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Product</th>
+                        <th>SKU</th>
+                        <th>Current Stock</th>
+                        <th>Min. Stock Level</th>
+                        <th>Reorder Point</th>
+                        <th>Stock Value</th>
+                        <th>Status</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for stock in stocks %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if stock.product.photo %}
+                                    <img src="{{ asset('uploads/products/' ~ stock.product.photo) }}" 
+                                         alt="{{ stock.product.name }}" class="rounded me-2" width="40" height="40">
+                                {% else %}
+                                    <div class="rounded bg-light d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 40px; height: 40px;">
+                                        <i class="bi bi-image text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ stock.product.name }}</strong>
+                                    <div class="text-muted small">{{ stock.product.productType.name|default('N/A') }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ stock.product.sku|default('N/A') }}</td>
+                        <td class="fw-bold">{{ stock.quantity }}</td>
+                        <td>{{ stock.minimumLevel|default(10) }}</td>
+                        <td>{{ stock.reorderPoint|default(5) }}</td>
+                        <td class="fw-bold">₱{{ (stock.quantity * stock.product.price)|number_format(2) }}</td>
+                        <td>
+                            {% if stock.quantity <= 0 %}
+                                <span class="badge bg-danger">Out of Stock</span>
+                            {% elseif stock.quantity <= stock.reorderPoint|default(5) %}
+                                <span class="badge bg-warning">Low Stock</span>
+                            {% elseif stock.quantity <= stock.minimumLevel|default(10) %}
+                                <span class="badge bg-info">Reorder Soon</span>
+                            {% else %}
+                                <span class="badge bg-success">In Stock</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>{{ stock.updatedAt|date('M d, Y') }}</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <button type="button" class="btn btn-outline-success" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#addStockModal"
+                                        data-product-id="{{ stock.product.id }}"
+                                        data-product-name="{{ stock.product.name }}">
+                                    <i class="bi bi-plus-lg"></i> Add
+                                </button>
+                                <button type="button" class="btn btn-outline-warning" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#adjustStockModal"
+                                        data-stock-id="{{ stock.id }}"
+                                        data-current-quantity="{{ stock.quantity }}">
+                                    <i class="bi bi-pencil"></i> Adjust
+                                </button>
+                                <button type="button" class="btn btn-outline-info" 
+                                        onclick="viewStockHistory({{ stock.id }})">
+                                    <i class="bi bi-clock-history"></i> History
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="9" class="text-center text-muted py-4">
+                            <i class="bi bi-clipboard-data fs-1"></i>
+                            <p class="mt-2">No stock records found</p>
+                            <p class="small">Products with stock will appear here</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modals -->
+{% include 'stock/staff/modals/_add_stock.html.twig' %}
+{% include 'stock/staff/modals/_adjust_stock.html.twig' %}
+{% include 'stock/staff/modals/_import_stock.html.twig' %}
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function exportStock() {
+    alert('Exporting stock data...');
+    // Implement export functionality
+}
+
+function printStockReport() {
+    window.print();
+}
+
+function viewStockHistory(stockId) {
+    window.location.href = `/staff/stock/${stockId}/history`;
+}
+
+// Initialize DataTable
+$(document).ready(function() {
+    $('table').DataTable({
+        pageLength: 25,
+        order: [[2, 'asc']], // Sort by stock quantity
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search inventory...",
+            lengthMenu: "Show _MENU_ items",
+            info: "Showing _START_ to _END_ of _TOTAL_ items",
+            infoEmpty: "Showing 0 to 0 of 0 items",
+            infoFiltered: "(filtered from _MAX_ total items)"
+        }
+    });
+    
+    // Modal handlers
+    $('#addStockModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var productId = button.data('product-id');
+        var productName = button.data('product-name');
+        var modal = $(this);
+        modal.find('#addProductId').val(productId);
+        modal.find('.modal-title').text('Add Stock: ' + productName);
+    });
+    
+    $('#adjustStockModal').on('show.bs.modal', function(event) {
+        var button = $(event.relatedTarget);
+        var stockId = button.data('stock-id');
+        var currentQuantity = button.data('current-quantity');
+        var modal = $(this);
+        modal.find('#adjustStockId').val(stockId);
+        modal.find('#currentQuantity').val(currentQuantity);
+        modal.find('#newQuantity').val(currentQuantity);
+    });
+});
+</script>
+{% endblock %}

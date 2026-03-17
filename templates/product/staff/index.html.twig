@@ -1,0 +1,587 @@
+{# templates/product/staff/index.html.twig #}
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Product Management - SMSol Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Products</li>
+{% endblock %}
+
+{% block page_title %}Product Management{% endblock %}
+{% block page_description %}Manage your product inventory{% endblock %}
+
+{% block page_actions %}
+<a href="{{ path('staff_product_new') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-2"></i>Add Product
+</a>
+{% endblock %}
+
+{% block admin_content %}
+<!-- Product Filters -->
+<div class="card admin-chart mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3" id="filterForm">
+            <div class="col-md-3">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {{ selectedCategory == category.id ? 'selected' : '' }}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Status</option>
+                    <option value="active" {{ selectedStatus == 'active' ? 'selected' : '' }}>Active</option>
+                    <option value="inactive" {{ selectedStatus == 'inactive' ? 'selected' : '' }}>Inactive</option>
+                    <option value="low_stock" {{ selectedStatus == 'low_stock' ? 'selected' : '' }}>Low Stock</option>
+                    <option value="out_of_stock" {{ selectedStatus == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" name="search" placeholder="Search by name or SKU..." 
+                           value="{{ searchTerm }}">
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearSearch()">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search me-2"></i>Search
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Bulk Actions -->
+<div class="card admin-chart mb-3" id="bulkActionsSection" style="display: none;">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="selectAll" onclick="toggleSelectAll()">
+                    <label class="form-check-label" for="selectAll">
+                        <span id="selectedCount">0</span> product(s) selected
+                    </label>
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <div class="btn-group">
+                    <button type="button" class="btn btn-sm btn-outline-success" onclick="bulkUpdateStatus(true)">
+                        <i class="bi bi-check-circle me-1"></i>Activate Selected
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-warning" onclick="bulkUpdateStatus(false)">
+                        <i class="bi bi-pause-circle me-1"></i>Deactivate Selected
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="bulkDeleteProducts()">
+                        <i class="bi bi-trash me-1"></i>Delete Selected
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
+                        <i class="bi bi-x-circle me-1"></i>Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Products Table -->
+<div class="card admin-chart">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">All Products ({{ products|length }})</h5>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="exportProducts()">
+                <i class="bi bi-download me-1"></i>Export
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="printTable()">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 data-table" id="productsTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th width="50">
+                            <input type="checkbox" class="form-check-input" id="selectAllHeader" onclick="toggleSelectAll()">
+                        </th>
+                        <th>ID</th>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Sales</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr id="product-{{ product.id }}">
+                        <td>
+                            <input type="checkbox" class="form-check-input product-checkbox" 
+                                   value="{{ product.id }}" 
+                                   onchange="updateBulkActions()">
+                        </td>
+                        <td>{{ product.id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if product.photo %}
+                                    <img src="{{ asset('uploads/products/' ~ product.photo) }}" 
+                                        alt="{{ product.name }}" class="rounded me-2" width="40" height="40"
+                                        style="object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded bg-light d-flex align-items-center justify-content-center me-2" 
+                                        style="width: 40px; height: 40px;">
+                                        <i class="bi bi-image text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ product.name }}</strong>
+                                    <div class="text-muted small">{{ product.sku|default('N/A') }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ product.category.name|default('N/A') }}</td>
+                        <td class="fw-bold">₱{{ product.price|number_format(2) }}</td>
+                        <td>
+                            {% if product.stock %}
+                                {% set stockClass = product.stock.quantity > 20 ? 'success' : (product.stock.quantity > 10 ? 'warning' : 'danger') %}
+                                <span class="badge bg-{{ stockClass }}">
+                                    {{ product.stock.quantity }}
+                                    {% if product.stock.quantity <= (product.stock.reorderPoint|default(5)) %}
+                                        <i class="bi bi-exclamation-triangle ms-1"></i>
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.isActive %}
+                                <span class="badge bg-success">Available</span>
+                            {% else %}
+                                <span class="badge bg-danger">Unavailable</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ product.totalSold|default(0) }} sold</span>
+                        </td>
+                        <td>
+                            <small>{{ product.updatedAt|date('M d, Y') }}</small>
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ path('staff_product_show', {'id': product.id}) }}" 
+                                   class="btn btn-outline-info" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ path('staff_product_edit', {'id': product.id}) }}" 
+                                   class="btn btn-outline-primary" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" title="Delete"
+                                        onclick="confirmDeleteProduct({{ product.id }}, '{{ product.name|e('js') }}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-4">
+                            <i class="bi bi-bag-x fs-1"></i>
+                            <p class="mt-2">No products found</p>
+                            <a href="{{ path('staff_product_new') }}" class="btn btn-primary">
+                                Add Your First Product
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Product Stats -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card stats-card border-left-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Total Products</h6>
+                        <h3 class="fw-bold mb-0">{{ totalProducts|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-primary">
+                        <i class="bi bi-box text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Available</h6>
+                        <h3 class="fw-bold mb-0">{{ availableProducts|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-success">
+                        <i class="bi bi-check-circle text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Low Stock</h6>
+                        <h3 class="fw-bold mb-0">{{ lowStockCount|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-warning">
+                        <i class="bi bi-exclamation-triangle text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Out of Stock</h6>
+                        <h3 class="fw-bold mb-0">{{ outOfStockCount|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-danger">
+                        <i class="bi bi-x-circle text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+// Bulk selection functions
+function toggleSelectAll() {
+    const selectAllCheckbox = document.getElementById('selectAllHeader');
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    const isChecked = selectAllCheckbox.checked;
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = isChecked;
+    });
+    
+    updateBulkActions();
+}
+
+function updateBulkActions() {
+    const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+    const selectedCount = checkboxes.length;
+    const bulkActionsSection = document.getElementById('bulkActionsSection');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    
+    selectedCountSpan.textContent = selectedCount;
+    
+    if (selectedCount > 0) {
+        bulkActionsSection.style.display = 'block';
+    } else {
+        bulkActionsSection.style.display = 'none';
+        document.getElementById('selectAllHeader').checked = false;
+    }
+}
+
+function clearSelection() {
+    const checkboxes = document.querySelectorAll('.product-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = false;
+    });
+    updateBulkActions();
+}
+
+function getSelectedProductIds() {
+    const checkboxes = document.querySelectorAll('.product-checkbox:checked');
+    return Array.from(checkboxes).map(checkbox => parseInt(checkbox.value));
+}
+
+// Bulk actions
+function bulkUpdateStatus(isActive) {
+    const productIds = getSelectedProductIds();
+    if (productIds.length === 0) {
+        alert('Please select at least one product.');
+        return;
+    }
+    
+    const action = isActive ? 'activate' : 'deactivate';
+    if (confirm(`Are you sure you want to ${action} ${productIds.length} product(s)?`)) {
+        const formData = new FormData();
+        formData.append('productIds', JSON.stringify(productIds));
+        formData.append('isActive', isActive);
+        formData.append('_token', '{{ csrf_token("bulk-actions") }}');
+        
+        fetch('{{ path("staff_product_bulk_status") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+}
+
+function bulkDeleteProducts() {
+    const productIds = getSelectedProductIds();
+    if (productIds.length === 0) {
+        alert('Please select at least one product.');
+        return;
+    }
+    
+    if (confirm(`Are you sure you want to delete ${productIds.length} product(s)? This action cannot be undone.`)) {
+        const formData = new FormData();
+        formData.append('productIds', JSON.stringify(productIds));
+        formData.append('_token', '{{ csrf_token("bulk-actions") }}');
+        
+        fetch('{{ path("staff_product_bulk_delete") }}', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.failedCount > 0) {
+                    alert(`${data.message}\n\nFailed products: ${data.failedProducts.join(', ')}`);
+                } else {
+                    alert(data.message);
+                }
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+}
+
+// Individual product actions
+function confirmDeleteProduct(productId, productName) {
+    if (confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
+        const formData = new FormData();
+        formData.append('_token', '{{ csrf_token("delete") }}' + productId);
+        
+        fetch(`/staff/products/${productId}/delete`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    location.reload();
+                }
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting product: ' + error.message);
+        });
+    }
+}
+
+function toggleProductStatus(productId, currentStatus) {
+    const action = currentStatus ? 'deactivate' : 'activate';
+    if (confirm(`Are you sure you want to ${action} this product?`)) {
+        const formData = new FormData();
+        formData.append('_token', '{{ csrf_token("toggle-status") }}' + productId);
+        
+        fetch(`/staff/products/${productId}/toggle-status`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update the badge in the table
+                const statusBadge = document.querySelector(`#product-${productId} .badge.bg-success, #product-${productId} .badge.bg-danger`);
+                if (statusBadge) {
+                    statusBadge.className = `badge bg-${data.statusClass}`;
+                    statusBadge.textContent = data.statusText;
+                }
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error: ' + error.message);
+        });
+    }
+}
+
+// Export and print
+function exportProducts() {
+    // Create CSV content
+    let csv = 'ID,Name,SKU,Category,Price,Stock,Status,Sales,Last Updated\n';
+    
+    document.querySelectorAll('#productsTable tbody tr').forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 9) {
+            const rowData = [
+                cells[1].textContent.trim(),
+                cells[2].querySelector('strong')?.textContent.trim() || '',
+                cells[2].querySelector('.text-muted')?.textContent.trim() || '',
+                cells[3].textContent.trim(),
+                cells[4].textContent.trim().replace('₱', ''),
+                cells[5].querySelector('.badge')?.textContent.trim() || '',
+                cells[6].textContent.trim(),
+                cells[7].querySelector('.badge')?.textContent.trim() || '',
+                cells[8].textContent.trim()
+            ];
+            csv += rowData.map(data => `"${data}"`).join(',') + '\n';
+        }
+    });
+    
+    // Download CSV file
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `products_export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+function printTable() {
+    const printContent = document.querySelector('.card.admin-chart').innerHTML;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = `
+        <div class="container mt-4">
+            <h3>Products List - SMSol Studio</h3>
+            <p>Generated: ${new Date().toLocaleString()}</p>
+            ${printContent}
+        </div>
+    `;
+    
+    window.print();
+    document.body.innerHTML = originalContent;
+    location.reload();
+}
+
+function clearSearch() {
+    document.querySelector('input[name="search"]').value = '';
+    document.getElementById('filterForm').submit();
+}
+
+// Initialize DataTable
+document.addEventListener('DOMContentLoaded', function() {
+    $('#productsTable').DataTable({
+        pageLength: 25,
+        lengthMenu: [10, 25, 50, 100],
+        order: [[8, 'desc']], // Sort by last updated
+        columnDefs: [
+            { orderable: false, targets: [0, 9] }, // Disable sorting for checkbox and actions columns
+            { searchable: false, targets: [0, 8, 9] } // Disable searching for some columns
+        ],
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search products...",
+            lengthMenu: "Show _MENU_ products",
+            info: "Showing _START_ to _END_ of _TOTAL_ products",
+            infoEmpty: "Showing 0 to 0 of 0 products",
+            infoFiltered: "(filtered from _MAX_ total products)"
+        }
+    });
+});
+</script>
+
+<style>
+.stats-card {
+    border-left: 4px solid;
+    transition: transform 0.2s;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+
+.stats-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.border-left-primary { border-left-color: #4e73df !important; }
+.border-left-success { border-left-color: #1cc88a !important; }
+.border-left-warning { border-left-color: #f6c23e !important; }
+.border-left-danger { border-left-color: #e74a3b !important; }
+
+.data-table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+.data-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+#bulkActionsSection {
+    animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
+{% endblock %}

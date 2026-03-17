@@ -1,0 +1,212 @@
+{# templates/landing/services.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Our Services - SMSol Studio{% endblock %}
+
+{% block body %}
+<!-- Hero Section -->
+<section class="hero-section">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-8 mx-auto text-center">
+                <h1 class="fw-bold text-white mb-3">Our Services</h1>
+                <p class="lead text-white mb-0">Premium clothing services designed for your lifestyle</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Services -->
+<section class="py-5">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-4 mb-4">
+                <div class="card service-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-primary rounded-circle p-3 mb-3 mx-auto">
+                            <i class="bi bi-tshirt text-white fs-3"></i>
+                        </div>
+                        <h4 class="card-title">Premium Clothing</h4>
+                        <p class="card-text text-muted">
+                            Curated collection of high-quality clothing and accessories from top brands.
+                            From casual wear to formal attire.
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Quality fabrics</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Latest fashion trends</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Size customization</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 mb-4">
+                <div class="card service-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-success rounded-circle p-3 mb-3 mx-auto">
+                            <i class="bi bi-truck text-white fs-3"></i>
+                        </div>
+                        <h4 class="card-title">Fast Delivery</h4>
+                        <p class="card-text text-muted">
+                            Quick and reliable delivery services to your doorstep. 
+                            Same-day delivery available in select areas.
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Free delivery over ₱1,000</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Real-time tracking</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Contactless delivery</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-lg-4 mb-4">
+                <div class="card service-card h-100">
+                    <div class="card-body text-center p-4">
+                        <div class="icon-wrapper bg-warning rounded-circle p-3 mb-3 mx-auto">
+                            <i class="bi bi-star text-white fs-3"></i>
+                        </div>
+                        <h4 class="card-title">Quality Assurance</h4>
+                        <p class="card-text text-muted">
+                            Every item is carefully inspected for quality and perfection.
+                            We stand behind the quality of every product we sell.
+                        </p>
+                        <ul class="list-unstyled text-start">
+                            <li><i class="bi bi-check-circle text-success me-2"></i>30-day return policy</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Quality inspection</li>
+                            <li><i class="bi bi-check-circle text-success me-2"></i>Warranty on select items</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Services -->
+        <div class="row mt-4">
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <h4 class="card-title mb-3">Personal Styling</h4>
+                        <p class="text-muted">
+                            Get personalized fashion advice from our expert stylists.
+                            We help you create outfits that match your style and occasion.
+                        </p>
+                        <div class="d-flex align-items-center mt-3">
+                            <i class="bi bi-person-check fs-4 text-primary me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Professional Stylists</h6>
+                                <small class="text-muted">Certified fashion experts</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6 mb-4">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-body p-4">
+                        <h4 class="card-title mb-3">Gift Services</h4>
+                        <p class="text-muted">
+                            Perfect gift solutions for any occasion. 
+                            We offer gift wrapping, personalized messages, and gift cards.
+                        </p>
+                        <div class="d-flex align-items-center mt-3">
+                            <i class="bi bi-gift fs-4 text-success me-3"></i>
+                            <div>
+                                <h6 class="mb-0">Gift Packaging</h6>
+                                <small class="text-muted">Elegant gift wrapping</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Pricing -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold">Service Pricing</h2>
+            <p class="text-muted">Transparent pricing for all our services</p>
+        </div>
+        
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h4 class="mb-0">Basic</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <h2 class="fw-bold mb-3">₱199<span class="text-muted small">/month</span></h2>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Basic clothing selection</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Standard delivery</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Email support</li>
+                            <li class="mb-2"><i class="bi bi-x text-danger me-2"></i>Priority delivery</li>
+                            <li class="mb-2"><i class="bi bi-x text-danger me-2"></i>Personal styling</li>
+                        </ul>
+                        <a href="{{ path('app_register') }}" class="btn btn-outline-primary w-100">Get Started</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card text-center h-100 border-primary">
+                    <div class="card-header bg-primary text-white py-3">
+                        <h4 class="mb-0">Premium</h4>
+                        <span class="badge bg-warning">Most Popular</span>
+                    </div>
+                    <div class="card-body p-4">
+                        <h2 class="fw-bold mb-3">₱499<span class="text-muted small">/month</span></h2>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Premium clothing selection</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Fast delivery</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Priority support</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Personal styling sessions</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Exclusive discounts</li>
+                        </ul>
+                        <a href="{{ path('app_register') }}" class="btn btn-primary w-100">Get Started</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card text-center h-100">
+                    <div class="card-header bg-dark text-white py-3">
+                        <h4 class="mb-0">Business</h4>
+                    </div>
+                    <div class="card-body p-4">
+                        <h2 class="fw-bold mb-3">₱999<span class="text-muted small">/month</span></h2>
+                        <ul class="list-unstyled mb-4">
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Enterprise clothing solutions</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Same-day delivery</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>24/7 support</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Bulk ordering</li>
+                            <li class="mb-2"><i class="bi bi-check text-success me-2"></i>Custom solutions</li>
+                        </ul>
+                        <a href="{{ path('app_contact') }}" class="btn btn-outline-dark w-100">Contact Sales</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="py-5">
+    <div class="container text-center">
+        <h2 class="fw-bold mb-3">Ready to Experience Premium Fashion?</h2>
+        <p class="lead mb-4">Join thousands of satisfied customers who trust SMSol Studio.</p>
+        <div class="d-flex justify-content-center gap-3">
+            <a href="{{ path('app_register') }}" class="btn btn-primary btn-lg px-5">
+                <i class="bi bi-rocket-takeoff me-2"></i>Get Started
+            </a>
+            <a href="{{ path('app_contact') }}" class="btn btn-outline-primary btn-lg px-5">
+                <i class="bi bi-chat-dots me-2"></i>Contact Us
+            </a>
+        </div>
+    </div>
+</section>
+{% endblock %}

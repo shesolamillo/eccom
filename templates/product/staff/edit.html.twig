@@ -1,0 +1,606 @@
+{# templates/product/staff/edit.html.twig #}
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Edit {{ product.name }} - SMSol Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('staff_products') }}">Products</a></li>
+<li class="breadcrumb-item"><a href="{{ path('staff_product_show', {'id': product.id}) }}">{{ product.name }}</a></li>
+<li class="breadcrumb-item active">Edit</li>
+{% endblock %}
+
+{% block page_title %}Edit Product{% endblock %}
+{% block page_description %}Update product information{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{{ path('staff_product_show', {'id': product.id}) }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Product
+    </a>
+    <a href="{{ path('staff_products') }}" class="btn btn-outline-secondary">
+        <i class="bi bi-list me-2"></i>All Products
+    </a>
+</div>
+{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Edit Product Information</h5>
+                <div class="d-flex gap-2">
+                    <span class="badge {{ product.isActive ? 'bg-success' : 'bg-danger' }}">
+                        {{ product.isActive ? 'Available' : 'Unavailable' }}
+                    </span>
+                    {% if product.isFeatured|default(false) %}
+                        <span class="badge bg-warning">Featured</span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                {{ form_start(form, {'attr': {'class': 'row g-3', 'enctype': 'multipart/form-data'}}) }}
+                    
+                    <!-- Current Image Preview -->
+                    {% if product.photo %}
+                    <div class="col-12 mb-4">
+                        <h6 class="mb-3">Current Image</h6>
+                        <div class="row align-items-center">
+                            <div class="col-md-3">
+                                <div class="border rounded p-2">
+                                    <img src="{{ asset('uploads/products/' ~ product.photo) }}" 
+                                         alt="{{ product.name }}" 
+                                         class="img-fluid rounded"
+                                         style="max-height: 150px;">
+                                </div>
+                            </div>
+                            <div class="col-md-9">
+                                <p class="mb-2">
+                                    <strong>Current file:</strong> {{ product.photo }}
+                                </p>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="removeImageCheckbox" name="remove_image">
+                                    <label class="form-check-label text-danger" for="removeImageCheckbox">
+                                        Remove current image
+                                    </label>
+                                </div>
+                                <small class="text-muted d-block mt-2">
+                                    Upload a new image below to replace the current one.
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-6">
+                        {{ form_label(form.name, 'Product Name *', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.name, {'attr': {'class': 'form-control', 'placeholder': 'Enter product name', 'required': 'required'}}) }}
+                        {{ form_errors(form.name) }}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        {{ form_label(form.sku, 'SKU (Stock Keeping Unit)', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.sku, {'attr': {'class': 'form-control', 'placeholder': 'Product SKU'}}) }}
+                        {{ form_errors(form.sku) }}
+                        <div class="form-text">Unique identifier for inventory tracking</div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        {{ form_label(form.price, 'Price (₱) *', {'label_attr': {'class': 'form-label'}}) }}
+                        <div class="input-group">
+                            <span class="input-group-text">₱</span>
+                            {{ form_widget(form.price, {'attr': {'class': 'form-control', 'min': '0', 'step': '0.01', 'required': 'required'}}) }}
+                        </div>
+                        {{ form_errors(form.price) }}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        {{ form_label(form.costPrice, 'Cost Price (₱)', {'label_attr': {'class': 'form-label'}}) }}
+                        <div class="input-group">
+                            <span class="input-group-text">₱</span>
+                            {{ form_widget(form.costPrice, {'attr': {'class': 'form-control', 'min': '0', 'step': '0.01'}}) }}
+                        </div>
+                        {{ form_errors(form.costPrice) }}
+                    </div>
+                    
+                    <div class="col-12">
+                        {{ form_label(form.description, 'Description', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.description, {'attr': {'class': 'form-control', 'rows': 4, 'placeholder': 'Product description, features, specifications...'}}) }}
+                        {{ form_errors(form.description) }}
+                    </div>
+                    
+                    <!-- New Image Upload -->
+                    <div class="col-12">
+                        {{ form_label(form.image, 'New Product Image', {'label_attr': {'class': 'form-label'}}) }}
+                        <div class="input-group">
+                            {{ form_widget(form.image, {'attr': {
+                                'class': 'form-control',
+                                'accept': 'image/jpeg,image/png,image/webp,image/gif'
+                            }}) }}
+                            <label class="input-group-text" for="{{ form.image.vars.id }}">
+                                <i class="bi bi-upload"></i>
+                            </label>
+                        </div>
+                        {{ form_errors(form.image) }}
+                        <div class="form-text">
+                            <i class="bi bi-info-circle"></i> Leave blank to keep current image. Supported formats: JPG, PNG, WebP, GIF (Max 5MB)
+                        </div>
+                        
+                        <!-- New Image Preview -->
+                        <div class="mt-2" id="imagePreviewContainer" style="display: none;">
+                            <h6 class="mt-3 mb-2">New Image Preview:</h6>
+                            <div class="border rounded p-3 text-center">
+                                <img id="imagePreview" src="" alt="Preview" class="img-fluid rounded" style="max-height: 200px;">
+                                <div class="mt-2">
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeNewImage()">
+                                        <i class="bi bi-trash me-1"></i>Remove New Image
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    {% if form.type is defined %}
+                    <div class="col-md-6">
+                        {{ form_label(form.type, 'Product Type *', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.type, {'attr': {'class': 'form-select', 'required': 'required'}}) }}
+                        {{ form_errors(form.type) }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.category is defined %}
+                    <div class="col-md-6">
+                        {{ form_label(form.category, 'Category *', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.category, {'attr': {'class': 'form-select', 'required': 'required'}}) }}
+                        {{ form_errors(form.category) }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.subcategory is defined %}
+                    <div class="col-md-6">
+                        {{ form_label(form.subcategory, 'Subcategory', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.subcategory, {'attr': {'class': 'form-select'}}) }}
+                        {{ form_errors(form.subcategory) }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.tags is defined %}
+                    <div class="col-12">
+                        {{ form_label(form.tags, 'Tags', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.tags, {'attr': {'class': 'form-control', 'placeholder': 'Enter tags separated by commas'}}) }}
+                        {{ form_errors(form.tags) }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.size is defined %}
+                    <div class="col-md-4">
+                        {{ form_label(form.size, 'Size', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.size, {'attr': {'class': 'form-control', 'placeholder': 'e.g., S, M, L, XL'}}) }}
+                        {{ form_errors(form.size) }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.color is defined %}
+                    <div class="col-md-4">
+                        {{ form_label(form.color, 'Color', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.color, {'attr': {'class': 'form-control', 'placeholder': 'e.g., Red, Blue, Black'}}) }}
+                        {{ form_errors(form.color) }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.material is defined %}
+                    <div class="col-md-4">
+                        {{ form_label(form.material, 'Material', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.material, {'attr': {'class': 'form-control', 'placeholder': 'e.g., Cotton, Polyester'}}) }}
+                        {{ form_errors(form.material) }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.weight is defined %}
+                    <div class="col-md-6">
+                        {{ form_label(form.weight, 'Weight (kg)', {'label_attr': {'class': 'form-label'}}) }}
+                        <div class="input-group">
+                            {{ form_widget(form.weight, {'attr': {'class': 'form-control', 'min': '0', 'step': '0.001'}}) }}
+                            <span class="input-group-text">kg</span>
+                        </div>
+                        {{ form_errors(form.weight) }}
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.dimensions is defined %}
+                    <div class="col-md-6">
+                        {{ form_label(form.dimensions, 'Dimensions (cm)', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.dimensions, {'attr': {'class': 'form-control', 'placeholder': 'L x W x H'}}) }}
+                        {{ form_errors(form.dimensions) }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mt-4 pt-2">
+                            {{ form_widget(form.isActive, {'attr': {
+                                'class': 'form-check-input',
+                                'role': 'switch'
+                            }}) }}
+                            {{ form_label(form.isActive, 'Available for Sale', {'label_attr': {'class': 'form-check-label'}}) }}
+                        </div>
+                    </div>
+                    
+                    {% if form.isFeatured is defined %}
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mt-4 pt-2">
+                            {{ form_widget(form.isFeatured, {'attr': {
+                                'class': 'form-check-input',
+                                'role': 'switch'
+                            }}) }}
+                            {{ form_label(form.isFeatured, 'Featured Product', {'label_attr': {'class': 'form-check-label'}}) }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if form.metaTitle is defined %}
+                    <div class="col-12">
+                        <h6 class="mt-4 mb-3 border-bottom pb-2">SEO Settings</h6>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        {{ form_label(form.metaTitle, 'Meta Title', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.metaTitle, {'attr': {'class': 'form-control', 'placeholder': 'SEO title for search engines'}}) }}
+                        {{ form_errors(form.metaTitle) }}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        {{ form_label(form.metaDescription, 'Meta Description', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.metaDescription, {'attr': {'class': 'form-control', 'rows': 2, 'placeholder': 'Brief description for search engines'}}) }}
+                        {{ form_errors(form.metaDescription) }}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="col-12 mt-4 pt-3 border-top">
+                        <div class="d-flex justify-content-between gap-2">
+                            <div>
+                                <a href="{{ path('staff_product_show', {'id': product.id}) }}" class="btn btn-secondary">
+                                    <i class="bi bi-x-circle me-2"></i>Cancel
+                                </a>
+                                <a href="{{ path('staff_products') }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-list me-2"></i>All Products
+                                </a>
+                            </div>
+                            <div class="btn-group">
+                                <button type="submit" name="save" class="btn btn-primary">
+                                    <i class="bi bi-check-circle me-2"></i>Update Product
+                                </button>
+                                <button type="submit" name="save_and_continue" class="btn btn-outline-primary">
+                                    <i class="bi bi-save me-2"></i>Update & Continue
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Product Summary -->
+        <div class="card admin-chart mb-4">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Product Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center mb-3">
+                    {% if product.photo %}
+                        <img src="{{ asset('uploads/products/' ~ product.photo) }}" 
+                             alt="{{ product.name }}" 
+                             class="rounded me-3" 
+                             width="60" height="60" style="object-fit: cover;">
+                    {% else %}
+                        <div class="rounded bg-light d-flex align-items-center justify-content-center me-3" 
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-image text-muted"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <h6 class="mb-0">{{ product.name }}</h6>
+                        <small class="text-muted">ID: #{{ product.id }}</small>
+                    </div>
+                </div>
+                
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <th class="text-muted">SKU:</th>
+                        <td>{{ product.sku|default('Not set') }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Price:</th>
+                        <td class="fw-bold">₱{{ product.price|number_format(2) }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Category:</th>
+                        <td>{{ product.category.name|default('Uncategorized') }}</td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Status:</th>
+                        <td>
+                            {% if product.isActive %}
+                                <span class="badge bg-success">Available</span>
+                            {% else %}
+                                <span class="badge bg-danger">Unavailable</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Stock:</th>
+                        <td>
+                            {% if product.stock %}
+                                <span class="badge {{ product.stock.quantity > 10 ? 'bg-success' : (product.stock.quantity > 0 ? 'bg-warning' : 'bg-danger') }}">
+                                    {{ product.stock.quantity }} units
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">No stock</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <th class="text-muted">Total Sold:</th>
+                        <td>{{ product.totalSold|default(0) }} units</td>
+                    </tr>
+                </table>
+                
+                <hr class="my-3">
+                
+                <h6 class="mb-3">Quick Actions</h6>
+                <div class="d-grid gap-2">
+                    <a href="{{ path('staff_product_show', {'id': product.id}) }}" 
+                       class="btn btn-outline-info text-start">
+                        <i class="bi bi-eye me-2"></i>View Product
+                    </a>
+                    {% if product.stock %}
+                        <a href="{{ path('staff_stock_update', {'id': product.stock.id}) }}" 
+                           class="btn btn-outline-primary text-start">
+                            <i class="bi bi-box-arrow-in-down me-2"></i>Update Stock
+                        </a>
+                    {% else %}
+                        <a href="{{ path('staff_stock_add') }}?product={{ product.id }}" 
+                           class="btn btn-outline-success text-start">
+                            <i class="bi bi-plus-circle me-2"></i>Add Stock
+                        </a>
+                    {% endif %}
+                    <button type="button" class="btn btn-outline-danger text-start" 
+                            onclick="confirmDeleteProduct({{ product.id }}, '{{ product.name|e('js') }}')">
+                        <i class="bi bi-trash me-2"></i>Delete Product
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit History -->
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Edit History</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-0">Created</h6>
+                            <small class="text-muted">{{ product.createdAt|date('F j, Y h:i A') }}</small>
+                            <div class="small">By: {{ product.createdBy.fullName|default('System') }}</div>
+                        </div>
+                    </div>
+                    
+                    {% if product.updatedAt and product.updatedAt != product.createdAt %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-warning"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-0">Last Updated</h6>
+                            <small class="text-muted">{{ product.updatedAt|date('F j, Y h:i A') }}</small>
+                            {% if product.updatedBy %}
+                                <div class="small">By: {{ product.updatedBy.fullName|default('System') }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if product.lastOrderDate %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-success"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-0">Last Sale</h6>
+                            <small class="text-muted">{{ product.lastOrderDate|date('F j, Y') }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <hr class="my-3">
+                
+                <h6 class="mb-2">Statistics</h6>
+                <div class="row g-2 text-center">
+                    <div class="col-6">
+                        <div class="bg-light p-2 rounded">
+                            <div class="fw-bold">{{ product.totalSold|default(0) }}</div>
+                            <small class="text-muted">Total Sold</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light p-2 rounded">
+                            <div class="fw-bold">₱{{ (product.totalSold|default(0) * product.price)|number_format(2) }}</div>
+                            <small class="text-muted">Revenue</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+// New image preview
+document.getElementById('{{ form.image.vars.id }}').addEventListener('change', function(event) {
+    const file = event.target.files[0];
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const previewImage = document.getElementById('imagePreview');
+    
+    if (file) {
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            previewImage.src = e.target.result;
+            previewContainer.style.display = 'block';
+        };
+        
+        reader.readAsDataURL(file);
+        
+        // Uncheck remove image checkbox when uploading new image
+        const removeImageCheckbox = document.getElementById('removeImageCheckbox');
+        if (removeImageCheckbox) {
+            removeImageCheckbox.checked = false;
+        }
+    } else {
+        previewContainer.style.display = 'none';
+        previewImage.src = '';
+    }
+});
+
+function removeNewImage() {
+    const fileInput = document.getElementById('{{ form.image.vars.id }}');
+    const previewContainer = document.getElementById('imagePreviewContainer');
+    const previewImage = document.getElementById('imagePreview');
+    
+    fileInput.value = '';
+    previewImage.src = '';
+    previewContainer.style.display = 'none';
+}
+
+// Delete product confirmation
+function confirmDeleteProduct(productId, productName) {
+    if (confirm(`Are you sure you want to delete "${productName}"? This action cannot be undone.`)) {
+        const formData = new FormData();
+        formData.append('_token', '{{ csrf_token("delete") }}' + productId);
+        
+        fetch(`/staff/products/${productId}/delete`, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    window.location.href = '{{ path('staff_products') }}';
+                }
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error deleting product: ' + error.message);
+        });
+    }
+}
+
+// Form validation
+document.querySelector('form').addEventListener('submit', function(event) {
+    const requiredFields = [
+        '{{ form.name.vars.id }}',
+        '{{ form.price.vars.id }}',
+        '{{ form.type.vars.id }}',
+        '{{ form.category.vars.id }}'
+    ];
+    
+    let isValid = true;
+    let errorMessage = '';
+    
+    requiredFields.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field && !field.value.trim()) {
+            isValid = false;
+            const label = field.closest('.col-md-6, .col-12')?.querySelector('.form-label')?.textContent || 'Field';
+            errorMessage += `• ${label.replace(' *', '')} is required\n`;
+        }
+    });
+    
+    if (!isValid) {
+        event.preventDefault();
+        alert('Please fill in all required fields:\n\n' + errorMessage);
+    }
+});
+
+// Price validation
+document.getElementById('{{ form.price.vars.id }}').addEventListener('blur', function() {
+    const value = parseFloat(this.value);
+    if (value < 0) {
+        alert('Price cannot be negative');
+        this.value = 0;
+    }
+});
+
+// Cost price validation
+const costPriceField = document.getElementById('{{ form.costPrice.vars.id }}');
+if (costPriceField) {
+    costPriceField.addEventListener('blur', function() {
+        const value = parseFloat(this.value);
+        if (value < 0) {
+            alert('Cost price cannot be negative');
+            this.value = 0;
+        }
+    });
+}
+</script>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -1.5rem;
+    top: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 3px solid white;
+}
+
+.timeline-content h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-content small {
+    font-size: 0.75rem;
+}
+
+#imagePreviewContainer img {
+    max-width: 100%;
+    height: auto;
+    object-fit: contain;
+}
+</style>
+{% endblock %}

@@ -1,0 +1,91 @@
+{# templates/security/login.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Login - SMSol Studio{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 col-lg-5">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4 p-md-5">
+                    <!-- Logo -->
+                    <div class="text-center mb-4">
+                        <i class="bi bi-shop display-4 text-primary mb-3"></i>
+                        <h3 class="fw-bold">SMSol Studio</h3>
+                        <p class="text-muted">Sign in to your account</p>
+                    </div>
+                    
+                    <!-- Flash Messages -->
+                    {% if error %}
+                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                            {{ error.messageKey|trans(error.messageData, 'security') }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Login Form -->
+                    <form method="post">
+                        {% if app.user %}
+                            <div class="mb-3">
+                                <div class="alert alert-info">
+                                    You are logged in as {{ app.user.userIdentifier }}, 
+                                    <a href="{{ path('app_logout') }}" class="alert-link">Logout</a>
+                                </div>
+                            </div>
+                        {% endif %}
+                        
+                        <div class="mb-3">
+                            <label for="inputEmail" class="form-label">Email Address</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-envelope"></i>
+                                </span>
+                                <input type="email" value="{{ last_username }}" name="email" id="inputEmail" 
+                                       class="form-control" placeholder="Enter your email" required autofocus>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-4">
+                            <label for="inputPassword" class="form-label">Password</label>
+                            <div class="input-group">
+                                <span class="input-group-text">
+                                    <i class="bi bi-lock"></i>
+                                </span>
+                                <input type="password" name="password" id="inputPassword" 
+                                       class="form-control" placeholder="Enter your password" required>
+                                <button type="button" class="input-group-text" onclick="togglePasswordVisibility('inputPassword')">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                        
+                        <div class="mb-3 form-check">
+                            <input type="checkbox" class="form-check-input" id="rememberMe" name="_remember_me">
+                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                        </div>
+                        
+                        <div class="d-grid mb-4">
+                            <button type="submit" class="btn btn-primary btn-lg">
+                                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+                            </button>
+                        </div>
+                        
+                        <div class="text-center">
+                            <p class="mb-0">
+                                Don't have an account? 
+                                <a href="{{ path('app_register') }}" class="text-decoration-none">Sign up</a>
+                            </p>
+                            <p class="mt-2">
+                                <a href="#" class="text-decoration-none">Forgot your password?</a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

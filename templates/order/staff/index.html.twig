@@ -1,0 +1,616 @@
+{# templates/order/staff/index.html.twig #}
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Order Management - SMSol Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Orders</li>
+{% endblock %}
+
+{% block page_title %}Order Management{% endblock %}
+{% block page_description %}Process and manage customer orders{% endblock %}
+
+{% block page_actions %}
+<a href="{{ path('staff_order_new') }}" class="btn btn-primary">
+    <i class="bi bi-plus-circle me-2"></i>Create New Order
+</a>
+{% endblock %}
+
+{% block admin_content %}
+<!-- Order Filters -->
+<div class="card admin-chart mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3" id="orderFilterForm">
+            <div class="col-md-3">
+                <label class="form-label">Status</label>
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Status</option>
+                    <option value="pending" {{ app.request.get('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                    <option value="processing" {{ app.request.get('status') == 'processing' ? 'selected' : '' }}>Processing</option>
+                    <option value="completed" {{ app.request.get('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                    <option value="cancelled" {{ app.request.get('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Date Range</label>
+                <select name="date_range" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Time</option>
+                    <option value="today" {{ app.request.get('date_range') == 'today' ? 'selected' : '' }}>Today</option>
+                    <option value="week" {{ app.request.get('date_range') == 'week' ? 'selected' : '' }}>This Week</option>
+                    <option value="month" {{ app.request.get('date_range') == 'month' ? 'selected' : '' }}>This Month</option>
+                </select>
+            </div>
+            
+            <div class="col-md-4">
+                <label class="form-label">Search</label>
+                <div class="input-group">
+                    <input type="text" class="form-control" name="search" placeholder="Search orders..." 
+                           value="{{ app.request.get('search') }}">
+                    <button type="button" class="btn btn-outline-secondary" onclick="clearSearch()">
+                        <i class="bi bi-x"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="col-md-2 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-filter me-2"></i>Filter
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Order Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card border-left-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Total Orders</h6>
+                        <h3 class="fw-bold mb-0">{{ totalOrders|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-primary">
+                        <i class="bi bi-cart text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Pending</h6>
+                        <h3 class="fw-bold mb-0">{{ pendingOrders|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-warning">
+                        <i class="bi bi-clock-history text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Processing</h6>
+                        <h3 class="fw-bold mb-0">{{ processingOrders|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-info">
+                        <i class="bi bi-gear text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Completed</h6>
+                        <h3 class="fw-bold mb-0">{{ completedOrders|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-success">
+                        <i class="bi bi-check-circle text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Orders Table -->
+<div class="card admin-chart">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">All Orders ({{ orders|length }})</h5>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="exportOrders()">
+                <i class="bi bi-download me-1"></i>Export
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="printOrders()">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 data-table" id="ordersTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Payment</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr class="{{ order.isUrgent ? 'table-warning' : '' }}">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <strong>{{ order.orderNumber }}</strong>
+                                {% if order.isUrgent %}
+                                    <span class="badge bg-danger ms-2">
+                                        <i class="bi bi-exclamation-triangle me-1"></i>Urgent
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <strong>{{ order.customer.fullName|default('N/A') }}</strong>
+                                <div class="text-muted small">{{ order.customer.email|default('') }}</div>
+                            </div>
+                        </td>
+                        <td>
+                            {{ order.createdAt|date('M d, Y') }}
+                            <div class="text-muted small">{{ order.createdAt|date('h:i A') }}</div>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary">{{ order.orderItems|length }} items</span>
+                        </td>
+                        <td class="fw-bold">₱{{ order.totalAmount|number_format(2) }}</td>
+                        <td>
+                            <div class="d-flex flex-column gap-1">
+                                {% if order.paymentMethod == 'cash' %}
+                                    <span class="badge bg-success">Cash</span>
+                                {% elseif order.paymentMethod == 'online' %}
+                                    <span class="badge bg-primary">Online</span>
+                                {% else %}
+                                    <span class="badge bg-secondary">{{ order.paymentMethod|default('N/A') }}</span>
+                                {% endif %}
+                                
+                                {% if order.isPaid %}
+                                    <span class="badge bg-success">
+                                        <i class="bi bi-check-circle me-1"></i>Paid
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning">
+                                        <i class="bi bi-clock me-1"></i>Unpaid
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if order.status == 'pending' %}
+                                <span class="badge bg-warning">
+                                    <i class="bi bi-clock me-1"></i>Pending
+                                </span>
+                            {% elseif order.status == 'processing' %}
+                                <span class="badge bg-info">
+                                    <i class="bi bi-gear me-1"></i>Processing
+                                </span>
+                            {% elseif order.status == 'completed' %}
+                                <span class="badge bg-success">
+                                    <i class="bi bi-check-circle me-1"></i>Completed
+                                </span>
+                            {% elseif order.status == 'cancelled' %}
+                                <span class="badge bg-secondary">
+                                    <i class="bi bi-x-circle me-1"></i>Cancelled
+                                </span>
+                            {% elseif order.status == 'declined' %}
+                                <span class="badge bg-danger">
+                                    <i class="bi bi-slash-circle me-1"></i>Declined
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ path('staff_order_manage', {'id': order.id}) }}" 
+                                   class="btn btn-outline-primary" title="Manage">
+                                    <i class="bi bi-gear"></i>
+                                </a>
+                                <a href="{{ path('app_receipt_generate', {'id': order.id}) }}" 
+                                   class="btn btn-outline-success" title="Generate Receipt">
+                                    <i class="bi bi-receipt"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-info" title="View Details"
+                                        onclick="viewOrderDetails({{ order.id }})">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="8" class="text-center text-muted py-4">
+                            <i class="bi bi-cart-x fs-1"></i>
+                            <p class="mt-2">No orders found</p>
+                            <a href="{{ path('staff_order_new') }}" class="btn btn-primary">
+                                Create Your First Order
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Order Details Modal -->
+<div class="modal fade" id="orderDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Order Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="orderDetailsContent">
+                Loading order details...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="printOrder()">
+                    <i class="bi bi-printer me-2"></i>Print
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+function clearSearch() {
+    document.querySelector('input[name="search"]').value = '';
+    document.getElementById('orderFilterForm').submit();
+}
+
+function viewOrderDetails(orderId) {
+    fetch(`/staff/orders/${orderId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('orderDetailsContent').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Order Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th width="40%">Order #:</th>
+                                        <td><strong>${data.orderNumber}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Date:</th>
+                                        <td>${new Date(data.createdAt).toLocaleDateString()} ${new Date(data.createdAt).toLocaleTimeString()}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Status:</th>
+                                        <td><span class="badge bg-${getStatusColor(data.status)}">${data.status}</span></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Payment Method:</th>
+                                        <td>${data.paymentMethod}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Payment Status:</th>
+                                        <td>
+                                            <span class="badge ${data.isPaid ? 'bg-success' : 'bg-warning'}">
+                                                ${data.isPaid ? 'Paid' : 'Unpaid'}
+                                            </span>
+                                            ${data.paidAt ? '<br><small>Paid on: ' + new Date(data.paidAt).toLocaleDateString() + '</small>' : ''}
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Delivery Type:</th>
+                                        <td>${data.deliveryType || 'Pickup'}</td>
+                                    </tr>
+                                    ${data.deliveryAddress ? `
+                                    <tr>
+                                        <th>Delivery Address:</th>
+                                        <td>${data.deliveryAddress}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ${data.deliveryFee ? `
+                                    <tr>
+                                        <th>Delivery Fee:</th>
+                                        <td>₱${parseFloat(data.deliveryFee).toFixed(2)}</td>
+                                    </tr>
+                                    ` : ''}
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h6 class="mb-0">Customer Information</h6>
+                            </div>
+                            <div class="card-body">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th width="40%">Name:</th>
+                                        <td>${data.customerName}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Email:</th>
+                                        <td>${data.customerEmail}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Phone:</th>
+                                        <td>${data.customerPhone || 'N/A'}</td>
+                                    </tr>
+                                    ${data.customerAddress ? `
+                                    <tr>
+                                        <th>Address:</th>
+                                        <td>${data.customerAddress}</td>
+                                    </tr>
+                                    ` : ''}
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Order Items</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>Product</th>
+                                                <th>Quantity</th>
+                                                <th>Price</th>
+                                                <th>Total</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            ${data.items.map(item => `
+                                                <tr>
+                                                    <td>${item.productName}</td>
+                                                    <td>${item.quantity}</td>
+                                                    <td>₱${parseFloat(item.price).toFixed(2)}</td>
+                                                    <td>₱${parseFloat(item.total).toFixed(2)}</td>
+                                                </tr>
+                                            `).join('')}
+                                        </tbody>
+                                        <tfoot>
+                                            <tr>
+                                                <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                                                <td><strong>₱${parseFloat(data.subtotal).toFixed(2)}</strong></td>
+                                            </tr>
+                                            ${data.tax > 0 ? `
+                                            <tr>
+                                                <td colspan="3" class="text-end"><strong>Tax:</strong></td>
+                                                <td>₱${parseFloat(data.tax).toFixed(2)}</td>
+                                            </tr>
+                                            ` : ''}
+                                            ${data.shipping > 0 ? `
+                                            <tr>
+                                                <td colspan="3" class="text-end"><strong>Shipping:</strong></td>
+                                                <td>₱${parseFloat(data.shipping).toFixed(2)}</td>
+                                            </tr>
+                                            ` : ''}
+                                            <tr>
+                                                <td colspan="3" class="text-end"><strong>Total:</strong></td>
+                                                <td><strong class="text-primary">₱${parseFloat(data.total).toFixed(2)}</strong></td>
+                                            </tr>
+                                        </tfoot>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ${data.notes ? `
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h6 class="mb-0">Order Notes</h6>
+                            </div>
+                            <div class="card-body">
+                                ${data.notes}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            
+            new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
+        })
+        .catch(error => {
+            document.getElementById('orderDetailsContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Error loading order details: ${error.message}
+                </div>
+            `;
+            new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
+        });
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'pending': return 'warning';
+        case 'processing': return 'info';
+        case 'completed': return 'success';
+        case 'cancelled': return 'secondary';
+        case 'declined': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function exportOrders() {
+    // Create CSV content
+    let csv = 'Order #,Customer,Date,Items,Total,Payment,Status,Urgent\n';
+    
+    document.querySelectorAll('#ordersTable tbody tr').forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length >= 7) {
+            const orderNumber = cells[0].querySelector('strong')?.textContent.trim() || '';
+            const customer = cells[1].querySelector('strong')?.textContent.trim() || '';
+            const date = cells[2].textContent.trim();
+            const items = cells[3].querySelector('.badge')?.textContent.trim() || '';
+            const total = cells[4].textContent.trim().replace('₱', '');
+            const payment = cells[5].textContent.trim();
+            const status = cells[6].querySelector('.badge')?.textContent.trim() || '';
+            const urgent = row.classList.contains('table-warning') ? 'Yes' : 'No';
+            
+            const rowData = [orderNumber, customer, date, items, total, payment, status, urgent];
+            csv += rowData.map(data => `"${data}"`).join(',') + '\n';
+        }
+    });
+    
+    // Download CSV file
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `orders_export_${new Date().toISOString().split('T')[0]}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    window.URL.revokeObjectURL(url);
+}
+
+function printOrders() {
+    const printContent = document.querySelector('.card.admin-chart').innerHTML;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = `
+        <div class="container mt-4">
+            <h3>Orders List - SMSol Studio</h3>
+            <p>Generated: ${new Date().toLocaleString()}</p>
+            ${printContent}
+        </div>
+    `;
+    
+    window.print();
+    document.body.innerHTML = originalContent;
+    location.reload();
+}
+
+function printOrder() {
+    // Print order details from modal
+    const printContent = document.getElementById('orderDetailsContent').innerHTML;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = `
+        <div class="container mt-4">
+            <h3>Order Details - SMSol Studio</h3>
+            <p>Generated: ${new Date().toLocaleString()}</p>
+            ${printContent}
+        </div>
+    `;
+    
+    window.print();
+    document.body.innerHTML = originalContent;
+    // Re-open modal if it was open
+    new bootstrap.Modal(document.getElementById('orderDetailsModal')).show();
+}
+
+// Initialize DataTable
+document.addEventListener('DOMContentLoaded', function() {
+    $('#ordersTable').DataTable({
+        pageLength: 25,
+        lengthMenu: [10, 25, 50, 100],
+        order: [[2, 'desc']], // Sort by date
+        language: {
+            search: "_INPUT_",
+            searchPlaceholder: "Search orders...",
+            lengthMenu: "Show _MENU_ orders",
+            info: "Showing _START_ to _END_ of _TOTAL_ orders",
+            infoEmpty: "Showing 0 to 0 of 0 orders",
+            infoFiltered: "(filtered from _MAX_ total orders)"
+        }
+    });
+});
+</script>
+
+<style>
+.stats-card {
+    border-left: 4px solid;
+    transition: transform 0.2s;
+}
+
+.stats-card:hover {
+    transform: translateY(-2px);
+}
+
+.stats-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.border-left-primary { border-left-color: #4e73df !important; }
+.border-left-success { border-left-color: #1cc88a !important; }
+.border-left-warning { border-left-color: #f6c23e !important; }
+.border-left-info { border-left-color: #36b9cc !important; }
+
+.table-warning {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.dataTables_wrapper .dataTables_filter {
+    float: right;
+    text-align: right;
+}
+
+.dataTables_wrapper .dataTables_length {
+    float: left;
+}
+
+.card-header {
+    background-color: rgba(0,0,0,.03);
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+    border-top: none;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0,0,0,.02);
+}
+</style>
+{% endblock %}

@@ -1,0 +1,172 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Create New Order - Admin{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('admin_orders') }}">Orders</a></li>
+<li class="breadcrumb-item active">New Order</li>
+{% endblock %}
+
+{% block page_title %}Create New Order{% endblock %}
+{% block page_description %}Add a new customer order{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Order Information</h5>
+            </div>
+            <div class="card-body">
+                {{ form_start(form, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate', 'id': 'orderForm'}}) }}
+                
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label required">Customer</label>
+                        <select name="{{ form.customer.vars.full_name }}" class="form-select" required>
+                            <option value="">Select a customer</option>
+                            {% for customer in customers %}
+                                <option value="{{ customer.id }}">
+                                    {{ customer.firstName }} {{ customer.lastName }} ({{ customer.email }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            <a href="{{ path('admin_users') }}" target="_blank">Add new customer</a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label required">Delivery Type</label>
+                        {{ form_widget(form.deliveryType) }}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label required">Payment Method</label>
+                        {{ form_widget(form.paymentMethod) }}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <div class="form-check form-switch mt-4">
+                            {{ form_widget(form.isUrgent) }}
+                            <label class="form-check-label" for="{{ form.isUrgent.vars.id }}">
+                                Mark as urgent order
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="col-12" id="deliveryAddressSection" style="display: none;">
+                        <label class="form-label">Delivery Address</label>
+                        {{ form_widget(form.deliveryAddress) }}
+                    </div>
+                    
+                    <div class="col-md-6" id="deliveryFeeSection" style="display: none;">
+                        <label class="form-label">Delivery Fee (₱)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">₱</span>
+                            {{ form_widget(form.deliveryFee) }}
+                        </div>
+                    </div>
+                    
+                    <div class="col-12">
+                        <label class="form-label">Order Notes (Optional)</label>
+                        {{ form_widget(form.notes) }}
+                    </div>
+                    
+                    <div class="col-12 mt-4">
+                        <div class="d-flex justify-content-end gap-2">
+                            <a href="{{ path('admin_orders') }}" class="btn btn-secondary">
+                                <i class="bi bi-x-circle me-2"></i>Cancel
+                            </a>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-check-circle me-2"></i>Create Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Quick Tips</h5>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        Select existing customer
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        Choose delivery type
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-check-circle-fill text-success me-2"></i>
+                        Select payment method
+                    </li>
+                    <li class="mb-2">
+                        <i class="bi bi-info-circle-fill text-info me-2"></i>
+                        Add products after creating order
+                    </li>
+                </ul>
+                
+                <hr>
+                
+                <h6>Required Fields</h6>
+                <p class="text-muted small">Fields marked with <span class="text-danger">*</span> are required</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const deliveryTypeSelect = document.querySelector('[name="{{ form.deliveryType.vars.full_name }}"]');
+    const addressSection = document.getElementById('deliveryAddressSection');
+    const feeSection = document.getElementById('deliveryFeeSection');
+    
+    function toggleDeliveryFields() {
+        if (deliveryTypeSelect.value === 'delivery') {
+            addressSection.style.display = 'block';
+            feeSection.style.display = 'block';
+        } else {
+            addressSection.style.display = 'none';
+            feeSection.style.display = 'none';
+        }
+    }
+    
+    deliveryTypeSelect.addEventListener('change', toggleDeliveryFields);
+    toggleDeliveryFields();
+    
+    // Form validation
+    const form = document.getElementById('orderForm');
+    form.addEventListener('submit', function(event) {
+        if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+        }
+        form.classList.add('was-validated');
+    });
+});
+</script>
+
+<style>
+.form-label.required:after {
+    content: " *";
+    color: #dc3545;
+}
+.was-validated .form-control:invalid,
+.was-validated .form-select:invalid {
+    border-color: #dc3545;
+}
+.was-validated .form-control:valid,
+.was-validated .form-select:valid {
+    border-color: #198754;
+}
+</style>
+{% endblock %}

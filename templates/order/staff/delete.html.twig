@@ -1,0 +1,141 @@
+{# templates/order/staff/delete.html.twig #}
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Delete Order #{{ order.orderNumber }} - SMSol Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('staff_orders') }}">Orders</a></li>
+<li class="breadcrumb-item"><a href="{{ path('staff_order_show', {'id': order.id}) }}">Order #{{ order.orderNumber }}</a></li>
+<li class="breadcrumb-item active">Delete</li>
+{% endblock %}
+
+{% block page_title %}Delete Order <span class="text-danger">#{{ order.orderNumber }}</span>{% endblock %}
+{% block page_description %}Warning: This action cannot be undone{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card admin-chart border-danger">
+            <div class="card-header bg-danger text-white border-0">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    Delete Order Confirmation
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading">
+                        <i class="bi bi-exclamation-octagon me-2"></i>
+                        Warning: This action cannot be undone!
+                    </h5>
+                    <p class="mb-0">
+                        You are about to permanently delete this order. This will remove all order data including:
+                    </p>
+                    <ul class="mb-0 mt-2">
+                        <li>Order information and history</li>
+                        <li>All order items</li>
+                        <li>Payment records</li>
+                        <li>Any associated receipts</li>
+                    </ul>
+                </div>
+                
+                <!-- Order Summary -->
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Order Details</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th width="40%">Order #:</th>
+                                        <td><strong>{{ order.orderNumber }}</strong></td>
+                                    </tr>
+                                    <tr>
+                                        <th>Date:</th>
+                                        <td>{{ order.createdAt|date('F j, Y h:i A') }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Customer:</th>
+                                        <td>{{ order.customer.fullName|default('N/A') }}</td>
+                                    </tr>
+                                </table>
+                            </div>
+                            <div class="col-md-6">
+                                <table class="table table-sm table-borderless">
+                                    <tr>
+                                        <th width="40%">Status:</th>
+                                        <td>
+                                            <span class="badge {{ order.status == 'pending' ? 'bg-warning' : (order.status == 'processing' ? 'bg-info' : (order.status == 'completed' ? 'bg-success' : 'bg-danger')) }}">
+                                                {{ order.status|upper }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <th>Total Amount:</th>
+                                        <td class="fw-bold">₱{{ order.totalAmount|number_format(2) }}</td>
+                                    </tr>
+                                    <tr>
+                                        <th>Items:</th>
+                                        <td>{{ order.orderItems|length }} items</td>
+                                    </tr>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Order Items -->
+                {% if order.orderItems|length > 0 %}
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Order Items to be Deleted ({{ order.orderItems|length }})</h6>
+                    </div>
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Product</th>
+                                        <th>Quantity</th>
+                                        <th>Price</th>
+                                        <th>Total</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for item in order.orderItems|slice(0, 5) %}
+                                    <tr>
+                                        <td>{{ item.product.name|default('Unknown Product') }}</td>
+                                        <td>{{ item.quantity }}</td>
+                                        <td>₱{{ item.price|number_format(2) }}</td>
+                                        <td class="fw-bold">₱{{ item.totalPrice|number_format(2) }}</td>
+                                    </tr>
+                                    {% endfor %}
+                                    {% if order.orderItems|length > 5 %}
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted">
+                                            ... and {{ order.orderItems|length - 5 }} more items
+                                        </td>
+                                    </tr>
+                                    {% endif %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+                
+                <!-- Deletion Restrictions -->
+                {% if order.status != 'pending' %}
+                <div class="alert alert-warning">
+                    <h6 class="alert-heading">
+                        <i class="bi bi-shield-exclamation me-2"></i>
+                        Deletion Restrictions
+                    </h6>
+                    <p class="mb-0">
+                        This order is in <strong>{{ order.status }}</strong> status. 
+                        {% if is_granted('ROLE_ADMIN') %}
+                            As an administrator, you can still delete it.
+                        {% else %}
+                            Only administrators can delete orders that are not in pending status.

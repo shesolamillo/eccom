@@ -1,0 +1,192 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Admin Dashboard - SMSol Studio{% endblock %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+{% block page_description %}System overview and management{% endblock %}
+
+{% block page_actions %}
+<a href="{{ path('admin_analytics') }}" class="btn btn-primary">
+    <i class="bi bi-bar-chart me-2"></i>View Analytics
+</a>
+{% endblock %}
+
+{% block admin_content %}
+
+<!-- STATS CARDS -->
+<div class="row mb-4">
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <div class="text-muted text-uppercase small">Total Users</div>
+                    <div class="h4 fw-bold">{{ userStats.total|default(0) }}</div>
+                    <small class="text-success">
+                        {{ userStats.admins|default(0) }} admins •
+                        {{ userStats.staff|default(0) }} staff
+                    </small>
+                </div>
+                <i class="bi bi-people fs-1 text-primary"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <div class="text-muted text-uppercase small">Orders</div>
+                    <div class="h4 fw-bold">{{ orderStats.totalOrders|default(0) }}</div>
+                    <small class="text-danger">
+                        {{ orderStats.pendingCount|default(0) }} pending
+                    </small>
+                </div>
+                <i class="bi bi-cart-check fs-1 text-success"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <div class="text-muted text-uppercase small">Revenue</div>
+                    <div class="h4 fw-bold">
+                        ₱{{ orderStats.totalRevenue|default(0)|number_format(2) }}
+                    </div>
+                </div>
+                <i class="bi bi-currency-dollar fs-1 text-warning"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6 mb-4">
+        <div class="card shadow-sm h-100">
+            <div class="card-body d-flex justify-content-between">
+                <div>
+                    <div class="text-muted text-uppercase small">Products</div>
+                    <div class="h4 fw-bold">
+                        {{ productStats.available|default(0) }}/{{ productStats.total|default(0) }}
+                    </div>
+                    <small class="text-warning">
+                        {{ stockStats.lowStockCount|default(0) }} low stock
+                    </small>
+                </div>
+                <i class="bi bi-box fs-1 text-info"></i>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- CHART + QUICK ACTIONS -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Order Status</h5>
+            </div>
+            <div class="card-body">
+                <canvas id="orderStatusChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card shadow-sm">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{{ path('admin_users') }}" class="btn btn-light w-100">
+                            <i class="bi bi-people"></i><br>Users
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ path('staff_product_new') }}" class="btn btn-light w-100">
+                            <i class="bi bi-plus-circle"></i><br>Add Product
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ path('admin_activity_logs') }}" class="btn btn-light w-100">
+                            <i class="bi bi-list-check"></i><br>Logs
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ path('admin_settings') }}" class="btn btn-light w-100">
+                            <i class="bi bi-gear"></i><br>Settings
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- RECENT ORDERS -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white d-flex justify-content-between">
+        <h5 class="mb-0">Recent Orders</h5>
+        <a href="{{ path('staff_orders') }}" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+
+    <div class="card-body p-0">
+        <table class="table mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Order #</th>
+                    <th>Customer</th>
+                    <th>Date</th>
+                    <th>Total</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for order in recentOrders|default([]) %}
+                <tr>
+                    <td>{{ order.reference }}</td>
+                    <td>{{ order.user.firstName }} {{ order.user.lastName }}</td>
+                    <td>{{ order.createdAt|date('M d, Y') }}</td>
+                    <td>₱{{ order.total|number_format(2) }}</td>
+                    <td>
+                        <span class="badge bg-success">{{ order.status }}</span>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">
+                        No recent orders
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const ctx = document.getElementById('orderStatusChart');
+    if (!ctx) return;
+
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Pending', 'Processing', 'Completed', 'Cancelled'],
+            datasets: [{
+                data: [
+                    {{ orderStats.pendingCount|default(0) }},
+                    {{ orderStats.processingCount|default(0) }},
+                    {{ orderStats.completedCount|default(0) }},
+                    {{ orderStats.cancelledCount|default(0) }}
+                ]
+            }]
+        }
+    });
+});
+</script>
+{% endblock %}

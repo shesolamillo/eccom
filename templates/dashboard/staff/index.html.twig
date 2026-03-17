@@ -1,0 +1,309 @@
+{# templates/dashboard/staff/index.html.twig #}
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Staff Dashboard - SMSol Studio{% endblock %}
+
+{% block page_title %}Staff Dashboard{% endblock %}
+{% block page_description %}Manage orders, products, and stocks{% endblock %}
+
+{% block admin_content %}
+<!-- Quick Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card border-left-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Today's Orders</h6>
+                        <h3 class="fw-bold">{{ todayOrders|length }}</h3>
+                    </div>
+                    <div class="stats-icon bg-primary">
+                        <i class="bi bi-cart text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Pending Orders</h6>
+                        <h3 class="fw-bold">{{ pendingOrders|length }}</h3>
+                    </div>
+                    <div class="stats-icon bg-warning">
+                        <i class="bi bi-clock-history text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Low Stock</h6>
+                        <h3 class="fw-bold">{{ lowStockProducts|length }}</h3>
+                    </div>
+                    <div class="stats-icon bg-danger">
+                        <i class="bi bi-exclamation-triangle text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Total Products</h6>
+                        <h3 class="fw-bold">{{ productCount|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-success">
+                        <i class="bi bi-box text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Pending Orders -->
+<div class="row mb-4">
+    <div class="col-lg-8">
+        <div class="card admin-chart h-100">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Pending Orders</h5>
+                <a href="{{ path('staff_orders') }}" class="btn btn-sm btn-outline-primary">
+                    View All <i class="bi bi-arrow-right ms-1"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>Order #</th>
+                                <th>Customer</th>
+                                <th>Date</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for order in pendingOrders|slice(0, 5) %}
+                            <tr>
+                                <td>{{ order.orderNumber }}</td>
+                                <td>{{ order.customer.fullName|default('N/A') }}</td>
+                                <td>{{ order.createdAt|date('M d, Y') }}</td>
+                                <td class="fw-bold">₱{{ order.totalAmount|number_format(2) }}</td>
+                                <td>
+                                    <span class="badge bg-warning">Pending</span>
+                                </td>
+                                <td>
+                                    <a href="{{ path('staff_order_manage', {'id': order.id}) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        Manage
+                                    </a>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-4">
+                                    <i class="bi bi-check-circle fs-1"></i>
+                                    <p class="mt-2">No pending orders</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Actions -->
+    <div class="col-lg-4">
+        <div class="card admin-chart h-100">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('staff_product_new') }}" class="btn btn-outline-primary text-start">
+                        <i class="bi bi-plus-circle me-2"></i>Add New Product
+                    </a>
+                    <a href="{{ path('staff_stock_add') }}" class="btn btn-outline-success text-start">
+                        <i class="bi bi-box-seam me-2"></i>Add Stock
+                    </a>
+                    <a href="{{ path('staff_orders') }}" class="btn btn-outline-warning text-start">
+                        <i class="bi bi-cart me-2"></i>Manage Orders
+                    </a>
+                    <a href="{{ path('staff_stocks') }}" class="btn btn-outline-danger text-start">
+                        <i class="bi bi-exclamation-triangle me-2"></i>View Low Stock
+                    </a>
+                </div>
+                
+                <hr class="my-4">
+                
+                <h6 class="mb-3">Low Stock Alert</h6>
+                {% if lowStockProducts|length > 0 %}
+                    <div class="list-group">
+                        {% for product in lowStockProducts|slice(0, 3) %}
+                        <a href="{{ path('staff_stock_update', {'id': product.stock.id|default(0)}) }}" 
+                           class="list-group-item list-group-item-action">
+                            <div class="d-flex justify-content-between">
+                                <span>{{ product.product.name }}</span>
+                                <span class="badge bg-danger">{{ product.stock.quantity|default(0) }} left</span>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% if lowStockProducts|length > 3 %}
+                    <div class="text-center mt-2">
+                        <a href="{{ path('staff_stocks') }}" class="text-decoration-none small">
+                            +{{ lowStockProducts|length - 3 }} more items
+                        </a>
+                    </div>
+                    {% endif %}
+                {% else %}
+                    <p class="text-muted small">No low stock items</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Orders Chart -->
+<div class="card admin-chart mb-4">
+    <div class="card-header bg-white border-0">
+        <h5 class="mb-0">Recent Orders Overview</h5>
+    </div>
+    <div class="card-body">
+        <div class="chart-container" style="height: 250px;">
+            <canvas id="recentOrdersChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Orders Table -->
+<div class="card admin-chart">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Recent Orders</h5>
+        <div class="btn-group">
+            <button class="btn btn-sm btn-outline-secondary active" onclick="filterOrders('all')">All</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="filterOrders('today')">Today</button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="filterOrders('week')">This Week</button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 data-table" id="ordersTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Items</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                        <th>Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in recentOrders %}
+                    <tr>
+                        <td>{{ order.orderNumber }}</td>
+                        <td>{{ order.customer.fullName|default('N/A') }}</td>
+                        <td>{{ order.orderItems|length }}</td>
+                        <td class="fw-bold">₱{{ order.totalAmount|number_format(2) }}</td>
+                        <td>
+                            {% if order.status == 'pending' %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% elseif order.status == 'processing' %}
+                                <span class="badge bg-info">Processing</span>
+                            {% elseif order.status == 'completed' %}
+                                <span class="badge bg-success">Completed</span>
+                            {% elseif order.status == 'cancelled' %}
+                                <span class="badge bg-secondary">Cancelled</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ order.createdAt|date('M d, Y') }}</td>
+                        <td>
+                            <a href="{{ path('staff_order_manage', {'id': order.id}) }}" 
+                               class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-gear"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-cart-x fs-1"></i>
+                            <p class="mt-2">No recent orders</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Recent Orders Chart
+    const ordersCtx = document.getElementById('recentOrdersChart').getContext('2d');
+    new Chart(ordersCtx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'Orders',
+                data: [12, 19, 8, 15, 22, 18, 25],
+                borderColor: '#667eea',
+                backgroundColor: 'rgba(102, 126, 234, 0.1)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 5
+                    }
+                }
+            }
+        }
+    });
+});
+
+function filterOrders(filter) {
+    const table = $('#ordersTable').DataTable();
+    table.search(filter).draw();
+    
+    // Update active button
+    $('.btn-group .btn').removeClass('active');
+    $(event.target).addClass('active');
+}
+</script>
+{% endblock %}  

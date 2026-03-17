@@ -1,0 +1,62 @@
+{# templates/stock/staff/modals/_import_stock.html.twig #}
+<div class="modal fade" id="importStockModal" tabindex="-1" aria-labelledby="importStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+           <form action="#" method="post" onsubmit="return handleAddStock(event);">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="importStockModalLabel">Import Stock Data</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Instructions:</strong> Upload a CSV file with columns: Product ID/SKU, Quantity to Add
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label for="stockFile" class="form-label">CSV File</label>
+                        <input type="file" class="form-control" id="stockFile" name="stock_file" 
+                               accept=".csv, .xlsx, .xls" required>
+                        <div class="form-text">Supported formats: CSV, Excel (.xlsx, .xls)</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Import Action</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="import_action" 
+                                   id="actionAdd" value="add" checked>
+                            <label class="form-check-label" for="actionAdd">
+                                Add to existing stock
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="import_action" 
+                                   id="actionReplace" value="replace">
+                            <label class="form-check-label" for="actionReplace">
+                                Replace existing stock
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="sendNotifications" name="send_notifications" checked>
+                            <label class="form-check-label" for="sendNotifications">
+                                Send low stock notifications
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <a href="{{ asset('templates/stock-import-template.csv') }}" class="btn btn-outline-primary">
+                        <i class="bi bi-download me-1"></i>Download Template
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-upload me-1"></i>Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>  

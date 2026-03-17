@@ -1,0 +1,464 @@
+{# templates/admin/activity_logs/index.html.twig #}
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Activity Logs - SMSol Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item active">Activity Logs</li>
+{% endblock %}
+
+{% block page_title %}Activity Logs{% endblock %}
+{% block page_description %}Monitor system activities and user actions{% endblock %}
+
+{% block page_actions %}
+<div class="d-flex gap-2">
+    <button type="button" class="btn btn-outline-secondary" onclick="exportLogs('csv')">
+        <i class="bi bi-download me-2"></i>Export CSV
+    </button>
+    <button type="button" class="btn btn-outline-secondary" onclick="clearOldLogs()">
+        <i class="bi bi-trash me-2"></i>Clear Old Logs
+    </button>
+</div>
+{% endblock %}
+
+{% block admin_content %}
+<!-- Filters -->
+<div class="card admin-chart mb-4">
+    <div class="card-body">
+        <form method="get" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Date Range</label>
+                <select name="date_range" class="form-select" onchange="this.form.submit()">
+                    <option value="today" {{ app.request.get('date_range') == 'today' ? 'selected' : '' }}>Today</option>
+                    <option value="week" {{ app.request.get('date_range') == 'week' ? 'selected' : '' }}>This Week</option>
+                    <option value="month" {{ app.request.get('date_range') == 'month' ? 'selected' : '' }}>This Month</option>
+                    <option value="all" {{ app.request.get('date_range') == 'all' ? 'selected' : '' }}>All Time</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">User</label>
+                <select name="user" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Users</option>
+                    {% for user in allUsers|default([]) %}
+                        <option value="{{ user.id }}" {{ app.request.get('user') == user.id ? 'selected' : '' }}>
+                            {{ user.firstName }} {{ user.lastName }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="col-md-3">
+                <label class="form-label">Action Type</label>
+                <select name="action_type" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Actions</option>
+                    <option value="login" {{ app.request.get('action_type') == 'login' ? 'selected' : '' }}>Login</option>
+                    <option value="create" {{ app.request.get('action_type') == 'create' ? 'selected' : '' }}>Create</option>
+                    <option value="update" {{ app.request.get('action_type') == 'update' ? 'selected' : '' }}>Update</option>
+                    <option value="delete" {{ app.request.get('action_type') == 'delete' ? 'selected' : '' }}>Delete</option>
+                </select>
+            </div>
+            
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-filter me-2"></i>Apply Filters
+                </button>
+                <a href="{{ path('admin_activity_logs') }}" class="btn btn-outline-secondary">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card border-left-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Total Logs</h6>
+                        <h3 class="fw-bold">{{ totalLogs }}</h3>
+                    </div>
+                    <div class="stats-icon bg-primary">
+                        <i class="bi bi-list-check text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Today's Activities</h6>
+                        <h3 class="fw-bold">{{ todayCount|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-success">
+                        <i class="bi bi-calendar-day text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Active Users</h6>
+                        <h3 class="fw-bold">{{ activeUsers|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-warning">
+                        <i class="bi bi-people text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-info h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">System Errors</h6>
+                        <h3 class="fw-bold">{{ errorCount|default(0) }}</h3>
+                    </div>
+                    <div class="stats-icon bg-info">
+                        <i class="bi bi-exclamation-triangle text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Chart -->
+<div class="card admin-chart mb-4">
+    <div class="card-header bg-white border-0">
+        <h5 class="mb-0">Activity Overview (Last 30 Days)</h5>
+    </div>
+    <div class="card-body">
+        <div class="chart-container" style="height: 300px;">
+            <canvas id="activityChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Logs Table -->
+<div class="card admin-chart">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Activity Logs</h5>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="refreshLogs()">
+                <i class="bi bi-arrow-clockwise"></i>
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="printTable()">
+                <i class="bi bi-printer"></i>
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 data-table" id="logsTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th>ID</th>
+                        <th>User</th>
+                        <th>Action</th>
+                        <th>Details</th>
+                        <th>IP Address</th>
+                        <th>Timestamp</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs %}
+                    <tr>
+                        <td>{{ log.id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if log.user %}
+                                    {% if log.user.userProfile and log.user.userProfile.profilePicture %}
+                                        <img src="{{ asset('uploads/profiles/' ~ log.user.userProfile.profilePicture) }}" 
+                                             alt="{{ log.user.firstName }}" class="rounded-circle me-2" width="28" height="28">
+                                    {% else %}
+                                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" 
+                                             style="width: 28px; height: 28px;">
+                                            <i class="bi bi-person text-white"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <div>{{ log.user.firstName }} {{ log.user.lastName }}</div>
+                                        <small class="text-muted">{{ log.user.email }}</small>
+                                    </div>
+                                {% else %}
+                                    <span class="text-muted">System</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if log.action == 'login' %}
+                                <span class="badge bg-success">Login</span>
+                            {% elseif log.action == 'create' %}
+                                <span class="badge bg-primary">Create</span>
+                            {% elseif log.action == 'update' %}
+                                <span class="badge bg-warning">Update</span>
+                            {% elseif log.action == 'delete' %}
+                                <span class="badge bg-danger">Delete</span>
+                            {% else %}
+                                <span class="badge bg-secondary">{{ log.action|default('unknown') }}</span>
+                            {% endif %}
+                        </td>   
+                        <td>
+                            <div class="log-details">
+                                <strong>{{ log.entityType|default('System') }}</strong>
+                                <small class="text-muted d-block">{{ log.description|default('No details') }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <code>{{ log.ipAddress|default('N/A') }}</code>
+                        </td>
+                        <td>
+                            <div>{{ log.createdAt|date('M d, Y') }}</div>
+                            <small class="text-muted">{{ log.createdAt|date('h:i A') }}</small>
+                        </td>
+                        <td>
+                            <button type="button" class="btn btn-sm btn-outline-info" 
+                                    onclick="viewLogDetails({{ log.id }})" title="View Details">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" class="text-center text-muted py-4">
+                            <i class="bi bi-list-check fs-1"></i>
+                            <p class="mt-2">No activity logs found</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Pagination -->
+    {% if totalPages > 1 %}
+    <div class="card-footer">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center mb-0">
+                <li class="page-item {{ currentPage == 1 ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ path('admin_activity_logs', {'page': currentPage - 1}) }}">
+                        Previous
+                    </a>
+                </li>
+                
+                {% for i in range(1, totalPages) %}
+                    {% if i >= currentPage - 2 and i <= currentPage + 2 %}
+                        <li class="page-item {{ currentPage == i ? 'active' : '' }}">
+                            <a class="page-link" href="{{ path('admin_activity_logs', {'page': i}) }}">{{ i }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                <li class="page-item {{ currentPage == totalPages ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ path('admin_activity_logs', {'page': currentPage + 1}) }}">
+                        Next
+                    </a>
+                </li>
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Log Details Modal -->
+<div class="modal fade" id="logDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="logDetailsContent">
+                Loading...
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Activity Chart
+    const activityCtx = document.getElementById('activityChart').getContext('2d');
+    new Chart(activityCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ activitySummary.dates|default(['Jan 1', 'Jan 2', 'Jan 3', 'Jan 4', 'Jan 5', 'Jan 6', 'Jan 7'])|json_encode|raw }},
+            datasets: [
+                {
+                    label: 'Logins',
+                    data: {{ activitySummary.logins|default([12, 19, 8, 15, 12, 18, 14])|json_encode|raw }},
+                    backgroundColor: '#198754',
+                    borderColor: '#198754',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Updates',
+                    data: {{ activitySummary.updates|default([8, 12, 6, 9, 7, 10, 8])|json_encode|raw }},
+                    backgroundColor: '#ffc107',
+                    borderColor: '#ffc107',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Creates',
+                    data: {{ activitySummary.creates|default([5, 8, 3, 6, 4, 7, 5])|json_encode|raw }},
+                    backgroundColor: '#0dcaf0',
+                    borderColor: '#0dcaf0',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 5
+                    }
+                }
+            }
+        }
+    });
+});
+
+function viewLogDetails(logId) {
+    fetch(`/admin/activity-log/${logId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('logDetailsContent').innerHTML = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Log Information</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>ID:</th>
+                                <td>${data.id}</td>
+                            </tr>
+                            <tr>
+                                <th>Action Type:</th>
+                                <td><span class="badge bg-${getBadgeColor(data.actionType)}">${data.actionType}</span></td>
+                            </tr>
+                            <tr>
+                                <th>Entity Type:</th>
+                                <td>${data.entityType || 'N/A'}</td>
+                            </tr>
+                            <tr>
+                                <th>Entity ID:</th>
+                                <td>${data.entityId || 'N/A'}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>User Information</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>User:</th>
+                                <td>${data.userName || 'System'}</td>
+                            </tr>
+                            <tr>
+                                <th>IP Address:</th>
+                                <td><code>${data.ipAddress || 'N/A'}</code></td>
+                            </tr>
+                            <tr>
+                                <th>User Agent:</th>
+                                <td><small class="text-muted">${data.userAgent || 'N/A'}</small></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Description</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                ${data.description || 'No description available'}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ${data.changes ? `
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Changes Made</h6>
+                        <div class="card">
+                            <div class="card-body">
+                                <pre class="mb-0"><code>${JSON.stringify(data.changes, null, 2)}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                ` : ''}
+            `;
+            
+            new bootstrap.Modal(document.getElementById('logDetailsModal')).show();
+        })
+        .catch(error => {
+            document.getElementById('logDetailsContent').innerHTML = `
+                <div class="alert alert-danger">
+                    Error loading log details: ${error.message}
+                </div>
+            `;
+            new bootstrap.Modal(document.getElementById('logDetailsModal')).show();
+        });
+}
+
+function getBadgeColor(actionType) {
+    switch(actionType) {
+        case 'login': return 'success';
+        case 'create': return 'primary';
+        case 'update': return 'warning';
+        case 'delete': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function exportLogs(format) {
+    alert(`Exporting logs in ${format.toUpperCase()} format...`);
+    // Implement export functionality
+}
+
+function clearOldLogs() {
+    if (confirm('Are you sure you want to clear logs older than 30 days?')) {
+        alert('Clearing old logs...');
+        // Implement clear functionality
+    }
+}
+
+function refreshLogs() {
+    location.reload();
+}
+
+function printTable() {
+    window.print();
+}
+</script>
+{% endblock %}

@@ -1,0 +1,83 @@
+{# templates/security/login_simple.html.twig #}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Login Test - SMSol Studio</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow">
+                    <div class="card-body p-5">
+                        <h2 class="text-center mb-4">Login Test</h2>
+                        
+                        {% if error %}
+                            <div class="alert alert-danger">
+                                {{ error.messageKey|trans(error.messageData, 'security') }}
+                            </div>
+                        {% endif %}
+                        
+                        <!-- SIMPLE FORM WITH EXACT FIELD NAMES -->
+                        <form method="post" action="{{ path('app_login') }}">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Email</label>
+                                <input type="email" 
+                                       class="form-control" 
+                                       id="username" 
+                                       name="_username" 
+                                       value="{{ last_username }}"
+                                       required 
+                                       autofocus>
+                                <div class="form-text">Field name: <code>_username</code></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" 
+                                       class="form-control" 
+                                       id="password" 
+                                       name="_password" 
+                                       required>
+                                <div class="form-text">Field name: <code>_password</code></div>
+                            </div>
+                            
+                            <!-- CRITICAL: CSRF Token -->
+                            <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+                            <div class="form-text mb-3">CSRF token name: <code>_csrf_token</code></div>
+                            
+                            <button type="submit" class="btn btn-primary w-100">Login</button>
+                        </form>
+                        
+                        <hr class="my-4">
+                        
+                        <h5>Test Credentials:</h5>
+                        <p>Try with this test user:</p>
+                        <div class="alert alert-info">
+                            <strong>Email:</strong> test@example.com<br>
+                            <strong>Password:</strong> password123
+                        </div>
+                        
+                        <a href="{{ path('app_register') }}" class="btn btn-outline-secondary w-100">
+                            Don't have an account? Register
+                        </a>
+                    </div>
+                </div>
+                
+                <!-- Debug Information -->
+                <div class="card mt-3">
+                    <div class="card-body">
+                        <h5>Debug Info:</h5>
+                        <p><strong>Last Username:</strong> {{ last_username }}</p>
+                        <p><strong>Error:</strong> {{ error ? error.messageKey : 'None' }}</p>
+                        <p><strong>Route:</strong> {{ path('app_login') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

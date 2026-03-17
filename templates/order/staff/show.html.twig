@@ -1,0 +1,605 @@
+{# templates/order/staff/show.html.twig #}
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Order #{{ order.orderNumber }} - SMSol Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('staff_orders') }}">Orders</a></li>
+<li class="breadcrumb-item active">Order #{{ order.orderNumber }}</li>
+{% endblock %}
+
+{% block page_title %}Order <span class="text-primary">#{{ order.orderNumber }}</span>{% endblock %}
+{% block page_description %}{{ order.createdAt|date('F j, Y h:i A') }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{{ path('staff_order_manage', {'id': order.id}) }}" class="btn btn-primary">
+        <i class="bi bi-gear me-2"></i>Manage Order
+    </a>
+    <a href="{{ path('staff_orders') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Orders
+    </a>
+</div>
+{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Order Summary -->
+        <div class="card admin-chart mb-4">
+            <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">Order Summary</h5>
+                <div class="d-flex gap-2">
+                    <span class="badge {{ order.status == 'pending' ? 'bg-warning' : (order.status == 'processing' ? 'bg-info' : (order.status == 'completed' ? 'bg-success' : 'bg-danger')) }}">
+                        {{ order.status|upper }}
+                    </span>
+                    {% if order.isUrgent %}
+                        <span class="badge bg-danger">
+                            <i class="bi bi-exclamation-triangle me-1"></i>URGENT
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <th width="40%">Order #:</th>
+                                <td><strong>{{ order.orderNumber }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Date:</th>
+                                <td>{{ order.createdAt|date('F j, Y h:i A') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Payment Method:</th>
+                                <td>
+                                    <span class="badge {{ order.paymentMethod == 'cash' ? 'bg-success' : 'bg-primary' }}">
+                                        {{ order.paymentMethod|upper }}
+                                    </span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Payment Status:</th>
+                                <td>
+                                    <span class="badge {{ order.isPaid ? 'bg-success' : 'bg-warning' }}">
+                                        {{ order.isPaid ? 'PAID' : 'UNPAID' }}
+                                    </span>
+                                    {% if order.paidAt %}
+                                        <br><small class="text-muted">{{ order.paidAt|date('M d, Y h:i A') }}</small>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <th width="40%">Delivery Type:</th>
+                                <td>
+                                    <span class="badge {{ order.deliveryType == 'delivery' ? 'bg-primary' : 'bg-secondary' }}">
+                                        {{ order.deliveryType|upper }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% if order.deliveryDate %}
+                            <tr>
+                                <th>Delivery Date:</th>
+                                <td>{{ order.deliveryDate|date('F j, Y h:i A') }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if order.pickupDate %}
+                            <tr>
+                                <th>Pickup Date:</th>
+                                <td>{{ order.pickupDate|date('F j, Y h:i A') }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>Processed By:</th>
+                                <td>{{ order.processedBy.fullName|default('N/A') }}</td>
+                            </tr>
+                            {% if order.completedAt %}
+                            <tr>
+                                <th>Completed:</th>
+                                <td>{{ order.completedAt|date('F j, Y h:i A') }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+                
+                {% if order.notes %}
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Order Notes</h6>
+                        <div class="card bg-light">
+                            <div class="card-body">
+                                {{ order.notes|nl2br }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Order Items -->
+        <div class="card admin-chart mb-4">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Order Items ({{ order.orderItems|length }})</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th>#</th>
+                                <th>Product</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.orderItems %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>
+                                    <div>
+                                        <strong>{{ item.product.name|default('Unknown Product') }}</strong>
+                                        {% if item.product.description %}
+                                        <div class="text-muted small">{{ item.product.description|slice(0, 50) }}...</div>
+                                        {% endif %}
+                                        <div class="text-muted small">SKU: {{ item.product.sku|default('N/A') }}</div>
+                                    </div>
+                                </td>
+                                <td>₱{{ item.price|number_format(2) }}</td>
+                                <td>{{ item.quantity }}</td>
+                                <td class="fw-bold">₱{{ item.totalPrice|number_format(2) }}</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted py-4">
+                                    <i class="bi bi-cart-x fs-1"></i>
+                                    <p class="mt-2">No items in this order</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="bg-light">
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Subtotal:</strong></td>
+                                <td colspan="2"><strong>₱{{ order.totalAmount - order.deliveryFee|default(0) }}</strong></td>
+                            </tr>
+                            {% if order.deliveryFee > 0 %}
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Delivery Fee:</strong></td>
+                                <td colspan="2">₱{{ order.deliveryFee|number_format(2) }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <td colspan="3" class="text-end"><h5 class="mb-0">Total Amount:</h5></td>
+                                <td colspan="2"><h5 class="mb-0 text-primary">₱{{ order.totalAmount|number_format(2) }}</h5></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Customer Information -->
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Customer Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Name:</th>
+                                <td>{{ order.customer.fullName|default('N/A') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>{{ order.customer.email|default('N/A') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Phone:</th>
+                                <td>{{ order.customer.phoneNumber|default('N/A') }}</td>
+                            </tr>
+                            {% if order.deliveryAddress %}
+                            <tr>
+                                <th>Delivery Address:</th>
+                                <td>{{ order.deliveryAddress }}</td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-sm">
+                            <tr>
+                                <th width="40%">Customer Since:</th>
+                                <td>{{ order.customer.createdAt|default('N/A')|date('M d, Y') }}</td>
+                            </tr>
+                            <tr>
+                                <th>Total Orders:</th>
+                                <td>
+                                    <span class="badge bg-info">{{ order.customer.orders|length|default(0) }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Total Spent:</th>
+                                <td class="fw-bold">
+                                    ₱{{ order.customer.orders|reduce((total, o) => total + o.totalAmount, 0)|number_format(2) }}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Last Order:</th>
+                                <td>
+                                    {% set lastOrder = order.customer.orders|sort((a, b) => b.createdAt <=> a.createdAt)|first %}
+                                    {% if lastOrder and lastOrder.id != order.id %}
+                                        {{ lastOrder.createdAt|date('M d, Y') }}
+                                        <br><small class="text-muted">Order #{{ lastOrder.orderNumber }}</small>
+                                    {% else %}
+                                        Current Order
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <a href="{{ path('admin_user_edit', {'id': order.customer.id}) }}" 
+                       class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-person me-1"></i>View Customer Profile
+                    </a>
+                    <a href="{{ path('staff_orders') }}?search={{ order.customer.email }}" 
+                       class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-list me-1"></i>View All Customer Orders
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Sidebar -->
+    <div class="col-lg-4">
+        <!-- Order Actions -->
+        <div class="card admin-chart mb-4">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Order Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{{ path('staff_order_manage', {'id': order.id}) }}" 
+                       class="btn btn-primary">
+                        <i class="bi bi-gear me-2"></i>Manage Order
+                    </a>
+                    
+                    <a href="{{ path('app_receipt_generate', {'id': order.id}) }}" 
+                       class="btn btn-success" target="_blank">
+                        <i class="bi bi-receipt me-2"></i>Generate Receipt
+                    </a>
+                    
+                    <a href="{{ path('staff_order_new') }}?customer={{ order.customer.id }}" 
+                       class="btn btn-outline-primary">
+                        <i class="bi bi-plus-circle me-2"></i>New Order for Same Customer
+                    </a>
+                    
+                    {% if order.status == 'pending' %}
+                    <button type="button" class="btn btn-outline-success" onclick="updateOrderStatus('processing')">
+                        <i class="bi bi-gear me-2"></i>Start Processing
+                    </button>
+                    {% endif %}
+                    
+                    {% if order.status == 'processing' %}
+                    <button type="button" class="btn btn-success" onclick="updateOrderStatus('completed')">
+                        <i class="bi bi-check-circle me-2"></i>Mark as Completed
+                    </button>
+                    {% endif %}
+                    
+                    {% if order.status != 'cancelled' and order.status != 'completed' %}
+                    <button type="button" class="btn btn-outline-danger" onclick="cancelOrder()">
+                        <i class="bi bi-x-circle me-2"></i>Cancel Order
+                    </button>
+                    {% endif %}
+                    
+                    <a href="{{ path('staff_orders') }}" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Orders
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Timeline -->
+        <div class="card admin-chart mb-4">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Order Timeline</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-primary"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-0">Order Created</h6>
+                            <small class="text-muted">{{ order.createdAt|date('M d, Y h:i A') }}</small>
+                            <div class="small">By: {{ order.createdBy.fullName|default('System') }}</div>
+                        </div>
+                    </div>
+                    
+                    {% if order.updatedAt and order.updatedAt != order.createdAt %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-warning"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-0">Last Updated</h6>
+                            <small class="text-muted">{{ order.updatedAt|date('M d, Y h:i A') }}</small>
+                            {% if order.updatedBy %}
+                                <div class="small">By: {{ order.updatedBy.fullName|default('System') }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if order.processedBy %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-info"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-0">Assigned for Processing</h6>
+                            <small class="text-muted">{{ order.updatedAt|date('M d, Y h:i A') }}</small>
+                            <div class="small">By: {{ order.processedBy.fullName }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if order.paidAt %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-success"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-0">Payment Received</h6>
+                            <small class="text-muted">{{ order.paidAt|date('M d, Y h:i A') }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                    
+                    {% if order.completedAt %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker bg-success"></div>
+                        <div class="timeline-content">
+                            <h6 class="mb-0">Order Completed</h6>
+                            <small class="text-muted">{{ order.completedAt|date('M d, Y h:i A') }}</small>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Order Statistics -->
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Order Statistics</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2 mb-3">
+                    <div class="col-6">
+                        <div class="bg-light p-3 rounded text-center">
+                            <h6 class="text-muted mb-1">Items</h6>
+                            <h3 class="fw-bold mb-0">{{ order.orderItems|length }}</h3>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light p-3 rounded text-center">
+                            <h6 class="text-muted mb-1">Total</h6>
+                            <h3 class="fw-bold mb-0">₱{{ order.totalAmount|number_format(2) }}</h3>
+                        </div>
+                    </div>
+                </div>
+                
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td>Subtotal:</td>
+                        <td class="text-end">₱{{ (order.totalAmount - order.deliveryFee|default(0))|number_format(2) }}</td>
+                    </tr>
+                    {% if order.deliveryFee > 0 %}
+                    <tr>
+                        <td>Delivery Fee:</td>
+                        <td class="text-end">₱{{ order.deliveryFee|number_format(2) }}</td>
+                    </tr>
+                    {% endif %}
+                    <tr>
+                        <th>Total:</th>
+                        <th class="text-end text-primary">₱{{ order.totalAmount|number_format(2) }}</th>
+                    </tr>
+                </table>
+                
+                <hr class="my-3">
+                
+                <h6 class="mb-2">Additional Information</h6>
+                <table class="table table-sm table-borderless">
+                    <tr>
+                        <td>Delivery Type:</td>
+                        <td class="text-end">
+                            <span class="badge {{ order.deliveryType == 'delivery' ? 'bg-primary' : 'bg-secondary' }}">
+                                {{ order.deliveryType|upper }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Payment Method:</td>
+                        <td class="text-end">
+                            <span class="badge {{ order.paymentMethod == 'cash' ? 'bg-success' : 'bg-primary' }}">
+                                {{ order.paymentMethod|upper }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Payment Status:</td>
+                        <td class="text-end">
+                            <span class="badge {{ order.isPaid ? 'bg-success' : 'bg-warning' }}">
+                                {{ order.isPaid ? 'PAID' : 'UNPAID' }}
+                            </span>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>Order Status:</td>
+                        <td class="text-end">
+                            <span class="badge {{ order.status == 'pending' ? 'bg-warning' : (order.status == 'processing' ? 'bg-info' : (order.status == 'completed' ? 'bg-success' : 'bg-danger')) }}">
+                                {{ order.status|upper }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% if order.isUrgent %}
+                    <tr>
+                        <td>Priority:</td>
+                        <td class="text-end">
+                            <span class="badge bg-danger">
+                                <i class="bi bi-exclamation-triangle me-1"></i>URGENT
+                            </span>
+                        </td>
+                    </tr>
+                    {% endif %}
+                </table>
+                
+                <div class="d-grid gap-2 mt-3">
+                    <button type="button" class="btn btn-sm btn-outline-info" onclick="printOrderDetails()">
+                        <i class="bi bi-printer me-1"></i>Print Order Details
+                    </button>
+                    <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyOrderLink()">
+                        <i class="bi bi-link me-1"></i>Copy Order Link
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+function updateOrderStatus(status) {
+    if (confirm(`Change order status to ${status.toUpperCase()}?`)) {
+        fetch(`/staff/orders/{{ order.id }}/status`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-Token': '{{ csrf_token('update-status') }}'
+            },
+            body: JSON.stringify({ status: status })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        })
+        .catch(error => {
+            alert('Error updating status: ' + error.message);
+        });
+    }
+}
+
+function cancelOrder() {
+    if (confirm('Are you sure you want to cancel this order? This action cannot be undone.')) {
+        updateOrderStatus('cancelled');
+    }
+}
+
+function printOrderDetails() {
+    const printContent = document.querySelector('.col-lg-8').innerHTML;
+    const originalContent = document.body.innerHTML;
+    
+    document.body.innerHTML = `
+        <div class="container mt-4">
+            <div class="text-center mb-4">
+                <h2>Order #{{ order.orderNumber }}</h2>
+                <p class="text-muted">Order Details - SMSol Studio</p>
+                <p>Generated: ${new Date().toLocaleString()}</p>
+            </div>
+            ${printContent}
+        </div>
+    `;
+    
+    window.print();
+    document.body.innerHTML = originalContent;
+    location.reload();
+}
+
+function copyOrderLink() {
+    const url = window.location.href;
+    navigator.clipboard.writeText(url).then(() => {
+        alert('Order link copied to clipboard!');
+    }).catch(err => {
+        alert('Failed to copy: ' + err);
+    });
+}
+</script>
+
+<style>
+.timeline {
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 0.5rem;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background-color: #dee2e6;
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+}
+
+.timeline-marker {
+    position: absolute;
+    left: -1.5rem;
+    top: 0.25rem;
+    width: 1rem;
+    height: 1rem;
+    border-radius: 50%;
+    border: 3px solid white;
+}
+
+.timeline-content h6 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.timeline-content small {
+    font-size: 0.75rem;
+}
+
+.table th {
+    font-weight: 600;
+    color: #495057;
+}
+
+.table tbody tr:hover {
+    background-color: rgba(0,0,0,.02);
+}
+
+.badge {
+    font-weight: 500;
+}
+
+.card-header {
+    background-color: rgba(0,0,0,.03);
+    border-bottom: 1px solid rgba(0,0,0,.125);
+}
+
+.btn-group .btn {
+    border-radius: 0.375rem;
+}
+</style>
+{% endblock %}  

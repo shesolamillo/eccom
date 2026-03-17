@@ -1,11 +1,277 @@
-# yaml-language-server: $schema=../vendor/symfony/routing/Loader/schema/routing.schema.json
+# ============================================
+# PUBLIC ROUTES
+# ============================================
 
-# This file is the entry point to configure the routes of your app.
-# Methods with the #[Route] attribute are automatically imported.
-# See also https://symfony.com/doc/current/routing.html
+# Main pages
+app_home:
+    path: /
+    controller: App\Controller\MainController::home
+    methods: GET
 
-# To list all registered routes, run the following command:
-#   bin/console debug:router
+app_services:
+    path: /services
+    controller: App\Controller\MainController::services
+    methods: GET
 
-controllers:
-    resource: routing.controllers
+app_contact:
+    path: /contact
+    controller: App\Controller\MainController::contact
+    methods: [GET, POST]
+
+app_about:
+    path: /about
+    controller: App\Controller\MainController::about
+    methods: GET
+
+# Products (public view)
+app_products:
+    path: /products
+    controller: App\Controller\ProductController::index
+    methods: GET
+
+app_product_show:
+    path: /product/{id}
+    controller: App\Controller\ProductController::show
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# ============================================
+# AUTHENTICATION ROUTES
+# ============================================
+
+app_login:
+    path: /login
+    controller: App\Controller\SecurityController::login
+    methods: [GET, POST]
+
+app_register:
+    path: /register
+    controller: App\Controller\SecurityController::register
+    methods: [GET, POST]
+
+app_logout:
+    path: /logout
+    methods: GET
+
+# ============================================
+# USER ROUTES (ROLE_USER)
+# ============================================
+
+# Dashboard
+app_dashboard:
+    path: /dashboard
+    controller: App\Controller\UserDashboardController::index
+    methods: GET
+
+# Profile
+app_profile:
+    path: /profile
+    controller: App\Controller\UserDashboardController::profile
+    methods: [GET, POST]
+
+# Orders
+app_user_orders:
+    path: /my-orders
+    controller: App\Controller\UserOrderController::index
+    methods: GET
+
+app_user_order_create:
+    path: /order/create
+    controller: App\Controller\UserOrderController::new
+    methods: [GET, POST]
+
+app_user_order_show:
+    path: /order/{id}
+    controller: App\Controller\UserOrderController::show
+    methods: GET
+
+# ============================================
+# STAFF ROUTES (ROLE_STAFF)
+# ============================================
+
+# Staff Dashboard
+staff_dashboard:
+    path: /staff
+    controller: App\Controller\StaffDashboardController::index
+    methods: GET
+
+# Staff Orders
+staff_orders:
+    path: /staff/orders
+    controller: App\Controller\StaffOrderController::index
+    methods: GET
+
+staff_order_manage:
+    path: /staff/order/{id}
+    controller: App\Controller\StaffOrderController::manage
+    methods: [GET, POST]
+
+# Staff Products
+staff_products:
+    path: /staff/products
+    controller: App\Controller\StaffProductController::index
+    methods: GET
+
+staff_product_new:
+    path: /staff/product/new
+    controller: App\Controller\StaffProductController::new
+    methods: [GET, POST]
+
+staff_product_edit:
+    path: /staff/product/{id}/edit
+    controller: App\Controller\StaffProductController::edit
+    methods: [GET, POST]
+
+# Staff Stocks
+staff_stocks:
+    path: /staff/stocks
+    controller: App\Controller\StaffStockController::index
+    methods: GET
+
+staff_stock_update:
+    path: /staff/stock/{id}
+    controller: App\Controller\StaffStockController::update
+    methods: [GET, POST]
+
+# ============================================
+# ADMIN ROUTES (ROLE_ADMIN)
+# ============================================
+
+# Admin Dashboard
+admin_dashboard:
+    path: /admin
+    controller: App\Controller\AdminDashboardController::index
+    methods: GET
+
+# Admin Analytics
+admin_analytics:
+    path: /admin/analytics
+    controller: App\Controller\AdminDashboardController::analytics
+    methods: GET
+
+# Admin Users
+admin_users:
+    path: /admin/users
+    controller: App\Controller\AdminUserController::index
+    methods: GET
+
+admin_user_edit:
+    path: /admin/user/{id}
+    controller: App\Controller\AdminUserController::edit
+    methods: [GET, POST]
+
+# Admin Settings
+admin_settings:
+    path: /admin/settings
+    controller: App\Controller\AdminSettingsController::index
+    methods: [GET, POST]
+
+# Admin Activity Logs
+admin_activity_logs:
+    path: /admin/activity-logs
+    controller: App\Controller\AdminActivityLogController::index
+    methods: GET
+
+# ============================================
+# COMMON ROUTES
+# ============================================
+
+# Receipt
+app_receipt_download:
+    path: /receipt/{id}
+    controller: App\Controller\ReceiptController::download
+    methods: GET
+
+# Health check
+app_health:
+    path: /health
+    controller: App\Controller\MainController::health
+    methods: GET
+
+# ============================================
+# API ROUTES
+# ============================================
+
+# API Products
+api_products_list:
+    path: /api/products
+    controller: App\Controller\Api\ApiProductController::list
+    methods: GET
+
+api_products_show:
+    path: /api/products/{id}
+    controller: App\Controller\Api\ApiProductController::show
+    methods: GET
+    requirements:
+        id: '\d+'
+
+api_products_stock:
+    path: /api/products/{id}/stock
+    controller: App\Controller\Api\ApiProductController::getStock
+    methods: GET
+    requirements:
+        id: '\d+'
+
+# API Orders
+api_orders_list:
+    path: /api/orders
+    controller: App\Controller\Api\ApiOrderController::list
+    methods: GET
+
+api_orders_show:
+    path: /api/orders/{id}
+    controller: App\Controller\Api\ApiOrderController::show
+    methods: GET
+    requirements:
+        id: '\d+'
+
+api_orders_create:
+    path: /api/orders
+    controller: App\Controller\Api\ApiOrderController::create
+    methods: POST
+
+api_orders_update:
+    path: /api/orders/{id}
+    controller: App\Controller\Api\ApiOrderController::update
+    methods: [PUT, PATCH]
+    requirements:
+        id: '\d+'
+
+# API Stock
+api_stock_list:
+    path: /api/stock
+    controller: App\Controller\Api\ApiStockController::list
+    methods: GET
+
+api_stock_show:
+    path: /api/stock/{id}
+    controller: App\Controller\Api\ApiStockController::show
+    methods: GET
+    requirements:
+        id: '\d+'
+
+api_stock_update:
+    path: /api/stock/{id}
+    controller: App\Controller\Api\ApiStockController::update
+    methods: [PUT, PATCH]
+    requirements:
+        id: '\d+'
+
+api_stock_low_stock:
+    path: /api/stock/low-stock
+    controller: App\Controller\Api\ApiStockController::getLowStock
+    methods: GET
+
+# API Users
+api_users_list:
+    path: /api/users
+    controller: App\Controller\Api\ApiUserController::list
+    methods: GET
+
+api_users_show:
+    path: /api/users/{id}
+    controller: App\Controller\Api\ApiUserController::show
+    methods: GET
+    requirements:
+        id: '\d+'

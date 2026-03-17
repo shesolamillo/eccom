@@ -1,0 +1,193 @@
+{# templates/dashboard/user/index.html.twig #}
+{% extends 'base.html.twig' %}
+
+{% block title %}Dashboard - SMSol Studio{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <!-- Welcome Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h4 class="fw-bold mb-1">Hello, {{ app.user.firstName|default('Customer') }}!</h4>
+            <p class="text-muted mb-0">Welcome back to your SMSol Studio dashboard</p>
+        </div>
+        <div class="d-flex gap-2">
+            <a href="{{ path('app_user_order_create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-2"></i>New Order
+            </a>
+            <a href="{{ path('app_products') }}" class="btn btn-outline-primary">
+                <i class="bi bi-bag me-2"></i>Browse Products
+            </a>
+        </div>
+    </div>
+    
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card stats-card border-left-primary h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-1">Total Orders</h6>
+                            <h3 class="fw-bold">{{ user.orders|length }}</h3>
+                        </div>
+                        <div class="stats-icon bg-primary">
+                            <i class="bi bi-cart text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card border-left-success h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-1">Active Orders</h6>
+                            <h3 class="fw-bold">
+                                {{ user.orders|filter(o => o.status not in ['completed', 'cancelled', 'declined'])|length }}
+                            </h3>
+                        </div>
+                        <div class="stats-icon bg-success">
+                            <i class="bi bi-clock-history text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card border-left-warning h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-1">Completed</h6>
+                            <h3 class="fw-bold">
+                                {{ user.orders|filter(o => o.status == 'completed')|length }}
+                            </h3>
+                        </div>
+                        <div class="stats-icon bg-warning">
+                            <i class="bi bi-check-circle text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3">
+            <div class="card stats-card border-left-info h-100">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="text-uppercase text-muted mb-1">Total Spent</h6>
+                            <h3 class="fw-bold">
+                                ₱{{ user.orders|filter(o => o.status == 'completed')|reduce((sum, o) => sum + o.totalAmount, 0)|number_format(2) }}
+                            </h3>
+                        </div>
+                        <div class="stats-icon bg-info">
+                            <i class="bi bi-currency-dollar text-white"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Orders -->
+    <div class="card admin-chart mb-4">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Recent Orders</h5>
+            <a href="{{ path('app_user_orders') }}" class="btn btn-sm btn-outline-primary">
+                View All <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 data-table">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Order #</th>
+                            <th>Date</th>
+                            <th>Items</th>
+                            <th>Total</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for order in recentOrders|slice(0, 5) %}
+                        <tr>
+                            <td>{{ order.orderNumber }}</td>
+                            <td>{{ order.createdAt|date('M d, Y') }}</td>
+                            <td>{{ order.orderItems|length }} items</td>
+                            <td class="fw-bold">₱{{ order.totalAmount|number_format(2) }}</td>
+                            <td>
+                                <span class="badge bg-{{ order.status == 'pending' ? 'warning' : (order.status == 'completed' ? 'success' : 'secondary') }}">
+                                    {{ order.status|capitalize }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ path('app_user_order_show', {'id': order.id}) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="View Order">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-4">
+                                <i class="bi bi-cart-x fs-1"></i>
+                                <p class="mt-2">No orders yet</p>
+                                <a href="{{ path('app_user_order_create') }}" class="btn btn-primary">
+                                    Place Your First Order
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Popular Products -->
+    <div class="card admin-chart">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Popular Products</h5>
+            <a href="{{ path('app_products') }}" class="btn btn-sm btn-outline-primary">
+                Browse All <i class="bi bi-arrow-right ms-1"></i>
+            </a>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for product in popularProducts %}
+                <div class="col-md-3 mb-3">
+                    <div class="card product-card h-100 border-0 shadow-sm">
+                        <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                             style="height: 150px;">
+                            <i class="bi bi-image text-muted fs-1"></i>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-title">{{ product.name }}</h6>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span class="fw-bold text-primary">₱{{ product.price|number_format(2) }}</span>
+                                <a href="{{ path('app_product_show', {'id': product.id}) }}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    View
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <div class="col-12 text-center text-muted py-4">
+                    <i class="bi bi-bag-x fs-1"></i>
+                    <p class="mt-2">No products available</p>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

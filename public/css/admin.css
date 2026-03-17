@@ -1,0 +1,141 @@
+/* public/css/admin.css */
+
+.admin-layout {
+    background-color: #f8f9fa;
+    min-height: 100vh;
+}
+
+/* Sidebar */
+.admin-sidebar {
+    background-color: #fff;
+    min-height: calc(100vh - 56px);
+    border-right: 1px solid #dee2e6;
+    box-shadow: 1px 0 3px rgba(0,0,0,0.1);
+}
+
+.sidebar-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+    padding: 1.25rem;
+}
+
+.sidebar-menu {
+    padding: 1rem 0;
+}
+
+.sidebar-menu .nav-link {
+    color: #495057;
+    padding: 0.75rem 1.5rem;
+    border-left: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.sidebar-menu .nav-link:hover {
+    background-color: #f8f9fa;
+    color: #667eea;
+    border-left-color: #667eea;
+}
+
+.sidebar-menu .nav-link.active {
+    background-color: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    border-left-color: #667eea;
+    font-weight: 500;
+}
+
+.sidebar-menu .nav-link i {
+    width: 20px;
+    text-align: center;
+    margin-right: 0.75rem;
+}
+
+/* Stats Cards */
+.stats-card {
+    border: none;
+    border-radius: 10px;
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-3px);
+}
+
+.stats-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* DataTables in Admin */
+.admin-table {
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.admin-table .dataTables_wrapper {
+    padding: 0;
+}
+
+/* Chart Containers */
+.admin-chart {
+    background: white;
+    border-radius: 10px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+/* Quick Actions */
+.quick-action-card {
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    height: 100%;
+}
+
+.quick-action-card:hover {
+    border-color: #667eea;
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.1);
+}
+
+.quick-action-card .card-body {
+    text-align: center;
+    padding: 2rem 1rem;
+}
+
+.quick-action-card i {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: #667eea;
+}
+
+/* Form Cards */
+.form-card {
+    background: white;
+    border-radius: 10px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Mobile Offcanvas */
+.offcanvas-start {
+    width: 280px;
+}
+
+@media (max-width: 992px) {
+    .admin-layout main {
+        padding: 1rem;
+    }
+    
+    .admin-chart {
+        margin-bottom: 1.5rem;
+    }
+}

@@ -1,0 +1,49 @@
+{# templates/stock/staff/modals/_adjust_stock.html.twig #}
+<div class="modal fade" id="adjustStockModal" tabindex="-1" aria-labelledby="adjustStockModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+           <form action="#" method="post" onsubmit="return handleAddStock(event);">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="adjustStockModalLabel">Adjust Stock Level</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="adjustStockId" name="stock_id">
+                    
+                    <div class="mb-3">
+                        <label for="currentQuantity" class="form-label">Current Quantity</label>
+                        <input type="number" class="form-control" id="currentQuantity" readonly disabled>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="newQuantity" class="form-label">New Quantity</label>
+                        <input type="number" class="form-control" id="newQuantity" name="new_quantity" 
+                               min="0" value="0" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="adjustReason" class="form-label">Reason for Adjustment</label>
+                        <select class="form-select" id="adjustReason" name="reason" required>
+                            <option value="">Select a reason</option>
+                            <option value="damaged">Damaged Goods</option>
+                            <option value="lost">Lost Inventory</option>
+                            <option value="count_error">Counting Error</option>
+                            <option value="theft">Theft</option>
+                            <option value="expired">Expired</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="adjustNotes" class="form-label">Notes (Optional)</label>
+                        <textarea class="form-control" id="adjustNotes" name="notes" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Update Stock</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>  
