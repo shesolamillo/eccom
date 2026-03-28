@@ -33,11 +33,14 @@ class StaffProductController extends AbstractController
         $search = $request->query->get('search');
         
         // Apply filters
-        $products = $productRepository->findWithFilters($categoryId, $status, $search);
+        $products = $productRepository->findBy(['isAvailable' => true]);
+        if ($categoryId) {
+            $products = array_filter($products, fn($p) => $p->getCategory() && $p->getCategory()->getId() == $categoryId);
+        }
         
         // Get statistics for the dashboard
         $totalProducts = $productRepository->count([]);
-        $availableProducts = count($productRepository->findBy(['isActive' => true]));
+        $availableProducts = count($productRepository->findBy(['isAvailable' => true]));
         $lowStockCount = $productRepository->countLowStock();
         $outOfStockCount = $productRepository->countOutOfStock();
         

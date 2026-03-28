@@ -20,6 +20,12 @@
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ asset('css/styles.css') }}">
+
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+
     
     {% block stylesheets %}{% endblock %}
 </head>
@@ -63,6 +69,15 @@
                 </ul>
                 
                 <ul class="navbar-nav">
+                    {% if app.user and is_granted('ROLE_USER') %}
+                        <li class="nav-item">
+                            <a class="nav-link {{ app.request.get('_route') == 'cart_view' ? 'active' : '' }}" 
+                               href="{{ path('cart_view') }}">
+                                <i class="bi bi-bag-check me-1"></i>Cart
+                            </a>
+                        </li>
+                    {% endif %}
+                    
                     {% if app.user %}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">

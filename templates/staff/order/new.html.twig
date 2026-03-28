@@ -1,0 +1,373 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Create New Order - Staff{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('staff_orders') }}">Orders</a></li>
+<li class="breadcrumb-item active">New Order</li>
+{% endblock %}
+
+{% block page_title %}Create New Order{% endblock %}
+{% block page_description %}Step 1: Select Customer | Step 2: Add Products | Step 3: Review & Confirm{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <!-- Left: Product Selection & Order Info -->
+    <div class="col-lg-8">
+        <!-- Step 1: Customer Selection -->
+        <div class="card admin-chart mb-3">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0"><span class="badge bg-info me-2">1</span>Select Customer & Delivery Details</h5>
+            </div>
+            <div class="card-body">
+                <form id="customerForm" class="row g-3">
+                    <div class="col-md-6">
+                        <label class="form-label required">Customer</label>
+                        <select name="customer_id" id="customerId" class="form-select" required>
+                            <option value="">-- Select a customer --</option>
+                            {% for customer in customers %}
+                                <option value="{{ customer.id }}">
+                                    {{ customer.firstName }} {{ customer.lastName }} ({{ customer.email }})
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label required">Delivery Type</label>
+                        <select name="delivery_type" id="deliveryType" class="form-select" required>
+                            <option value="">-- Select delivery type --</option>
+                            <option value="pickup">Pickup</option>
+                            <option value="delivery">Delivery</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <label class="form-label required">Payment Method</label>
+                        <select name="payment_method" class="form-select" required>
+                            <option value="">-- Select payment method --</option>
+                            <option value="cash">Cash</option>
+                            <option value="card">Card</option>
+                            <option value="transfer">Bank Transfer</option>
+                        </select>
+                    </div>
+                    
+                    <div class="col-12" id="deliveryAddressSection" style="display: none;">
+                        <label class="form-label">Delivery Address</label>
+                        <textarea name="delivery_address" class="form-control" rows="2" placeholder="Enter delivery address"></textarea>
+                    </div>
+                    
+                    <div class="col-md-6" id="deliveryFeeSection" style="display: none;">
+                        <label class="form-label">Delivery Fee (₱)</label>
+                        <input type="number" name="delivery_fee" class="form-control" step="0.01" min="0" value="100">
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Step 2: Product Selection -->
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0"><span class="badge bg-info me-2">2</span>Add Products to Order</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Search Products</label>
+                        <input type="text" id="productSearch" class="form-control" placeholder="Search product name...">
+                    </div>
+                </div>
+
+                <!-- Product Grid -->
+                <div class="row g-3" id="productGrid">
+                    {% for product in products %}
+                        <div class="col-md-6">
+                            <div class="card border h-100">
+                                <div class="card-body">
+                                    <div class="d-flex align-items-start mb-2">
+                                        {% if product.photoUrl %}
+                                            <img src="{{ product.photoUrl }}" alt="{{ product.name }}" 
+                                                 class="rounded me-3" style="width: 70px; height: 70px; object-fit: cover;">
+                                        {% else %}
+                                            <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                                                 style="width: 70px; height: 70px;">
+                                                <i class="bi bi-image"></i>
+                                            </div>
+                                        {% endif %}
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-1">{{ product.name }}</h6>
+                                            <p class="text-muted mb-0 small">{{ product.productType.name }}</p>
+                                        </div>
+                                    </div>
+
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <strong>₱{{ product.price|number_format(2) }}</strong>
+                                        {% if product.stock %}
+                                            <span class="badge bg-info">{{ product.stock.quantity }} stock</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <!-- Add to Cart -->
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control product-qty" value="1" min="1" 
+                                               data-product-id="{{ product.id }}" data-price="{{ product.price }}">
+                                        <button class="btn btn-success btn-add-to-cart" type="button" 
+                                                data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: Order Summary & Cart -->
+    <div class="col-lg-4">
+        <div class="card admin-chart sticky-top" style="top: 20px;">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0"><span class="badge bg-info me-2">3</span>Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <!-- Selected Customer -->
+                <div class="mb-3 pb-3 border-bottom">
+                    <p class="text-muted small">Customer</p>
+                    <p id="selectedCustomer" class="fw-600">
+                        <i class="bi bi-exclamation-circle text-warning"></i> Select a customer
+                    </p>
+                </div>
+
+                <!-- Cart Items -->
+                <div class="mb-3">
+                    <p class="text-muted small">Items</p>
+                    <div id="cartItems" style="max-height: 300px; overflow-y: auto;">
+                        <p class="text-muted text-center">No items added</p>
+                    </div>
+                </div>
+
+                <!-- Pricing -->
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Subtotal</span>
+                        <span id="subtotal">₱0.00</span>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Delivery Fee</span>
+                        <span id="deliveryFee">₱0.00</span>
+                    </div>
+                </div>
+
+                <div class="mb-3 pb-3 border-bottom">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Discount</span>
+                        <span class="text-success">₱0.00</span>
+                    </div>
+                </div>
+
+                <!-- Total -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between">
+                        <span class="h5 mb-0">Total</span>
+                        <span class="h5 mb-0 text-primary" id="totalAmount">₱0.00</span>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2">
+                    <button id="createOrderBtn" class="btn btn-success" disabled>
+                        <i class="bi bi-check-circle me-2"></i>Create Order
+                    </button>
+                    <a href="{{ path('staff_orders') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-2"></i>Cancel
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let cartItems = {};
+const customerId = document.getElementById('customerId');
+const deliveryType = document.getElementById('deliveryType');
+const deliveryAddressSection = document.getElementById('deliveryAddressSection');
+const deliveryFeeSection = document.getElementById('deliveryFeeSection');
+const deliveryFeeInput = document.querySelector('input[name="delivery_fee"]');
+
+// Toggle delivery fields
+deliveryType.addEventListener('change', function() {
+    if (this.value === 'delivery') {
+        deliveryAddressSection.style.display = 'block';
+        deliveryFeeSection.style.display = 'block';
+    } else {
+        deliveryAddressSection.style.display = 'none';
+        deliveryFeeSection.style.display = 'none';
+        deliveryFeeInput.value = 0;
+    }
+    updateTotal();
+});
+
+// Update customer display
+customerId.addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (this.value) {
+        document.getElementById('selectedCustomer').innerHTML = `<i class="bi bi-check-circle text-success"></i> ${selectedOption.text}`;
+        updateCreateOrderButton();
+    } else {
+        document.getElementById('selectedCustomer').innerHTML = '<i class="bi bi-exclamation-circle text-warning"></i> Select a customer';
+        updateCreateOrderButton();
+    }
+});
+
+// Add to cart
+document.querySelectorAll('.btn-add-to-cart').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const productId = this.dataset.productId;
+        const productName = this.dataset.productName;
+        const qtyInput = document.querySelector(`.product-qty[data-product-id="${productId}"]`);
+        const quantity = parseInt(qtyInput.value) || 1;
+        const price = parseFloat(qtyInput.dataset.price);
+
+        if (cartItems[productId]) {
+            cartItems[productId].quantity += quantity;
+        } else {
+            cartItems[productId] = {
+                name: productName,
+                price: price,
+                quantity: quantity
+            };
+        }
+
+        updateCartDisplay();
+        qtyInput.value = 1;
+    });
+});
+
+// Update cart display
+function updateCartDisplay() {
+    const cartHTML = Object.entries(cartItems).map(([id, item]) => `
+        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom">
+            <div>
+                <small class="fw-600">${item.name}</small>
+                <br>
+                <small class="text-muted">${item.quantity} × ₱${item.price.toFixed(2)}</small>
+            </div>
+            <div class="text-end">
+                <small class="fw-600">₱${(item.quantity * item.price).toFixed(2)}</small>
+                <br>
+                <button class="btn btn-sm btn-outline-danger btn-remove-item" data-product-id="${id}">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </div>
+        </div>
+    `).join('');
+
+    document.getElementById('cartItems').innerHTML = cartHTML || '<p class="text-muted text-center">No items added</p>';
+
+    // Attach remove handlers
+    document.querySelectorAll('.btn-remove-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            delete cartItems[this.dataset.productId];
+            updateCartDisplay();
+            updateTotal();
+        });
+    });
+
+    updateTotal();
+}
+
+// Update total
+function updateTotal() {
+    let subtotal = 0;
+    Object.values(cartItems).forEach(item => {
+        subtotal += item.quantity * item.price;
+    });
+
+    let delivery = deliveryType.value === 'delivery' ? parseFloat(deliveryFeeInput.value) || 0 : 0;
+    let total = subtotal + delivery;
+
+    document.getElementById('subtotal').textContent = '₱' + subtotal.toFixed(2);
+    document.getElementById('deliveryFee').textContent = '₱' + delivery.toFixed(2);
+    document.getElementById('totalAmount').textContent = '₱' + total.toFixed(2);
+
+    updateCreateOrderButton();
+}
+
+// Update create order button state
+function updateCreateOrderButton() {
+    const btn = document.getElementById('createOrderBtn');
+    const hasCustomer = customerId.value;
+    const hasItems = Object.keys(cartItems).length > 0;
+
+    btn.disabled = !(hasCustomer && hasItems);
+}
+
+// Create order
+document.getElementById('createOrderBtn').addEventListener('click', function() {
+    if (!customerId.value) {
+        alert('Please select a customer');
+        return;
+    }
+
+    if (Object.keys(cartItems).length === 0) {
+        alert('Please add at least one product');
+        return;
+    }
+
+    // Collect form data
+    const formData = new FormData();
+    formData.append('customer_id', customerId.value);
+    formData.append('delivery_type', deliveryType.value);
+    formData.append('payment_method', document.querySelector('select[name="payment_method"]').value);
+    formData.append('delivery_address', document.querySelector('textarea[name="delivery_address"]')?.value || '');
+    formData.append('delivery_fee', deliveryType.value === 'delivery' ? (deliveryFeeInput.value || 0) : 0);
+    
+    // Add items
+    let itemCount = 0;
+    Object.entries(cartItems).forEach(([id, item]) => {
+        formData.append(`items[${itemCount}][product_id]`, id);
+        formData.append(`items[${itemCount}][quantity]`, item.quantity);
+        itemCount++;
+    });
+
+    // Submit
+    fetch('{{ path("staff_order_new") }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            window.location.href = data.redirectUrl;
+        } else {
+            alert(data.error || 'Error creating order');
+        }
+    })
+    .catch(error => console.error('Error:', error));
+});
+</script>
+
+<style>
+.sticky-top {
+    z-index: 10;
+}
+
+@media (max-width: 991px) {
+    .sticky-top {
+        position: relative;
+        top: 0 !important;
+        margin-top: 2rem;
+    }
+}
+
+.badge {
+    font-size: 0.75rem;
+}
+</style>
+{% endblock %}

@@ -14,13 +14,36 @@ use Symfony\Component\Routing\Annotation\Route;
 
 class StaffStockController extends AbstractController
 {
-    #[Route('/staff/stocks', name: 'staff_stocks')]
-    public function index(StockRepository $stockRepository): Response
-    {
+    #[Route('/staff/stocks', name: 'staff_stocks', methods: ['GET','POST'])]
+    public function index(StockRepository $stockRepository,
+        Request $request,
+        EntityManagerInterface $em,
+        ProductRepository $productRepository
+    ):Response {
+        if ($request->isMethod('POST')) {
+        $stock = new Stock();
+        $stock->setQuantity((int) $request->request->get('quantity'));
+        $stock->setMinimumThreshold((int) $request->request->get('minimumThreshold'));
+
+        // Example: set product relation
+        $productId = $request->request->get('product_id');
+        if ($productId) {
+            $product = $productRepository->find($productId);
+            if ($product) {
+                $stock->setProduct($product);
+            }
+        }
+
+        $em->persist($stock);
+        $em->flush();
+
+        return $this->redirectToRoute('staff_stocks');
+    }
         $stocks = $stockRepository->findAll();
+
         $lowStock = $stockRepository->findLowStock();
         $outOfStock = $stockRepository->findOutOfStock();
-
+        
         return $this->render('stock/staff/index.html.twig', [
             'stocks' => $stocks,
             'lowStock' => $lowStock,
@@ -127,4 +150,23 @@ class StaffStockController extends AbstractController
             'products' => $products,
         ]);
     }
+
+    #[Route('/staff/stock/{id}/history', name: 'staff_stock_history')]
+    public function history(int $id, StockRepository $stockRepository): Response
+    {
+        $stock = $stockRepository->find($id);
+
+        if (!$stock) {
+            throw $this->createNotFoundException('Stock not found');
+        }
+
+        // Assuming you have a StockHistory entity or relation
+        $history = $stock->getHistory(); 
+
+        return $this->render('stock/history.html.twig', [
+            'stock' => $stock,
+            'history' => $history,
+        ]);
+    }
+
 }

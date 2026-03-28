@@ -12,6 +12,8 @@ use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
 use Symfony\Component\Validator\Constraints\Length;
 use Symfony\Component\Validator\Constraints\NotBlank;
+use Symfony\Component\Validator\Constraints\IsTrue;
+use Symfony\Component\Form\Extension\Core\Type\CheckboxType;
 
 class RegistrationFormType extends AbstractType
 {
@@ -56,6 +58,7 @@ class RegistrationFormType extends AbstractType
             ])
             ->add('plainPassword', RepeatedType::class, [
                 'type' => PasswordType::class,
+                'mapped' => false, 
                 'invalid_message' => 'The password fields must match.',
                 'options' => [
                     'attr' => ['class' => 'password-field form-control'],
@@ -79,7 +82,27 @@ class RegistrationFormType extends AbstractType
                         'max' => 4096,
                     ]),
                 ],
+                
+            ])
+            ->add('agreeTerms', CheckboxType::class, [
+                'mapped' => false,   // not in your User entity
+                'label' => 'I agree to the terms and conditions',
+                'constraints' => [
+                    new IsTrue(message: 'You must agree to the terms.'),
+                ],
+            ])
+
+             ->add('email', EmailType::class, [
+                'attr' => ['autocomplete' => 'email'],
+                'constraints' => [
+                    new NotBlank([
+                        'message' => 'Please enter an email',
+                    ]),
+                ],
             ]);
+            
+
+
     }
 
     public function configureOptions(OptionsResolver $resolver): void

@@ -5,6 +5,31 @@ namespace App\Entity;
 use App\Repository\ActivityLogRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+
+use Symfony\Component\Serializer\Attribute\Groups;
+
+
+#[ApiResource(
+    operations: [
+        new Get(
+            normalizationContext: ['groups' => ['activity_log:read']]
+        ),
+        new GetCollection(
+            normalizationContext: ['groups' => ['activity_log:read']]
+        ),
+        new Post(),
+        new Put(),
+        new Delete()
+    ]
+)]
+
+
 #[ORM\Entity(repositoryClass: ActivityLogRepository::class)]
 class ActivityLog
 {

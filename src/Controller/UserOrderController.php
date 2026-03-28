@@ -35,9 +35,21 @@ class UserOrderController extends AbstractController
         $order = new Order();
         $order->setCustomer($this->getUser());
 
-        // Add example item for form
-        $orderItem = new OrderItem();
-        $order->addOrderItem($orderItem);
+        $productId = $request->query->get('product');
+        if ($productId) {
+            $preselectProduct = $productRepository->find((int) $productId);
+            if ($preselectProduct) {
+                $orderItem = new OrderItem();
+                $orderItem->setProduct($preselectProduct);
+                $orderItem->setQuantity(1);
+                $order->addOrderItem($orderItem);
+            }
+        }
+
+        if (!$order->getOrderItems()->count()) {
+            // Add empty item so collection form renders one row even without preselect.
+            $order->addOrderItem(new OrderItem());
+        }
 
         $form = $this->createForm(OrderType::class, $order);
         $form->handleRequest($request);

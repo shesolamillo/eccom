@@ -8,6 +8,30 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
+
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+
+use Symfony\Component\Serializer\Attribute\Groups;
+
+#[ApiResource(
+    operations: [
+        new Get(
+            normalizationContext: ['groups' => ['order:read']]
+        ),
+        new GetCollection(
+            normalizationContext: ['groups' => ['order:read']]
+        ),
+        new Post(),
+        new Put(),
+        new Delete()
+    ]
+)]
+
 #[ORM\Entity(repositoryClass: OrderRepository::class)]
 #[ORM\Table(name: '`order`')]
 #[ORM\HasLifecycleCallbacks]

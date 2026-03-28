@@ -3,7 +3,32 @@
 namespace App\Entity;
 
 use App\Repository\StockRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+
+use Symfony\Component\Serializer\Attribute\Groups;
+
+#[ApiResource(
+    operations: [
+        new Get(
+            normalizationContext: ['groups' => ['stock:read']]
+        ),
+        new GetCollection(
+            normalizationContext: ['groups' => ['stock:read']]
+        ),
+        new Post(),
+        new Put(),
+        new Delete()
+    ]
+)]
 
 #[ORM\Entity(repositoryClass: StockRepository::class)]
 #[ORM\HasLifecycleCallbacks]
@@ -36,10 +61,17 @@ class Stock
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $updatedAt = null;
 
+    /**
+     * @var Collection<int, StockAdjustment>
+     */
+    #[ORM\OneToMany(targetEntity: StockAdjustment::class, mappedBy: 'stock')]
+    private Collection $adjustments;
+
     public function __construct()
     {
         $this->createdAt = new \DateTimeImmutable();
         $this->lastRestockedAt = new \DateTimeImmutable();
+        $this->adjustments = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -166,5 +198,40 @@ class Stock
             return 'Low Stock';
         }
         return 'In Stock';
+    }
+
+    /**
+     * @return Collection<int, StockAdjustment>
+     */
+    public function getAdjustments(): Collection
+    {
+        return $this->adjustments;
+    }
+
+    public function addAdjustment(StockAdjustment $adjustment): static
+    {
+        if (!$this->adjustments->contains($adjustment)) {
+            $this->adjustments->add($adjustment);
+            $adjustment->setStock($this);
+        }
+
+        return $this;
+    }
+
+    public function removeAdjustment(StockAdjustment $adjustment): static
+    {
+        if ($this->adjustments->removeElement($adjustment)) {
+            // set the owning side to null (unless already changed)
+            if ($adjustment->getStock() === $this) {
+                $adjustment->setStock(null);
+            }
+        }
+
+        return $this;
+    }
+
+    public function getHistory(): Collection
+    {
+        return $this->adjustments;
     }
 }

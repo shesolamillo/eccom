@@ -6,6 +6,25 @@ use App\Repository\UserProfileRepository;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+
+use Symfony\Component\Serializer\Attribute\Groups;
+
+#[ApiResource(
+    operations: [
+        new Get(normalizationContext: ['groups' => ['user_profile:read']]),
+        new GetCollection(normalizationContext: ['groups' => ['user_profile:read']]),
+        new Post(denormalizationContext: ['groups' => ['user_profile:write']]),
+        new Put(denormalizationContext: ['groups' => ['user_profile:write']]),
+        new Delete()
+    ]
+)]
+
 #[ORM\Entity(repositoryClass: UserProfileRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 class UserProfile

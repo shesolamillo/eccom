@@ -194,15 +194,26 @@
                         </a>
                         
                         {% if is_granted('ROLE_USER') and product.isAvailable and product.stock and product.stock.quantity > 0 %}
-                            <a href="{{ path('app_user_order_create') }}?product={{ product.id }}" 
-                               class="btn btn-primary btn-sm">
-                                <i class="bi bi-cart-plus me-1"></i>Order Now
-                            </a>
+                            {% set productImage = product.photo ? asset('uploads/products/' ~ product.photo) : '' %}
+                            <button type="button" 
+                                    class="btn btn-success btn-sm"
+                                    data-add-to-cart="{{ product.id }}"
+                                    data-product-name="{{ product.name }}"
+                                    data-product-price="{{ product.price }}"
+                                    data-product-image="{{ productImage }}"
+                                    data-stock="{{ product.stock.quantity }}">
+                                <i class="bi bi-bag-check me-1"></i>Add to Cart
+                            </button>
                         {% elseif not product.isAvailable %}
                             <button class="btn btn-secondary btn-sm" disabled>
                                 <i class="bi bi-slash-circle me-1"></i>Unavailable
                             </button>
+                        {% else %}
+                            <button class="btn btn-secondary btn-sm" disabled>
+                                <i class="bi bi-x-circle me-1"></i>Out of Stock
+                            </button>
                         {% endif %}
+
                     </div>
                 </div>
             </div>
@@ -243,4 +254,16 @@
     </nav>
     {% endif %}
 </div>
+
+<!-- Quick Cart Preview -->
+<div style="position: fixed; top: 20px; right: 20px; z-index: 1040;">
+    {% include 'components/quick-cart-preview.html.twig' %}
+</div>
+
+<!-- Add to Cart Modal -->
+{% include 'components/add-to-cart-modal.html.twig' %}
+
+<!-- Cart Animations Script -->
+<script src="{{ asset('js/cart-animations.js') }}"></script>
+
 {% endblock %}

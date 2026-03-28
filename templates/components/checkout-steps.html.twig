@@ -1,0 +1,197 @@
+{# Checkout Steps Progress Indicator #}
+<div class="checkout-steps-container">
+    <div class="checkout-steps">
+        <!-- Step 1: Customer -->
+        <div class="step-item" data-step="1">
+            <div class="step-circle" id="stepCircle1">
+                <span class="step-number">1</span>
+                <i class="bi bi-check step-check" style="display: none;"></i>
+            </div>
+            <div class="step-label">Customer</div>
+        </div>
+
+        <!-- Connector Line -->
+        <div class="step-connector" id="connector1"></div>
+
+        <!-- Step 2: Shipping -->
+        <div class="step-item" data-step="2">
+            <div class="step-circle" id="stepCircle2">
+                <span class="step-number">2</span>
+                <i class="bi bi-check step-check" style="display: none;"></i>
+            </div>
+            <div class="step-label">Shipping</div>
+        </div>
+
+        <!-- Connector Line -->
+        <div class="step-connector" id="connector2"></div>
+
+        <!-- Step 3: Payment -->
+        <div class="step-item" data-step="3">
+            <div class="step-circle" id="stepCircle3">
+                <span class="step-number">3</span>
+                <i class="bi bi-check step-check" style="display: none;"></i>
+            </div>
+            <div class="step-label">Payment</div>
+        </div>
+
+        <!-- Connector Line -->
+        <div class="step-connector" id="connector3"></div>
+
+        <!-- Step 4: Confirm -->
+        <div class="step-item" data-step="4">
+            <div class="step-circle" id="stepCircle4">
+                <span class="step-number">4</span>
+                <i class="bi bi-check step-check" style="display: none;"></i>
+            </div>
+            <div class="step-label">Confirm</div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .checkout-steps-container {
+        margin-bottom: 30px;
+    }
+
+    .checkout-steps {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .step-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        position: relative;
+        flex: 1;
+    }
+
+    .step-circle {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: #e9ecef;
+        border: 3px solid #ddd;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+        font-weight: 700;
+        color: #999;
+        transition: all 0.4s ease;
+        position: relative;
+        font-size: 1.2rem;
+    }
+
+    .step-circle.active {
+        background: #198754;
+        border-color: #198754;
+        color: white;
+    }
+
+    .step-circle.completed {
+        background: #198754;
+        border-color: #198754;
+        color: white;
+    }
+
+    .step-circle.completed .step-number {
+        display: none;
+    }
+
+    .step-circle .step-check {
+        color: white;
+    }
+
+    .step-label {
+        font-size: 0.9rem;
+        color: #999;
+        font-weight: 500;
+        white-space: nowrap;
+    }
+
+    .step-item.active .step-label {
+        color: #198754;
+        font-weight: 700;
+    }
+
+    .step-item.completed .step-label {
+        color: #198754;
+        font-weight: 600;
+    }
+
+    .step-connector {
+        flex: 1;
+        height: 3px;
+        background: #ddd;
+        margin: 0 10px;
+        margin-bottom: 30px;
+        transition: all 0.4s ease;
+    }
+
+    .step-connector.active {
+        background: #198754;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+        .checkout-steps {
+            padding: 15px;
+        }
+
+        .step-circle {
+            width: 40px;
+            height: 40px;
+            font-size: 1rem;
+        }
+
+        .step-label {
+            font-size: 0.8rem;
+        }
+
+        .step-connector {
+            margin: 0 5px;
+            margin-bottom: 25px;
+        }
+    }
+</style>
+
+<script>
+    function updateCheckoutStep(currentStep) {
+        // Reset all steps
+        for (let i = 1; i <= 4; i++) {
+            const circle = document.getElementById(`stepCircle${i}`);
+            const item = document.querySelector(`[data-step="${i}"]`);
+            const connector = document.getElementById(`connector${i}`);
+
+            circle.classList.remove('active', 'completed');
+            if (item) item.classList.remove('active', 'completed');
+            if (connector) connector.classList.remove('active');
+
+            // Set completed steps
+            if (i < currentStep) {
+                circle.classList.add('completed');
+                if (item) item.classList.add('completed');
+                if (connector) connector.classList.add('active');
+                circle.querySelector('.step-number').style.display = 'none';
+                circle.querySelector('.step-check').style.display = 'block';
+            }
+            // Set active step
+            else if (i === currentStep) {
+                circle.classList.add('active');
+                if (item) item.classList.add('active');
+                if (connector) connector.classList.add('active');
+            }
+        }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        updateCheckoutStep(1); // Start at step 1
+    });
+</script>

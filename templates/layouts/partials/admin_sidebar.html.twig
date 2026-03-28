@@ -48,23 +48,57 @@
                 </a>
             {% endif %}
             
-            {# Orders - Both Admin and Staff #}
-            <a href="{{ path('staff_orders') }}" 
-               class="nav-link {{ app.request.get('_route') in ['staff_orders', 'staff_order_manage'] ? 'active' : '' }}">
-                <i class="bi bi-cart"></i>Orders
-            </a>
+            {# Cart - Role based (Create Orders) #}
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('admin_order_new') }}" 
+                   class="nav-link {{ app.request.get('_route') == 'admin_order_new' ? 'active' : '' }}" title="Create Order via Cart">
+                    <i class="bi bi-bag-check"></i>Cart
+                </a>
+            {% elseif is_granted('ROLE_STAFF') %}
+                <a href="{{ path('staff_order_new') }}" 
+                   class="nav-link {{ app.request.get('_route') == 'staff_order_new' ? 'active' : '' }}" title="Create Order via Cart">
+                    <i class="bi bi-bag-check"></i>Cart
+                </a>
+            {% endif %}
             
-            {# Products - Both Admin and Staff #}
-            <a href="{{ path('staff_products') }}" 
-               class="nav-link {{ app.request.get('_route') in ['staff_products', 'staff_product_new', 'staff_product_edit'] ? 'active' : '' }}">
-                <i class="bi bi-shop"></i>Products
-            </a>
+            {# Orders - Role based (View/Manage Orders) #}
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('admin_orders') }}" 
+                   class="nav-link {{ app.request.get('_route') in ['admin_orders', 'admin_order_manage', 'admin_order_show'] ? 'active' : '' }}">
+                    <i class="bi bi-list-check"></i>Orders
+                </a>
+            {% elseif is_granted('ROLE_STAFF') %}
+                <a href="{{ path('staff_orders') }}" 
+                   class="nav-link {{ app.request.get('_route') in ['staff_orders', 'staff_order_manage'] ? 'active' : '' }}">
+                    <i class="bi bi-list-check"></i>Orders
+                </a>
+            {% endif %}
             
-            {# Stocks - Both Admin and Staff #}
-            <a href="{{ path('staff_stocks') }}" 
-               class="nav-link {{ app.request.get('_route') in ['staff_stocks', 'staff_stock_update', 'staff_stock_add'] ? 'active' : '' }}">
-                <i class="bi bi-box-seam"></i>Stocks
-            </a>
+            {# Products - Role based #}
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('admin_products') }}" 
+                   class="nav-link {{ app.request.get('_route') in ['admin_products', 'admin_product_new', 'admin_product_edit', 'admin_product_show'] ? 'active' : '' }}">
+                    <i class="bi bi-shop"></i>Products
+                </a>
+            {% elseif is_granted('ROLE_STAFF') %}
+                <a href="{{ path('staff_products') }}" 
+                   class="nav-link {{ app.request.get('_route') in ['staff_products', 'staff_product_new', 'staff_product_edit'] ? 'active' : '' }}">
+                    <i class="bi bi-shop"></i>Products
+                </a>
+            {% endif %}
+            
+            {# Stocks - Role based #}
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('staff_stocks') }}" 
+                   class="nav-link {{ app.request.get('_route') in ['staff_stocks', 'staff_stock_update', 'staff_stock_add'] ? 'active' : '' }}">
+                    <i class="bi bi-box-seam"></i>Stocks
+                </a>
+            {% elseif is_granted('ROLE_STAFF') %}
+                <a href="{{ path('staff_stocks') }}" 
+                   class="nav-link {{ app.request.get('_route') in ['staff_stocks', 'staff_stock_update', 'staff_stock_add'] ? 'active' : '' }}">
+                    <i class="bi bi-box-seam"></i>Stocks
+                </a>
+            {% endif %}
             
             {# Activity Logs - Admin only #}
             {% if is_granted('ROLE_ADMIN') %}
@@ -74,31 +108,6 @@
                 </a>
             {% endif %}
             
-            {# Settings - Admin only #}
-            {% if is_granted('ROLE_ADMIN') %}
-                <a href="{{ path('admin_settings') }}" 
-                   class="nav-link {{ app.request.get('_route') == 'admin_settings' ? 'active' : '' }}">
-                    <i class="bi bi-gear"></i>Settings
-                </a>
-            {% endif %}
-
-
-                        {# Orders - Admin only #}
-            {% if is_granted('ROLE_ADMIN') %}
-                <a href="{{ path('admin_orders') }}" 
-                class="nav-link {{ app.request.get('_route') in ['admin_orders', 'admin_order_new', 'admin_order_manage', 'admin_order_show'] ? 'active' : '' }}">
-                    <i class="bi bi-cart"></i>Orders
-                </a>
-            {% endif %}
-
-            {# Products - Admin only #}
-            {% if is_granted('ROLE_ADMIN') %}
-                <a href="{{ path('admin_products') }}" 
-                class="nav-link {{ app.request.get('_route') in ['admin_products', 'admin_product_new', 'admin_product_edit', 'admin_product_show'] ? 'active' : '' }}">
-                    <i class="bi bi-shop"></i>Products
-                </a>
-            {% endif %}
-
             <div class="mt-4 pt-3 border-top">
                 <h6 class="nav-link">
                     <i class="bi bi-house"></i>LOGOUT

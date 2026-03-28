@@ -104,4 +104,61 @@ class ProductRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+    public function countLowStock(): int
+    {
+        return $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->leftJoin('p.stock', 's')
+            ->andWhere('p.isAvailable = :available')
+            ->setParameter('available', true)
+            ->andWhere('s.quantity < :threshold')
+            ->setParameter('threshold', 5) // adjust threshold as needed
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function countOutOfStock(): int
+    {
+        return $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->leftJoin('p.stock', 's')
+            ->andWhere('p.isAvailable = :available')
+            ->setParameter('available', true)
+            ->andWhere('s.quantity = 0')
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    public function findWithFilters(?int $categoryId = null, ?string $status = null, ?string $search = null): array
+    {
+        $qb = $this->createQueryBuilder('p')
+            ->leftJoin('p.clothesCategory', 'c')
+            ->leftJoin('p.stock', 's')
+            ->addSelect('c', 's');
+
+        if ($categoryId) {
+            $qb->andWhere('c.id = :categoryId')
+            ->setParameter('categoryId', $categoryId);
+        }
+
+        if ($search) {
+            $qb->andWhere('p.name LIKE :search OR p.description LIKE :search')
+            ->setParameter('search', '%' . $search . '%');
+        }
+
+        if ($status === 'active') {
+            $qb->andWhere('p.isAvailable = true');
+        } elseif ($status === 'inactive') {
+            $qb->andWhere('p.isAvailable = false');
+        } elseif ($status === 'low_stock') {
+            $qb->andWhere('s.quantity > 0 AND s.quantity <= s.minimumThreshold');
+        } elseif ($status === 'out_of_stock') {
+            $qb->andWhere('s.quantity = 0');
+        }
+
+        $qb->orderBy('p.name', 'ASC');
+
+        return $qb->getQuery()->getResult();
+    }
+
 }

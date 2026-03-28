@@ -5,6 +5,30 @@ namespace App\Entity;
 use App\Repository\SettingsRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+
+use Symfony\Component\Serializer\Attribute\Groups;
+
+#[ApiResource(
+    operations: [
+        new Get(
+            normalizationContext: ['groups' => ['settings:read']]
+        ),
+        new GetCollection(
+            normalizationContext: ['groups' => ['settings:read']]
+        ),
+        new Post(),
+        new Put(),
+        new Delete()
+    ]
+)]
+
+
 #[ORM\Entity(repositoryClass: SettingsRepository::class)]
 #[ORM\Table(name: 'settings')]
 class Settings

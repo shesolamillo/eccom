@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Controller\Admin;
+namespace App\Controller;
 
 use App\Entity\Order;
 use App\Entity\OrderItem;
 use App\Entity\Product;
 use App\Entity\User;
+use App\Entity\ClothesCategory;
 use App\Form\OrderFormType;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
@@ -25,59 +26,180 @@ class AdminOrderController extends AbstractController
     public function new(
         Request $request, 
         EntityManagerInterface $entityManager,
-        UserRepository $userRepository
+        UserRepository $userRepository,
+        ProductRepository $productRepository
     ): Response {
         // Check if user has admin access
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
-        $order = new Order();
-        $order->setCreatedAt(new \DateTimeImmutable());
-        $order->setStatus(Order::STATUS_PENDING);
-        
-        // Set default values
-        $order->setDeliveryType(Order::DELIVERY_PICKUP);
-        $order->setPaymentMethod(Order::PAYMENT_CASH);
-        $order->setIsPaid(false);
-        
-        // Generate order number
-        $order->setOrderNumber('ORD-' . date('Ymd') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT));
-        
-        // Create form
-        $form = $this->createForm(OrderFormType::class, $order, [
-            'method' => 'POST',
-        ]);
-        
-        $form->handleRequest($request);
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            try {
-                // Set created by
-                $order->setCreatedBy($this->getUser());
-                
-                // Calculate initial total
-                $order->setTotalAmount(0);
-                
-                $entityManager->persist($order);
-                $entityManager->flush();
-
-                $this->addFlash('success', 'Order created successfully! You can now add products.');
-                
-                return $this->redirectToRoute('admin_order_manage', ['id' => $order->getId()]);
-                
-            } catch (\Exception $e) {
-                $this->addFlash('error', 'Error creating order: ' . $e->getMessage());
-            }
+        // Handle POST request (cart-based order creation)
+        if ($request->isMethod('POST')) {
+            return $this->handleCartOrderCreation($request, $entityManager, $userRepository, $productRepository);
         }
 
-        // Get all active users for customer selection
+        // GET request - display form
         $customers = $userRepository->findBy(['isActive' => true], ['firstName' => 'ASC']);
+        $products = $productRepository->findBy(['isAvailable' => true], ['name' => 'ASC']);
+        $categories = $entityManager->getRepository(ClothesCategory::class)->findAll();
+
+        // Fetch current user with userProfile relationship loaded
+        $currentUser = $entityManager->createQueryBuilder()
+            ->select('u', 'up')
+            ->from('App\Entity\User', 'u')
+            ->leftJoin('u.userProfile', 'up')
+            ->where('u.id = :id')
+            ->setParameter('id', $this->getUser()->getId())
+            ->getQuery()
+            ->getOneOrNullResult();
 
         return $this->render('admin/order/new.html.twig', [
-            'form' => $form->createView(),
             'customers' => $customers,
+            'products' => $products,
+            'categories' => $categories,
+            'currentUser' => $currentUser,
         ]);
     }
 
+    /**
+     * Handle cart-based order creation from AJAX
+     */
+    private function handleCartOrderCreation(
+    Request $request,
+    EntityManagerInterface $entityManager,
+    UserRepository $userRepository,
+    ProductRepository $productRepository
+): Response {
+    try {
+        $data = $request->request->all();
+
+        // --- CSRF validation ---
+        $submittedToken = $data['_csrf_token'] ?? '';
+        if (!$this->isCsrfTokenValid('order_create', $submittedToken)) {
+            return new JsonResponse(['error' => 'Invalid CSRF token'], 403);
+        }
+
+        // Validate required fields
+        if (empty($data['customer_id'])) {
+            return new JsonResponse(['error' => 'Customer required'], 400);
+        }
+
+        // Get customer
+        $customer = $userRepository->find($data['customer_id']);
+        if (!$customer) {
+            return new JsonResponse(['error' => 'Customer not found'], 404);
+        }
+
+        // Validate items - properly parse nested array
+        $items = [];
+        $itemIndex = 0;
+        while (isset($data['items'][$itemIndex]['product_id'])) {
+            $items[] = [
+                'product_id' => $data['items'][$itemIndex]['product_id'],
+                'quantity' => $data['items'][$itemIndex]['quantity'] ?? 0
+            ];
+            $itemIndex++;
+        }
+
+        if (empty($items)) {
+            return new JsonResponse(['error' => 'No items in order'], 400);
+        }
+
+        $entityManager->beginTransaction(); // Start transaction
+
+        // Create order
+        $order = new Order();
+        $order->setOrderNumber('ORD-' . date('Ymd') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT));
+        $order->setCustomer($customer);
+        $order->setCreatedAt(new \DateTimeImmutable());
+      
+        $order->setStatus(Order::STATUS_PENDING);
+        $order->setDeliveryType($data['delivery_type'] ?? Order::DELIVERY_PICKUP);
+        $order->setPaymentMethod($data['payment_method'] ?? Order::PAYMENT_CASH);
+        $order->setIsPaid(false);
+        $order->setIsUrgent($data['is_urgent'] ? true : false);
+
+        // --- Address combination ---
+        if ($order->getDeliveryType() === Order::DELIVERY_DELIVERY) {
+            $recipient = $data['recipient_name'] ?? '';
+            $street = $data['street_address'] ?? '';
+            $city = $data['city'] ?? '';
+            $postal = $data['postal_code'] ?? '';
+
+            // Basic validation
+            if (empty($recipient) || empty($street) || empty($city) || empty($postal)) {
+                return new JsonResponse(['error' => 'All delivery address fields are required'], 400);
+            }
+
+            $addressParts = array_filter([$recipient, $street, $city, $postal]);
+            $deliveryAddress = implode(', ', $addressParts);
+            $order->setDeliveryAddress($deliveryAddress);
+            $order->setDeliveryFee((float)($data['delivery_fee'] ?? 100));
+        } else {
+            $order->setDeliveryFee(0);
+        }
+
+        $totalAmount = 0;
+
+        // Add items to order and deduct stock
+        foreach ($items as $item) {
+            $productId = (int)$item['product_id'];
+            $quantity = (int)$item['quantity'];
+            
+            $product = $productRepository->find($productId);
+            if (!$product) {
+                return new JsonResponse([
+                    'error' => 'Product ID ' . $productId . ' not found'
+                ], 404);
+            }
+
+            // Validate stock
+            if (!$product->getStock() || $product->getStock()->getQuantity() < $quantity) {
+                return new JsonResponse([
+                    'error' => $product->getName() . ' has insufficient stock'
+                ], 400);
+            }
+
+            // Create order item
+            // Create order item
+                $orderItem = new OrderItem();
+                $orderItem->setProduct($product);
+                $orderItem->setQuantity($quantity);
+                $orderItem->setUnitPrice($product->getPrice());
+                $orderItem->setTotalPrice($product->getPrice() * $quantity);
+
+            $order->addOrderItem($orderItem);
+            $totalAmount += $orderItem->getTotalPrice();
+
+            // --- Deduct stock ---
+            $stock = $product->getStock();
+            $stock->subtractQuantity($quantity);
+            $entityManager->persist($stock);
+        }
+
+        // Set total
+       $order->setTotalAmount($totalAmount);
+
+        // Persist order
+        $entityManager->persist($order);
+        $entityManager->flush();  // flush order and stock updates
+        $entityManager->commit(); // commit transaction
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'Order created successfully',
+            'orderId' => $order->getId(),
+            'redirectUrl' => $this->generateUrl('admin_order_manage', ['id' => $order->getId()])
+        ]);
+
+    } catch (\Exception $e) {
+        if ($entityManager->getConnection()->isTransactionActive()) {
+            $entityManager->rollback();
+        }
+        return new JsonResponse([
+            'error' => 'Error creating order: ' . $e->getMessage()
+        ], 500);
+    }
+}
     #[Route('/{id}/manage', name: 'admin_order_manage', methods: ['GET', 'POST'])]
     public function manage(
         Order $order, 
@@ -448,4 +570,15 @@ class AdminOrderController extends AbstractController
             'completedOrders' => $completedOrders,
         ]);
     }
+
+    #[Route('/{id}', name: 'admin_order_show', methods: ['GET'])]
+    public function show(Order $order): Response
+    {
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+        return $this->render('admin/order/show.html.twig', [
+            'order' => $order,
+        ]);
+    }
+
 }

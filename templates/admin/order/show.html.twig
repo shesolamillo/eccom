@@ -1,0 +1,225 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}View Order - Admin{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('admin_orders') }}">Orders</a></li>
+<li class="breadcrumb-item active">Order #{{ order.orderNumber }}</li>
+{% endblock %}
+
+{% block page_title %}Order #{{ order.orderNumber }}{% endblock %}
+{% block page_description %}Customer: {{ order.customer.firstName }} {{ order.customer.lastName }}{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <!-- Order Items (Shopping Cart View) -->
+    <div class="col-lg-8">
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0"><i class="bi bi-cart-check me-2"></i>Order Items</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Product</th>
+                                <th class="text-center">Price</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if order.orderItems|length > 0 %}
+                                {% for item in order.orderItems %}
+                                    <tr>
+                                        <td class="py-3">
+                                            <div class="d-flex align-items-center">
+                                                {% if item.product.photoUrl %}
+                                                    <img src="{{ item.product.photoUrl }}" 
+                                                         alt="{{ item.product.name }}"
+                                                         class="rounded me-3"
+                                                         style="width: 60px; height: 60px; object-fit: cover;">
+                                                {% else %}
+                                                    <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
+                                                         style="width: 60px; height: 60px;">
+                                                        <i class="bi bi-image"></i>
+                                                    </div>
+                                                {% endif %}
+                                                <div>
+                                                    <h6 class="mb-1">{{ item.product.name }}</h6>
+                                                    <small class="text-muted">SKU: {{ item.product.sku }}</small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-center py-3">
+                                            <strong>₱{{ item.unitPrice|number_format(2) }}</strong>
+                                        </td>
+                                        <td class="text-center py-3">
+                                            <span class="badge bg-light text-dark">{{ item.quantity }}</span>
+                                        </td>
+                                        <td class="text-end py-3">
+                                            <strong>₱{{ item.total|number_format(2) }}</strong>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            {% else %}
+                                <tr>
+                                    <td colspan="4" class="text-center py-4 text-muted">
+                                        No items in order
+                                    </td>
+                                </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Information -->
+        <div class="card admin-chart mt-3">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Customer Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Customer Details</h6>
+                        <p class="mb-1"><strong>Name:</strong> {{ order.customer.firstName }} {{ order.customer.lastName }}</p>
+                        <p class="mb-0"><strong>Email:</strong> {{ order.customer.email }}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Delivery Information</h6>
+                        <p class="mb-1"><strong>Type:</strong> <span class="badge bg-info">{{ order.deliveryType|capitalize }}</span></p>
+                        {% if order.deliveryAddress %}
+                            <p class="mb-0"><strong>Address:</strong> {{ order.deliveryAddress }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Order Summary -->
+    <div class="col-lg-4">
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Order Summary</h5>
+            </div>
+            <div class="card-body">
+                <!-- Order Status -->
+                <div class="mb-3 pb-3 border-bottom">
+                    <label class="form-label"><strong>Status</strong></label>
+                    <div>
+                        <span class="badge">
+                            {% if order.status == 'pending' %}
+                                <span class="badge bg-warning">{{ order.status|capitalize }}</span>
+                            {% elseif order.status == 'accepted' %}
+                                <span class="badge bg-info">{{ order.status|capitalize }}</span>
+                            {% elseif order.status == 'processing' %}
+                                <span class="badge bg-primary">{{ order.status|capitalize }}</span>
+                            {% elseif order.status == 'completed' %}
+                                <span class="badge bg-success">{{ order.status|capitalize }}</span>
+                            {% else %}
+                                <span class="badge bg-danger">{{ order.status|capitalize }}</span>
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Pricing Details -->
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Subtotal</span>
+                        <span><strong>₱{{ order.total|number_format(2) }}</strong></span>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Delivery Fee</span>
+                        <span><strong>₱{{ order.deliveryFee|number_format(2) }}</strong></span>
+                    </div>
+                </div>
+
+                <div class="mb-3 pb-3 border-bottom">
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted">Discount</span>
+                        <span class="text-success"><strong>₱0.00</strong></span>
+                    </div>
+                </div>
+
+                <!-- Total -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between">
+                        <span class="h5 mb-0">Total Amount</span>
+                        <span class="h5 mb-0 text-primary"><strong>₱{{ (order.total + order.deliveryFee)|number_format(2) }}</strong></span>
+                    </div>
+                </div>
+
+                <!-- Payment Status -->
+                <div class="mb-3 pb-3 border-bottom">
+                    <p class="mb-1"><strong>Payment Method:</strong></p>
+                    <p class="text-muted mb-0">{{ order.paymentMethod|capitalize }}</p>
+                    <div class="mt-2">
+                        {% if order.isPaid %}
+                            <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i>Paid</span>
+                        {% else %}
+                            <span class="badge bg-danger"><i class="bi bi-x-circle me-1"></i>Unpaid</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Order Date -->
+                <div class="mb-3">
+                    <small class="text-muted">
+                        <strong>Created:</strong> {{ order.createdAt|date('M d, Y H:i') }}<br>
+                        {% if order.updatedAt %}
+                            <strong>Updated:</strong> {{ order.updatedAt|date('M d, Y H:i') }}
+                        {% endif %}
+                    </small>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="d-grid gap-2">
+                    <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#updateStatusModal">
+                        <i class="bi bi-pencil me-2"></i>Update Status
+                    </button>
+                    <a href="{{ path('admin_orders') }}" class="btn btn-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-2"></i>Back to Orders
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Update Status Modal -->
+<div class="modal fade" id="updateStatusModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Update Order Status</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ path('admin_order_update_status', {'id': order.id}) }}" method="POST">
+                <div class="modal-body">
+                    <label class="form-label"><strong>New Status</strong></label>
+                    <select name="status" class="form-select" required>
+                        <option value="">Select new status</option>
+                        <option value="pending">Pending</option>
+                        <option value="accepted">Accepted</option>
+                        <option value="processing">Processing</option>
+                        <option value="completed">Completed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="submit" class="btn btn-primary">Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
