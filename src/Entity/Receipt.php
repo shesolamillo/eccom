@@ -5,6 +5,29 @@ namespace App\Entity;
 use App\Repository\ReceiptRepository;
 use Doctrine\ORM\Mapping as ORM;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+
+use Symfony\Component\Serializer\Attribute\Groups;
+
+#[ApiResource(
+    operations: [
+        new Get(
+            normalizationContext: ['groups' => ['receipt:read']]
+        ),
+        new GetCollection(
+            normalizationContext: ['groups' => ['receipt:read']]
+        ),
+        new Post(),
+        new Put(),
+        new Delete()
+    ]
+)]
+
 #[ORM\Entity(repositoryClass: ReceiptRepository::class)]
 #[ORM\HasLifecycleCallbacks]
 class Receipt

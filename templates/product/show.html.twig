@@ -11,7 +11,7 @@
             <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
                     <div class="product-image-main text-center mb-3">
-                        {% if product.image %}
+                        {% if product.photo %}
                             <img src="{{ asset('uploads/products/' ~ product.image) }}" 
                                  alt="{{ product.name }}" class="img-fluid rounded" style="max-height: 400px;">
                         {% else %}
@@ -22,7 +22,7 @@
                         {% endif %}
                     </div>
                     
-                    {% if product.image %}
+                    {% if product.photo %}
                     <div class="product-thumbnails d-flex justify-content-center gap-2">
                         <div class="thumbnail active border rounded p-2" style="width: 80px; height: 80px;">
                             <img src="{{ asset('uploads/products/' ~ product.image) }}" 
@@ -88,14 +88,24 @@
             </div>
             
             <div class="d-grid gap-2">
-                {% if is_granted('ROLE_USER') and product.isAvailable %}
+                {% if is_granted('ROLE_USER') and product.isAvailable and product.stock and product.stock.quantity > 0 %}
+                    {% set productImage = product.photo ? asset('uploads/products/' ~ product.photo) : '' %}
+                    <button type="button" 
+                            class="btn btn-success btn-lg"
+                            data-add-to-cart="{{ product.id }}"
+                            data-product-name="{{ product.name }}"
+                            data-product-price="{{ product.price }}"
+                            data-product-image="{{ productImage }}"
+                            data-stock="{{ product.stock.quantity }}">
+                        <i class="bi bi-bag-check me-2"></i>Add to Cart
+                    </button>
                     <a href="{{ path('app_user_order_create') }}?product={{ product.id }}" 
                        class="btn btn-primary btn-lg">
-                        <i class="bi bi-cart-plus me-2"></i>Order Now
+                        <i class="bi bi-rocket-takeoff me-2"></i>Buy Now
                     </a>
                 {% elseif not is_granted('ROLE_USER') %}
                     <a href="{{ path('app_login') }}" class="btn btn-primary btn-lg">
-                        <i class="bi bi-box-arrow-in-right me-2"></i>Login to Order
+                        <i class="bi bi-box-arrow-in-right me-2"></i>Login to Shop
                     </a>
                 {% else %}
                     <button class="btn btn-secondary btn-lg" disabled>
@@ -145,4 +155,16 @@
     </div>
     {% endif %}
 </div>
+
+<!-- Quick Cart Preview -->
+<div style="position: fixed; top: 20px; right: 20px; z-index: 1040;">
+    {% include 'components/quick-cart-preview.html.twig' %}
+</div>
+
+<!-- Add to Cart Modal -->
+{% include 'components/add-to-cart-modal.html.twig' %}
+
+<!-- Cart Animations Script -->
+<script src="{{ asset('js/cart-animations.js') }}"></script>
+
 {% endblock %}

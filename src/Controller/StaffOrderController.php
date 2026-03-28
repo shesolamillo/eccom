@@ -6,8 +6,10 @@ use App\Entity\Order;
 use App\Entity\OrderItem;
 use App\Entity\Product;
 use App\Entity\User;
+use App\Entity\ClothesCategory;
 use App\Repository\OrderRepository;
 use App\Repository\ProductRepository;
+use App\Repository\UserRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -91,89 +93,159 @@ class StaffOrderController extends AbstractController
     }
 
     #[Route('/new', name: 'staff_order_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
-    {
-        $order = new Order();
-        
-        // Create form inline
-        $form = $this->createFormBuilder($order)
-            ->add('customer', EntityType::class, [
-                'label' => 'Customer *',
-                'class' => User::class,
-                'choice_label' => function(User $user) {
-                    return $user->getFullName() . ' (' . $user->getEmail() . ')';
-                },
-                'placeholder' => 'Select a customer',
-                'attr' => ['class' => 'form-select'],
-                'required' => true,
-            ])
-            ->add('deliveryType', ChoiceType::class, [
-                'label' => 'Delivery Type *',
-                'choices' => [
-                    'Pickup' => Order::DELIVERY_PICKUP,
-                    'Delivery' => Order::DELIVERY_DELIVERY,
-                ],
-                'attr' => ['class' => 'form-select'],
-                'required' => true,
-            ])
-            ->add('paymentMethod', ChoiceType::class, [
-                'label' => 'Payment Method *',
-                'choices' => [
-                    'Cash' => Order::PAYMENT_CASH,
-                    'Online' => Order::PAYMENT_ONLINE,
-                ],
-                'attr' => ['class' => 'form-select'],
-                'required' => true,
-            ])
-            ->add('isUrgent', CheckboxType::class, [
-                'label' => 'Urgent Order',
-                'required' => false,
-                'attr' => ['class' => 'form-check-input'],
-                'label_attr' => ['class' => 'form-check-label'],
-            ])
-            ->add('deliveryAddress', TextareaType::class, [
-                'label' => 'Delivery Address',
-                'required' => false,
-                'attr' => ['class' => 'form-control', 'rows' => 3],
-            ])
-            ->add('deliveryFee', MoneyType::class, [
-                'label' => 'Delivery Fee (₱)',
-                'required' => false,
-                'currency' => 'PHP',
-                'attr' => ['class' => 'form-control'],
-                'html5' => true,
-            ])
-            ->add('notes', TextareaType::class, [
-                'label' => 'Order Notes',
-                'required' => false,
-                'attr' => ['class' => 'form-control', 'rows' => 3, 'placeholder' => 'Special instructions or notes...'],
-            ])
-            ->add('save', SubmitType::class, [
-                'label' => 'Continue to Add Products',
-                'attr' => ['class' => 'btn btn-primary'],
-            ])
-            ->getForm();
-        
-        $form->handleRequest($request);
-        
-        if ($form->isSubmitted() && $form->isValid()) {
-            // Generate order number
-            if (!$order->getOrderNumber()) {
-                $order->generateOrderNumber();
-            }
-            
-            $entityManager->persist($order);
-            $entityManager->flush();
-            
-            $this->addFlash('success', 'Order created successfully! Now add products.');
-            
-            return $this->redirectToRoute('staff_order_manage', ['id' => $order->getId()]);
+    public function new(
+        Request $request, 
+        EntityManagerInterface $entityManager,
+        UserRepository $userRepository,
+        ProductRepository $productRepository
+    ): Response {
+        // Check if user has staff access
+        $this->denyAccessUnlessGranted('ROLE_STAFF');
+
+        // Handle POST request (cart-based order creation)
+        if ($request->isMethod('POST') && !str_starts_with($request->headers->get('content-type', ''), 'multipart/form-data')) {
+            return $this->handleCartOrderCreation($request, $entityManager, $userRepository, $productRepository);
         }
-        
-        return $this->render('order/staff/new.html.twig', [
-            'form' => $form->createView(),
+
+        // GET request - display form
+        $customers = $userRepository->findBy(['isActive' => true], ['firstName' => 'ASC']);
+        $products = $productRepository->findBy(['isAvailable' => true], ['name' => 'ASC']);
+        $categories = $entityManager->getRepository(ClothesCategory::class)->findAll();
+
+        return $this->render('staff/order/new.html.twig', [
+            'customers' => $customers,
+            'products' => $products,
+            'categories' => $categories,
         ]);
     }
+
+    /**
+     * Handle cart-based order creation from AJAX
+     */
+    private function handleCartOrderCreation(
+    Request $request,
+    EntityManagerInterface $entityManager,
+    UserRepository $userRepository,
+    ProductRepository $productRepository
+): Response {
+    try {
+        $data = $request->request->all();
+
+        // --- CSRF validation ---
+        $submittedToken = $data['_csrf_token'] ?? '';
+        if (!$this->isCsrfTokenValid('order_create', $submittedToken)) {
+            return new JsonResponse(['error' => 'Invalid CSRF token'], 403);
+        }
+
+        // Validate required fields
+        if (empty($data['customer_id'])) {
+            return new JsonResponse(['error' => 'Customer required'], 400);
+        }
+
+        // Get customer
+        $customer = $userRepository->find($data['customer_id']);
+        if (!$customer) {
+            return new JsonResponse(['error' => 'Customer not found'], 404);
+        }
+
+        // Validate items
+        $items = $data['items'] ?? [];
+        if (empty($items)) {
+            return new JsonResponse(['error' => 'No items in order'], 400);
+        }
+
+        $entityManager->beginTransaction(); // Start transaction
+
+        // Create order
+        $order = new Order();
+        $order->setOrderNumber('ORD-' . date('Ymd') . '-' . str_pad(mt_rand(1, 9999), 4, '0', STR_PAD_LEFT));
+        $order->setCustomer($customer);
+        $order->setCreatedAt(new \DateTimeImmutable());
+        $order->setCreatedBy($this->getUser());
+        $order->setStatus(Order::STATUS_PENDING);
+        $order->setDeliveryType($data['delivery_type'] ?? Order::DELIVERY_PICKUP);
+        $order->setPaymentMethod($data['payment_method'] ?? Order::PAYMENT_CASH);
+        $order->setIsPaid(false);
+        $order->setIsUrgent($data['is_urgent'] ? true : false);
+
+        // --- Address combination ---
+        if ($order->getDeliveryType() === Order::DELIVERY_DELIVERY) {
+            $recipient = $data['recipient_name'] ?? '';
+            $street = $data['street_address'] ?? '';
+            $city = $data['city'] ?? '';
+            $postal = $data['postal_code'] ?? '';
+
+            // Basic validation
+            if (empty($recipient) || empty($street) || empty($city) || empty($postal)) {
+                return new JsonResponse(['error' => 'All delivery address fields are required'], 400);
+            }
+
+            $addressParts = array_filter([$recipient, $street, $city, $postal]);
+            $deliveryAddress = implode(', ', $addressParts);
+            $order->setDeliveryAddress($deliveryAddress);
+            $order->setDeliveryFee((float)($data['delivery_fee'] ?? 100));
+        } else {
+            $order->setDeliveryFee(0);
+        }
+
+        $totalAmount = 0;
+
+        // Add items to order and deduct stock
+        foreach ($items as $item) {
+            $product = $productRepository->find($item['product_id']);
+            if (!$product) {
+                continue;
+            }
+
+            $quantity = (int)$item['quantity'];
+
+            // Validate stock
+            if (!$product->getStock() || $product->getStock()->getQuantity() < $quantity) {
+                return new JsonResponse([
+                    'error' => $product->getName() . ' has insufficient stock'
+                ], 400);
+            }
+
+            // Create order item
+            $orderItem = new OrderItem();
+            $orderItem->setProduct($product);
+            $orderItem->setQuantity($quantity);
+            $orderItem->setUnitPrice($product->getPrice());
+            $orderItem->setTotal($product->getPrice() * $quantity);
+
+            $order->addOrderItem($orderItem);
+            $totalAmount += $orderItem->getTotal();
+
+            // --- Deduct stock ---
+            $stock = $product->getStock();
+            $stock->subtractQuantity($quantity);
+            $entityManager->persist($stock);
+        }
+
+        // Set total
+        $order->setTotal($totalAmount);
+
+        // Persist order
+        $entityManager->persist($order);
+        $entityManager->flush();  // flush order and stock updates
+        $entityManager->commit(); // commit transaction
+
+        return new JsonResponse([
+            'success' => true,
+            'message' => 'Order created successfully',
+            'orderId' => $order->getId(),
+            'redirectUrl' => $this->generateUrl('admin_order_manage', ['id' => $order->getId()])
+        ]);
+
+    } catch (\Exception $e) {
+        if ($entityManager->getConnection()->isTransactionActive()) {
+            $entityManager->rollback();
+        }
+        return new JsonResponse([
+            'error' => 'Error creating order: ' . $e->getMessage()
+        ], 500);
+    }
+}
 
     #[Route('/{id}', name: 'staff_order_manage', methods: ['GET', 'POST'])]
     public function manage(Order $order, Request $request, EntityManagerInterface $entityManager): Response

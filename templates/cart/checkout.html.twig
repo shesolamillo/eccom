@@ -1,0 +1,341 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Checkout - SMSol Studio{% endblock %}
+
+{% block content %}
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/cartcheckout.css') }}">
+{% endblock %}
+
+
+<div class="checkout-wrapper">
+    {% if items is empty %}
+        <div class="container">
+            <div class="alert alert-info text-center py-5">
+                <i class="bi bi-bag-x display-3 d-block mb-3"></i>
+                <h4>Your cart is empty</h4>
+                <p class="mb-0"><a href="{{ path('app_products') }}" class="btn btn-primary mt-3">Continue Shopping</a></p>
+            </div>
+        </div>
+    {% else %}
+        <div class="container">
+            <!-- Progress Steps -->
+            <div class="checkout-steps">
+                <div class="step-item completed" id="step1Item">
+                    <div class="step-circle completed">
+                        <span class="step-number">1</span>
+                        <i class="bi bi-check step-check"></i>
+                    </div>
+                    <div class="step-label">Cart</div>
+                </div>
+                <div class="step-connector completed" id="connector1"></div>
+
+                <div class="step-item active" id="step2Item">
+                    <div class="step-circle active">
+                        <span class="step-number">2</span>
+                        <i class="bi bi-check step-check"></i>
+                    </div>
+                    <div class="step-label">Shipping</div>
+                </div>
+                <div class="step-connector" id="connector2"></div>
+
+                <div class="step-item" id="step3Item">
+                    <div class="step-circle">
+                        <span class="step-number">3</span>
+                        <i class="bi bi-check step-check"></i>
+                    </div>
+                    <div class="step-label">Payment</div>
+                </div>
+                <div class="step-connector" id="connector3"></div>
+
+                <div class="step-item" id="step4Item">
+                    <div class="step-circle">
+                        <span class="step-number">4</span>
+                        <i class="bi bi-check step-check"></i>
+                    </div>
+                    <div class="step-label">Confirm</div>
+                </div>
+            </div>
+
+            <!-- Checkout Content -->
+            <div class="checkout-content">
+                <!-- Main Content -->
+                <div class="checkout-main">
+                    <!-- Step 1: Shopping Cart -->
+                    <div class="checkout-step" id="stepCart">
+                        <h2 class="step-title"><i class="bi bi-bag-check me-2"></i>Shopping Cart</h2>
+                        <div class="cart-summary">
+                            {% for item in items %}
+                                <div class="cart-item-mini">
+                                    <div>
+                                        <strong>{{ item.product.name }}</strong><br>
+                                        <small class="text-muted">Qty: {{ item.quantity }}</small>
+                                    </div>
+                                    <div class="text-end">
+                                        <strong>₱{{ item.subtotal|number_format(2) }}</strong>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                        <button class="btn btn-primary" onclick="goToStep(2)" style="width: 100%; margin-top: 20px;">
+                            Continue to Shipping <i class="bi bi-arrow-right ms-2"></i>
+                        </button>
+                    </div>
+
+                    <!-- Step 2: Shipping -->
+                    <div class="checkout-step active" id="stepShipping">
+                        <h2 class="step-title"><i class="bi bi-truck me-2"></i>Shipping Information</h2>
+                        
+                        <div class="form-group">
+                            <label>Delivery Type</label>
+                            <div class="radio-group">
+                                <div class="radio-option">
+                                    <input type="radio" id="deliveryPickup" name="deliveryType" value="pickup" checked onchange="updateSummary()">
+                                    <label for="deliveryPickup">Pickup (Free)</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="deliveryDelivery" name="deliveryType" value="delivery" onchange="updateSummary()">
+                                    <label for="deliveryDelivery">Delivery (₱{{ shipping|number_format(2) }})</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-group" id="addressSection" style="display: none;">
+                            <label for="deliveryAddress">Delivery Address</label>
+                            <textarea id="deliveryAddress" name="deliveryAddress" rows="4" placeholder="Enter your delivery address"></textarea>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 30px;">
+                            <button class="btn btn-secondary" onclick="goToStep(1)">← Back to Cart</button>
+                            <button class="btn btn-primary" onclick="goToStep(3)">Continue to Payment →</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Payment -->
+                    <div class="checkout-step" id="stepPayment">
+                        <h2 class="step-title"><i class="bi bi-credit-card me-2"></i>Payment Method</h2>
+                        
+                        <div class="form-group">
+                            <label>Select Payment Method</label>
+                            <div class="radio-group" style="flex-direction: column;">
+                                <div class="radio-option">
+                                    <input type="radio" id="paymentCash" name="paymentMethod" value="cash" checked onchange="updateSummary()">
+                                    <label for="paymentCash">Cash on Delivery</label>
+                                </div>
+                                <div class="radio-option">
+                                    <input type="radio" id="paymentOnline" name="paymentMethod" value="online" onchange="updateSummary()">
+                                    <label for="paymentOnline">Online Payment (GCash, Card, etc.)</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style="display: flex; gap: 10px; margin-top: 30px;">
+                            <button class="btn btn-secondary" onclick="goToStep(2)">← Back to Shipping</button>
+                            <button class="btn btn-primary" onclick="goToStep(4)">Continue to Confirm →</button>
+                        </div>
+                    </div>
+
+                    <!-- Step 4: Confirm -->
+                    <div class="checkout-step" id="stepConfirm">
+                        <h2 class="step-title"><i class="bi bi-clipboard-check me-2"></i>Confirm Order</h2>
+                        
+                        <div class="form-group">
+                            <label style="display: flex; align-items: center; margin: 0 0 15px 0; cursor: pointer;">
+                                <input type="checkbox" id="termsCheckbox" style="width: 18px; height: 18px; margin-right: 10px;">
+                                <span>I agree to the terms and conditions</span>
+                            </label>
+                        </div>
+
+                        <div style="margin-top: 30px; display: flex; gap: 10px;">
+                            <button class="btn btn-secondary" onclick="goToStep(3)">← Back to Payment</button>
+                            <button class="btn btn-primary" id="placeOrderBtn" onclick="placeOrder()" disabled>
+                                <i class="bi bi-check-circle me-2"></i>Place Order
+                            </button>
+                        </div>
+
+                        <script>
+                            document.getElementById('termsCheckbox').addEventListener('change', function() {
+                                document.getElementById('placeOrderBtn').disabled = !this.checked;
+                            });
+                        </script>
+                    </div>
+
+                    <!-- Success Message -->
+                    <div class="checkout-step" id="stepSuccess">
+                        <div class="success-message">
+                            <div class="success-icon">
+                                <i class="bi bi-check-circle"></i>
+                            </div>
+                            <h2 class="success-title">Order Placed Successfully!</h2>
+                            <p class="success-text">
+                                Your order has been placed and is being processed.<br>
+                                Please wait for confirmation from our staff.
+                            </p>
+                            <div style="background: #f0f0f0; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+                                <p style="margin: 0; color: #666;"><strong>Order Number:</strong> <span id="orderNumber"></span></p>
+                                <p style="margin: 10px 0 0 0; color: #666;"><strong>Status:</strong> Processing</p>
+                            </div>
+                            <a href="{{ path('app_products') }}" class="btn btn-primary">Continue Shopping</a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sidebar - Order Summary -->
+                <div class="checkout-sidebar">
+                    <h4 style="margin: 0 0 20px 0; font-weight: 700;">Order Summary</h4>
+                    
+                    <div class="cart-summary">
+                        {% for item in items %}
+                            <div class="cart-item-mini">
+                                <div>{{ item.product.name }} x{{ item.quantity }}</div>
+                                <div>₱{{ item.subtotal|number_format(2) }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+
+                    <div class="price-summary">
+                        <div class="summary-row">
+                            <span>Subtotal</span>
+                            <span id="summarySubtotal">₱{{ subtotal|number_format(2) }}</span>
+                        </div>
+                        <div class="summary-row">
+                            <span>Shipping</span>
+                            <span id="summaryShipping">Free</span>
+                        </div>
+                        <div class="summary-row total">
+                            <span>Total</span>
+                            <span id="summaryTotal">₱{{ total|number_format(2) }}</span>
+                        </div>
+                    </div>
+
+                    <div style="text-align: center; color: #999; font-size: 0.85rem;">
+                        <i class="bi bi-shield-check me-1"></i> Safe Payments
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- Form for Order Submission -->
+<form id="checkoutForm" action="{{ path('cart_checkout') }}" method="POST" style="display: none;">
+    <input type="hidden" name="delivery_type" id="deliveryTypeInput" value="pickup">
+    <input type="hidden" name="delivery_address" id="deliveryAddressInput" value="">
+    <input type="hidden" name="payment_method" id="paymentMethodInput" value="cash">
+    <input type="hidden" name="terms_accepted" id="termsAcceptedInput" value="0">
+</form>
+
+<script>
+    let currentStep = 2; // Start at shipping (step 2)
+    const subtotalValue = {{ subtotal|raw }};
+    const shippingValue = {{ shipping|raw }};
+
+    function goToStep(step) {
+        // Hide all steps
+        document.querySelectorAll('.checkout-step').forEach(el => el.classList.remove('active'));
+        
+        // Update progress indicators
+        for (let i = 1; i <= 4; i++) {
+            const item = document.getElementById(`stepItem`);
+            const circle = document.getElementById(`step${i}Item`);
+            const connector = document.getElementById(`connector${i-1}`);
+
+            circle.classList.remove('active', 'completed');
+
+            if (i < step) {
+                circle.classList.add('completed');
+                if (connector) connector.classList.add('completed');
+                if (connector) connector.classList.add('active');
+            } else if (i === step) {
+                circle.classList.add('active');
+            }
+        }
+
+        // Show active step content
+        if (step === 1) {
+            document.getElementById('stepCart').classList.add('active');
+        } else if (step === 2) {
+            document.getElementById('stepShipping').classList.add('active');
+        } else if (step === 3) {
+            document.getElementById('stepPayment').classList.add('active');
+        } else if (step === 4) {
+            document.getElementById('stepConfirm').classList.add('active');
+        }
+
+        currentStep = step;
+        updateSummary();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function updateSummary() {
+        const deliveryType = document.querySelector('input[name="deliveryType"]:checked')?.value || 'pickup';
+        const shipping = deliveryType === 'delivery' ? shippingValue : 0;
+        const total = subtotalValue + shipping;
+
+        document.getElementById('summaryShipping').textContent = shipping === 0 ? 'Free' : `₱${shipping.toFixed(2)}`;
+        document.getElementById('summaryTotal').textContent = `₱${total.toFixed(2)}`;
+
+        // Show/hide address field
+        const addressSection = document.getElementById('addressSection');
+        if (deliveryType === 'delivery') {
+            addressSection.style.display = 'block';
+        } else {
+            addressSection.style.display = 'none';
+        }
+    }
+
+    function placeOrder() {
+        const deliveryType = document.querySelector('input[name="deliveryType"]:checked')?.value || 'pickup';
+        const deliveryAddress = document.getElementById('deliveryAddress')?.value || '';
+        const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked')?.value || 'cash';
+
+        // Validate
+        if (deliveryType === 'delivery' && !deliveryAddress.trim()) {
+            alert('Please enter delivery address');
+            goToStep(2);
+            return;
+        }
+
+        // Set form values
+        document.getElementById('deliveryTypeInput').value = deliveryType;
+        document.getElementById('deliveryAddressInput').value = deliveryAddress;
+        document.getElementById('paymentMethodInput').value = paymentMethod;
+        document.getElementById('termsAcceptedInput').value = 1;
+
+        // Show success screen
+        document.querySelectorAll('.checkout-step').forEach(el => el.classList.remove('active'));
+        document.getElementById('stepSuccess').classList.add('active');
+
+        // Update progress to all completed
+        for (let i = 1; i <= 4; i++) {
+            const circle = document.getElementById(`step${i}Item`);
+            circle.classList.remove('active');
+            circle.classList.add('completed');
+            const connector = document.getElementById(`connector${i}`);
+            if (connector) {
+                connector.classList.add('completed', 'active');
+            }
+        }
+
+        // Generate order number
+        const orderNum = 'ORD-' + Date.now();
+        document.getElementById('orderNumber').textContent = orderNum;
+
+        // Submit after 2 seconds
+        setTimeout(() => {
+            document.getElementById('checkoutForm').submit();
+        }, 2000);
+    }
+
+    // Handle delivery address toggle
+    document.querySelectorAll('input[name="deliveryType"]').forEach(radio => {
+        radio.addEventListener('change', updateSummary);
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        updateSummary();
+    });
+</script>
+
+{% endblock %}

@@ -5,6 +5,8 @@ namespace App\Controller;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Request;
+
 
 
 class MainController extends AbstractController
@@ -38,4 +40,21 @@ class MainController extends AbstractController
     {
         return new Response('OK', 200);
     }
+
+    #[Route('/contact/submit', name: 'app_contact_submit', methods: ['POST'])]
+    public function submitContact(Request $request): Response
+    {
+        // Handle form submission here
+        $firstName = $request->request->get('firstName');
+        $email = $request->request->get('email');
+        $message = $request->request->get('message');
+
+        // You can add validation, send email, or save to database here
+
+        $this->addFlash('success', 'Thank you for contacting us!');
+        return $this->redirectToRoute('app_contact');
+    }
+
+
+    
 }

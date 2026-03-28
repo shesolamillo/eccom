@@ -17,6 +17,74 @@
 {% endblock %}
 
 {% block admin_content %}
+
+<!-- User Stats -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card stats-card border-left-primary h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Total Users</h6>
+                        <h3 class="fw-bold">{{ users|length }}</h3>
+                    </div>
+                    <div class="stats-icon bg-primary">
+                        <i class="bi bi-people text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-danger h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Admins</h6>
+                        <h3 class="fw-bold">{{ users|filter(u => 'ROLE_ADMIN' in u.roles)|length }}</h3>
+                    </div>
+                    <div class="stats-icon bg-danger">
+                        <i class="bi bi-shield-check text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-warning h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Staff</div>
+                        <h3 class="fw-bold">{{ users|filter(u => 'ROLE_STAFF' in u.roles)|length }}</h3>
+                    </div>
+                    <div class="stats-icon bg-warning">
+                        <i class="bi bi-person-badge text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card stats-card border-left-success h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between">
+                    <div>
+                        <h6 class="text-uppercase text-muted mb-1">Active</div>
+                        <h3 class="fw-bold">{{ users|filter(u => u.isActive)|length }}</h3>
+                    </div>
+                    <div class="stats-icon bg-success">
+                        <i class="bi bi-check-circle text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <!-- Users Table -->
 <div class="card admin-chart">
     <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
@@ -137,72 +205,7 @@
     </div>
 </div>
 
-<!-- User Stats -->
-<div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card stats-card border-left-primary h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Total Users</h6>
-                        <h3 class="fw-bold">{{ users|length }}</h3>
-                    </div>
-                    <div class="stats-icon bg-primary">
-                        <i class="bi bi-people text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-danger h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Admins</h6>
-                        <h3 class="fw-bold">{{ users|filter(u => 'ROLE_ADMIN' in u.roles)|length }}</h3>
-                    </div>
-                    <div class="stats-icon bg-danger">
-                        <i class="bi bi-shield-check text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-warning h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Staff</div>
-                        <h3 class="fw-bold">{{ users|filter(u => 'ROLE_STAFF' in u.roles)|length }}</h3>
-                    </div>
-                    <div class="stats-icon bg-warning">
-                        <i class="bi bi-person-badge text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-success h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Active</div>
-                        <h3 class="fw-bold">{{ users|filter(u => u.isActive)|length }}</h3>
-                    </div>
-                    <div class="stats-icon bg-success">
-                        <i class="bi bi-check-circle text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
+
 
 <!-- Add User Modal -->
 <div class="modal fade" id="addUserModal" tabindex="-1">

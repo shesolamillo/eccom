@@ -34,29 +34,19 @@ class StockRepository extends ServiceEntityRepository
     public function findLowStock(): array
     {
         return $this->createQueryBuilder('s')
-            ->leftJoin('s.product', 'p')
-            ->addSelect('p')
-            ->andWhere('s.isLowStock = :lowStock')
-            ->setParameter('lowStock', true)
-            ->andWhere('p.isAvailable = :available')
-            ->setParameter('available', true)
-            ->orderBy('s.quantity', 'ASC')
-            ->getQuery()
-            ->getResult();
+        ->andWhere('s.isLowStock = :low')
+        ->setParameter('low', true)
+        ->getQuery()
+        ->getResult();
+
     }
 
     public function findOutOfStock(): array
     {
-        return $this->createQueryBuilder('s')
-            ->leftJoin('s.product', 'p')
-            ->addSelect('p')
-            ->andWhere('s.quantity = :zero')
-            ->setParameter('zero', 0)
-            ->andWhere('p.isAvailable = :available')
-            ->setParameter('available', true)
-            ->orderBy('p.name', 'ASC')
-            ->getQuery()
-            ->getResult();
+       return $this->createQueryBuilder('s')
+        ->andWhere('s.quantity = 0')
+        ->getQuery()
+        ->getResult();
     }
 
     public function findStockByProduct(int $productId): ?Stock

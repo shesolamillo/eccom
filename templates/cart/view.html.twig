@@ -1,0 +1,283 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Shopping Cart - SMSol Studio{% endblock %}
+
+{% block content %}
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/cartview.css') }}">
+{% endblock %}
+
+
+<div class="cart-page">
+    {% if items is empty %}
+        <div class="container py-5">
+            <div class="alert alert-info text-center py-5">
+                <i class="bi bi-bag-x display-3 d-block mb-3"></i>
+                <h4>Your cart is empty</h4>
+                <p class="mb-0"><a href="{{ path('app_products') }}" class="btn btn-primary mt-3">Continue Shopping</a></p>
+            </div>
+        </div>
+    {% else %}
+        <div class="container">
+            <!-- Checkout Steps Progress -->
+            {% include 'components/checkout-steps.html.twig' %}
+
+            <div class="cart-container">
+                <!-- Cart Header -->
+                <div class="cart-header">
+                    <div>
+                        <h2><i class="bi bi-bag-check me-2"></i>My Cart</h2>
+                        <small>({{ items|length }} items)</small>
+                    </div>
+                    <div class="security-badge">
+                        <i class="bi bi-shield-check me-2"></i>100% Secure
+                    </div>
+                </div>
+
+                <!-- Cart Items -->
+                <div class="cart-items">
+                    {% for item in items %}
+                        <div class="cart-item">
+                            <div class="item-image">
+                                {% if item.product.photoUrl %}
+                                    <img src="{{ item.product.photoUrl }}" alt="{{ item.product.name }}">
+                                {% else %}
+                                    <div class="bg-light d-flex align-items-center justify-content-center" style="width: 80px; height: 80px; border-radius: 8px;">
+                                        <i class="bi bi-image text-muted"></i>
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="item-details">
+                                <h5>{{ item.product.name }}</h5>
+                                <p class="item-meta">
+                                    {% if item.product.productType %}
+                                        {{ item.product.productType.name }}
+                                    {% endif %}
+                                    {% if item.stock_available < 5 %}
+                                        | <span class="text-warning"><i class="bi bi-exclamation-circle"></i> Only {{ item.stock_available }} left</span>
+                                    {% endif %}
+                                </p>
+                            </div>
+                            <div class="item-price">₱{{ item.price|number_format(2) }}</div>
+                            <div class="item-qty">
+                                <div class="qty-control">
+                                    <button class="btn-qty btn-decrement" data-product-id="{{ item.id }}">−</button>
+                                    <input type="text" class="qty-input" value="{{ item.quantity }}" readonly>
+                                    <button class="btn-qty btn-increment" data-product-id="{{ item.id }}">+</button>
+                                </div>
+                            </div>
+                            <div class="item-total">₱{{ item.subtotal|number_format(2) }}</div>
+                            <button class="btn-remove" data-product-id="{{ item.id }}" title="Remove item">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    {% endfor %}
+                </div>
+
+                <!-- Continue Shopping Button -->
+                <a href="{{ path('app_products') }}" class="btn btn-outline-secondary mb-4">
+                    <i class="bi bi-chevron-left me-2"></i>Continue Shopping
+                </a>
+            </div>
+
+            <!-- Order Summary -->
+            <div class="order-summary-section">
+                <div class="order-summary sticky-top">
+                    <h5><i class="bi bi-receipt me-2"></i>Order Summary</h5>
+
+                    <!-- Apply Coupon -->
+                    <div class="coupon-section">
+                        <div class="input-group input-group-sm">
+                            <input type="text" class="form-control" placeholder="Apply Coupon" id="couponInput">
+                            <button class="btn btn-success" id="applyCouponBtn">
+                                <i class="bi bi-tag me-1"></i>Apply
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Price Breakdown -->
+                    <div class="price-details">
+                        <h6>PRICE DETAILS</h6>
+                        
+                        <div class="summary-row">
+                            <span>Total MRP</span>
+                            <span id="summaryPrice">₱{{ subtotal|number_format(2) }}</span>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Discount on MRP</span>
+                            <span style="color: #198754;">−₱0.00</span>
+                        </div>
+
+                        <div class="summary-row">
+                            <span>Coupon Discount</span>
+                            <span id="couponDiscount">Apply Coupon</span>
+                        </div>
+
+                        <div class="summary-row" style="border-bottom: 2px solid #ddd; padding-bottom: 12px;">
+                            <span>Shipping Fee</span>
+                            <span id="summaryShipping" style="color: {% if shipping == 0 %}#198754{% else %}#333{% endif %};">
+                                {% if shipping == 0 %}FREE{% else %}₱{{ shipping|number_format(2) }}{% endif %}
+                            </span>
+                        </div>
+
+                        <div class="summary-row total-row">
+                            <strong>Total Amount</strong>
+                            <strong style="color: #0077cc;">₱{{ total|number_format(2) }}</strong>
+                        </div>
+
+                        <p style="text-align: center; color: #198754; margin: 15px 0 0 0; font-size: 0.9rem;">
+                            <i class="bi bi-check-circle me-1"></i>You will save ₱0.00 on this order
+                        </p>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="btn-group-vertical" style="margin-top: 25px;">
+                        <a href="{{ path('cart_checkout_page') }}" class="btn btn-primary" style="font-size: 1rem; text-decoration: none;">
+                            <i class="bi bi-arrow-right-circle me-2"></i>Proceed to Checkout
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" id="cancelCartBtn">
+                            <i class="bi bi-trash me-2"></i>Clear Cart
+                        </button>
+                    </div>
+
+                    <!-- Security Message -->
+                    <div class="security-footer">
+                        <div style="text-align: center;">
+                            <i class="bi bi-shield-check text-success" style="font-size: 1.8rem; display: block; margin-bottom: 10px;"></i>
+                            <small><strong>Safe and Secure Payments</strong></small>
+                            <small>Easy returns. 100% Authentic products.</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Quantity increment
+    document.querySelectorAll('.btn-increment').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const input = document.querySelector(`input[data-product-id="${productId}"]`);
+            if (input) {
+                const currentValue = parseInt(input.value);
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/cart/update/${productId}`;
+                form.innerHTML = `<input type="hidden" name="quantity" value="${currentValue + 1}">`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    });
+
+    // Quantity decrement
+    document.querySelectorAll('.btn-decrement').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const input = document.querySelector(`input[data-product-id="${productId}"]`);
+            if (input) {
+                const currentValue = parseInt(input.value);
+                if (currentValue > 1) {
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/cart/update/${productId}`;
+                    form.innerHTML = `<input type="hidden" name="quantity" value="${currentValue - 1}">`;
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            }
+        });
+    });
+
+    // Remove item
+    document.querySelectorAll('.btn-remove').forEach(btn => {
+        btn.addEventListener('click', function() {
+            if (confirm('Remove this item from cart?')) {
+                const productId = this.dataset.productId;
+                const form = document.createElement('form');
+                form.method = 'POST';
+                form.action = `/cart/remove/${productId}`;
+                document.body.appendChild(form);
+                form.submit();
+            }
+        });
+    });
+
+    // Clear cart
+    document.getElementById('cancelCartBtn')?.addEventListener('click', function() {
+        if (confirm('Clear entire cart?')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/cart/clear';
+            document.body.appendChild(form);
+            form.submit();
+        }
+    });
+
+    // Proceed to checkout
+    document.getElementById('proceedToCheckout')?.addEventListener('click', function() {
+        document.getElementById('checkoutForm').submit();
+    });
+
+    // Apply coupon
+    document.getElementById('applyCouponBtn')?.addEventListener('click', function() {
+        const couponCode = document.getElementById('couponInput')?.value?.trim();
+        if (!couponCode) {
+            alert('Please enter a coupon code');
+            return;
+        }
+        alert('Coupon validation to be implemented');
+    });
+
+    // Handle checkout step progression
+    let currentCheckoutStep = 1;
+
+    function updateButtonText() {
+        const btnText = document.getElementById('checkoutBtnText');
+        const btnIcon = document.querySelector('#proceedToCheckout i');
+        
+        const steps = {
+            1: { text: 'Continue to Shipping', icon: 'bi-arrow-right-circle' },
+            2: { text: 'Continue to Payment', icon: 'bi-arrow-right-circle' },
+            3: { text: 'Continue to Confirm', icon: 'bi-arrow-right-circle' },
+            4: { text: 'Place Order', icon: 'bi-bag-check' }
+        };
+
+        if (btnText && steps[currentCheckoutStep]) {
+            btnText.textContent = steps[currentCheckoutStep].text;
+            if (btnIcon) {
+                btnIcon.className = `bi ${steps[currentCheckoutStep].icon} me-2`;
+            }
+        }
+    }
+
+    document.getElementById('proceedToCheckout')?.addEventListener('click', function() {
+        if (currentCheckoutStep === 1) {
+            // Move to Shipping step
+            currentCheckoutStep = 2;
+            updateCheckoutStep(currentCheckoutStep);
+            updateButtonText();
+        } else if (currentCheckoutStep === 2) {
+            // Move to Payment step
+            currentCheckoutStep = 3;
+            updateCheckoutStep(currentCheckoutStep);
+            updateButtonText();
+        } else if (currentCheckoutStep === 3) {
+            // Move to Confirm step
+            currentCheckoutStep = 4;
+            updateCheckoutStep(currentCheckoutStep);
+            updateButtonText();
+        } else if (currentCheckoutStep === 4) {
+            // Place order
+            document.getElementById('checkoutForm').submit();
+        }
+    });
+});
+</script>
+
+{% endblock %}

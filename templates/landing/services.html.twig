@@ -3,6 +3,10 @@
 
 {% block title %}Our Services - SMSol Studio{% endblock %}
 
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/services.css') }}">
+{% endblock %}
+
 {% block body %}
 <!-- Hero Section -->
 <section class="hero-section">
@@ -20,6 +24,7 @@
 <section class="py-5">
     <div class="container">
         <div class="row">
+            <!-- Service Card 1 -->
             <div class="col-lg-4 mb-4">
                 <div class="card service-card h-100">
                     <div class="card-body text-center p-4">
@@ -39,7 +44,7 @@
                     </div>
                 </div>
             </div>
-            
+            <!-- Service Card 2 -->
             <div class="col-lg-4 mb-4">
                 <div class="card service-card h-100">
                     <div class="card-body text-center p-4">
@@ -48,7 +53,7 @@
                         </div>
                         <h4 class="card-title">Fast Delivery</h4>
                         <p class="card-text text-muted">
-                            Quick and reliable delivery services to your doorstep. 
+                            Quick and reliable delivery services to your doorstep.
                             Same-day delivery available in select areas.
                         </p>
                         <ul class="list-unstyled text-start">
@@ -59,7 +64,7 @@
                     </div>
                 </div>
             </div>
-            
+            <!-- Service Card 3 -->
             <div class="col-lg-4 mb-4">
                 <div class="card service-card h-100">
                     <div class="card-body text-center p-4">
@@ -80,7 +85,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Additional Services -->
         <div class="row mt-4">
             <div class="col-md-6 mb-4">
@@ -107,7 +112,7 @@
                     <div class="card-body p-4">
                         <h4 class="card-title mb-3">Gift Services</h4>
                         <p class="text-muted">
-                            Perfect gift solutions for any occasion. 
+                            Perfect gift solutions for any occasion.
                             We offer gift wrapping, personalized messages, and gift cards.
                         </p>
                         <div class="d-flex align-items-center mt-3">
@@ -133,6 +138,7 @@
         </div>
         
         <div class="row">
+            <!-- Basic Plan -->
             <div class="col-md-4 mb-4">
                 <div class="card text-center h-100">
                     <div class="card-header bg-primary text-white py-3">
@@ -152,8 +158,9 @@
                 </div>
             </div>
             
+            <!-- Premium Plan -->
             <div class="col-md-4 mb-4">
-                <div class="card text-center h-100 border-primary">
+                <div class="card text-center h-100 border-primary premium-card">
                     <div class="card-header bg-primary text-white py-3">
                         <h4 class="mb-0">Premium</h4>
                         <span class="badge bg-warning">Most Popular</span>
@@ -172,8 +179,9 @@
                 </div>
             </div>
             
+                        <!-- Business Plan -->
             <div class="col-md-4 mb-4">
-                <div class="card text-center h-100">
+                <div class="card text-center h-100 business-card">
                     <div class="card-header bg-dark text-white py-3">
                         <h4 class="mb-0">Business</h4>
                     </div>
@@ -206,6 +214,50 @@
             <a href="{{ path('app_contact') }}" class="btn btn-outline-primary btn-lg px-5">
                 <i class="bi bi-chat-dots me-2"></i>Contact Us
             </a>
+        </div>
+    </div>
+</section>
+
+<!-- Testimonials -->
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-pink">What Our Customers Say</h2>
+            <p class="text-muted">Trusted by thousands of fashion enthusiasts</p>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <img src="/images/testimonial1.jpg" alt="Customer 1" class="rounded-circle mb-3" width="80" height="80">
+                        <h5 class="fw-bold mb-1">Maria S.</h5>
+                        <p class="text-muted small">Entrepreneur</p>
+                        <p class="mt-3">“SMSol Studio transformed my wardrobe. The premium styling sessions are worth every peso!”</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <img src="/images/testimonial2.jpg" alt="Customer 2" class="rounded-circle mb-3" width="80" height="80">
+                        <h5 class="fw-bold mb-1">James R.</h5>
+                        <p class="text-muted small">Designer</p>
+                        <p class="mt-3">“Fast delivery and quality assurance make shopping stress-free. Highly recommend their premium plan.”</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-4 mb-4">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body text-center p-4">
+                        <img src="/images/testimonial3.jpg" alt="Customer 3" class="rounded-circle mb-3" width="80" height="80">
+                        <h5 class="fw-bold mb-1">Angela P.</h5>
+                        <p class="text-muted small">Student</p>
+                        <p class="mt-3">“Affordable pricing and stylish clothing options. I love the personalized fashion advice!”</p>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </section>

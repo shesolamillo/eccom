@@ -1,0 +1,89 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block body %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            {# Success/Error Messages #}
+            {% for message in app.flashes('success') %}
+                <div class="alert alert-success alert-dismissible fade show" role="alert">
+                    <i class="bi bi-check-circle me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+            {% for message in app.flashes('error') %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="mb-0">My Profile</h2>
+                </div>
+                <div class="card-body">
+                    {{ form_start(profileForm) }}
+
+                        <div class="text-center mb-4">
+                            {% if app.user.userProfile and app.user.userProfile.profilePicture %}
+                                <img src="{{ app.user.userProfile.getProfilePictureUrl() }}" 
+                                     class="rounded-circle img-thumbnail" 
+                                     style="width:120px;height:120px;" alt="Profile Picture">
+                            {% else %}
+                                <img src="/images/default-avatar.png" 
+                                     class="rounded-circle img-thumbnail" 
+                                     style="width:120px;height:120px;" alt="Default Avatar">
+                            {% endif %}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(profileForm.address) }}
+                            {{ form_widget(profileForm.address, {'attr': {'class': 'form-control', 'placeholder': 'Enter your address'}}) }}
+                            {{ form_errors(profileForm.address) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(profileForm.city) }}
+                            {{ form_widget(profileForm.city, {'attr': {'class': 'form-control', 'placeholder': 'Enter your city'}}) }}
+                            {{ form_errors(profileForm.city) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(profileForm.state) }}
+                            {{ form_widget(profileForm.state, {'attr': {'class': 'form-control', 'placeholder': 'Enter your state'}}) }}
+                            {{ form_errors(profileForm.state) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(profileForm.zipCode) }}
+                            {{ form_widget(profileForm.zipCode, {'attr': {'class': 'form-control', 'placeholder': 'Enter your zip code'}}) }}
+                            {{ form_errors(profileForm.zipCode) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(profileForm.dateOfBirth) }}
+                            {{ form_widget(profileForm.dateOfBirth, {'attr': {'class': 'form-control'}}) }}
+                            {{ form_errors(profileForm.dateOfBirth) }}
+                        </div>
+
+                        <div class="mb-3">
+                            {{ form_label(profileForm.gender) }}
+                            {{ form_widget(profileForm.gender, {'attr': {'class': 'form-select'}}) }}
+                            {{ form_errors(profileForm.gender) }}
+                        </div>
+
+                        <button type="submit" class="btn btn-primary w-100">
+                            <i class="bi bi-save me-2"></i>Update Profile
+                        </button>
+
+                    {{ form_end(profileForm) }}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

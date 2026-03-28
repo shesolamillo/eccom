@@ -127,7 +127,7 @@ staff_product_edit:
 staff_stocks:
     path: /staff/stocks
     controller: App\Controller\StaffStockController::index
-    methods: GET
+    methods: [GET, POST]
 
 staff_stock_update:
     path: /staff/stock/{id}
@@ -275,3 +275,4 @@ api_users_show:
     methods: GET
     requirements:
         id: '\d+'
+

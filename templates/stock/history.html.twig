@@ -1,0 +1,62 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Stock History - {{ stock.product.name }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('staff_stocks') }}">Stocks</a></li>
+<li class="breadcrumb-item active">History</li>
+{% endblock %}
+
+{% block page_title %}Stock History for {{ stock.product.name }}{% endblock %}
+
+{% block admin_content %}
+<div class="card">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">Stock Adjustments</h5>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Type</th>
+                        <th>Previous Quantity</th>
+                        <th>New Quantity</th>
+                        <th>Change</th>
+                        <th>Reason</th>
+                        <th>Notes</th>
+                        <th>Adjusted By</th>
+                    </thead>
+                <tbody>
+                    {% for adjustment in history %}
+                        <tr>
+                            <td>{{ adjustment.adjustedAt|date('Y-m-d H:i') }}</td>
+                            <td>
+                                <span class="badge bg-{{ adjustment.adjustmentType == 'add' ? 'success' : (adjustment.adjustmentType == 'remove' ? 'danger' : 'warning') }}">
+                                    {{ adjustment.adjustmentType|title }}
+                                </span>
+                            </td>
+                            <td>{{ adjustment.previousQuantity }}</td>
+                            <td>{{ adjustment.newQuantity }}</td>
+                            <td class="{{ adjustment.newQuantity > adjustment.previousQuantity ? 'text-success' : 'text-danger' }}">
+                                {{ adjustment.newQuantity > adjustment.previousQuantity ? '+' : '' }}{{ adjustment.newQuantity - adjustment.previousQuantity }}
+                            </td>
+                            <td>{{ adjustment.reason|default('N/A') }}</td>
+                            <td>{{ adjustment.notes|default('') }}</td>
+                            <td>{{ adjustment.adjustedBy.fullName|default('System') }}</td>
+                        </tr>
+                    {% else %}
+                         <tr>
+                            <td colspan="8" class="text-center">No adjustments recorded</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="card-footer">
+        <a href="{{ path('staff_stocks') }}" class="btn btn-secondary">Back to Stocks</a>
+    </div>
+</div>
+{% endblock %}

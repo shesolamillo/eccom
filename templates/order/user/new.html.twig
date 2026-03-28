@@ -1,0 +1,91 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Order Now{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <h1 class="mb-4">Order Now</h1>
+
+    {{ form_start(form) }}
+        <div class="row mb-3">
+            <div class="col-md-6">
+                {{ form_row(form.deliveryType) }}
+            </div>
+            <div class="col-md-6">
+                {{ form_row(form.paymentMethod) }}
+            </div>
+        </div>
+
+        <div class="mb-3">
+            {{ form_row(form.deliveryAddress) }}
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                {{ form_row(form.deliveryFee) }}
+            </div>
+            <div class="col-md-6">
+                {{ form_row(form.pickupDate) }}
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-6">
+                {{ form_row(form.deliveryDate) }}
+            </div>
+            <div class="col-md-6">
+                {{ form_row(form.notes) }}
+            </div>
+        </div>
+
+        <h5 class="mt-4">Your Cart</h5>
+        <table class="table table-bordered align-middle">
+            <thead class="table-light">
+                <tr>
+                    <th style="width: 50%">Product</th>
+                    <th style="width: 20%">Quantity</th>
+                    <th style="width: 20%">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="order-items">
+                {{ form_row(form.orderItems) }}
+            </tbody>
+        </table>
+
+        <div class="text-end">
+            <button class="btn btn-primary">Checkout</button>
+        </div>
+    {{ form_end(form) }}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const collectionHolder = document.querySelector('#order-items');
+    collectionHolder.dataset.index = collectionHolder.querySelectorAll('tr').length;
+
+    const addButton = document.createElement('button');
+    addButton.type = 'button';
+    addButton.className = 'btn btn-success mt-2';
+    addButton.innerText = 'Add to Cart';
+    collectionHolder.parentNode.parentNode.appendChild(addButton);
+
+    addButton.addEventListener('click', () => {
+        const prototype = collectionHolder.dataset.prototype;
+        const index = collectionHolder.dataset.index;
+        const newForm = prototype.replace(/__name__/g, index);
+
+        const row = document.createElement('tr');
+        row.innerHTML = newForm + '<td><button type="button" class="btn btn-danger btn-sm remove-item">Remove</button></td>';
+        collectionHolder.appendChild(row);
+
+        collectionHolder.dataset.index++;
+
+        row.querySelector('.remove-item').addEventListener('click', () => {
+            row.remove();
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -52,7 +52,10 @@ class OrderItemType extends AbstractType
                     'readonly' => true,
                 ],
                 'required' => false,
-            ]);
+            ])
+            
+            
+;
     }
 
     public function configureOptions(OptionsResolver $resolver): void

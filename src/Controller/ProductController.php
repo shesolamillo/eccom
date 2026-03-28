@@ -23,6 +23,11 @@ class ProductController extends AbstractController
         $categoryId = $request->query->get('category');
         $typeId = $request->query->get('type');
 
+         $categoryId = $categoryId !== null && $categoryId !== '' ? (int) $categoryId : null;
+            $typeId     = $typeId !== null && $typeId !== '' ? (int) $typeId : null;
+
+
+
         $products = $productRepository->findByCategoryAndType($categoryId, $typeId);
         $categories = $categoryRepository->findAllActive();
         $types = $productTypeRepository->findAllActive();

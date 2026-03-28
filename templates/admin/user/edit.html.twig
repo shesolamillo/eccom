@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Edit User{% endblock %}
+
+{% block body %}
+<div class="container py-5">
+    <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+            <h4 class="mb-0">Edit User</h4>
+        </div>
+        <div class="card-body">
+            {{ form_start(form) }}
+                <div class="mb-3">
+                    {{ form_row(form.email) }}
+                </div>
+                <div class="mb-3">
+                    {{ form_row(form.firstName) }}
+                </div>
+                <div class="mb-3">
+                    {{ form_row(form.lastName) }}
+                </div>
+                <div class="mb-3">
+                    {{ form_row(form.phoneNumber) }}
+                </div>
+                <div class="mb-3">
+                    {{ form_row(form.roles) }}
+                </div>
+                <div class="form-check mb-3">
+                    {{ form_row(form.isActive) }}
+                </div>
+                <button class="btn btn-success">Save Changes</button>
+                <a href="{{ path('admin_users') }}" class="btn btn-secondary">Cancel</a>
+            {{ form_end(form) }}
+        </div>
+    </div>
+</div>
+{% endblock %}

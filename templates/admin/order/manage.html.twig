@@ -1,0 +1,174 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Manage Order {{ order.orderNumber }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('admin_orders') }}">Orders</a></li>
+<li class="breadcrumb-item active">Manage</li>
+{% endblock %}
+
+{% block page_title %}Manage Order #{{ order.orderNumber }}{% endblock %}
+{% block page_description %}Update items, status, and payment{% endblock %}
+
+{% block admin_content %}
+<div class="card mb-4">
+    <div class="card-body">
+        <h5>Customer</h5>
+        <p>{{ order.customer.firstName }} {{ order.customer.lastName }}<br>
+           <small class="text-muted">{{ order.customer.email }}</small></p>
+        <p><strong>Status:</strong> <span id="order-status">{{ order.status }}</span></p>
+        <p><strong>Total:</strong> ₱<span id="order-total">{{ order.totalAmount|number_format(2) }}</span></p>
+        <p><strong>Payment:</strong> 
+            {% if order.isPaid %}
+                <span class="badge bg-success" id="payment-status">Paid</span>
+            {% else %}
+                <span class="badge bg-warning" id="payment-status">Unpaid</span>
+            {% endif %}
+        </p>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">Order Items</div>
+    <div class="card-body p-0">
+        <table class="table mb-0" id="order-items-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Unit Price</th>
+                    <th>Total</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.orderItems %}
+                <tr data-id="{{ item.id }}">
+                    <td>{{ item.product.name }}</td>
+                    <td class="item-qty">{{ item.quantity }}</td>
+                    <td>₱{{ item.unitPrice|number_format(2) }}</td>
+                    <td class="item-total">₱{{ item.totalPrice|number_format(2) }}</td>
+                    <td>
+                        <button class="btn btn-sm btn-outline-secondary update-qty" data-change="1">+1</button>
+                        <button class="btn btn-sm btn-outline-secondary update-qty" data-change="-1">-1</button>
+                        <button class="btn btn-sm btn-outline-danger remove-item">Remove</button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted">No items yet</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="mt-4">
+    <h5>Actions</h5>
+    <button class="btn btn-sm btn-outline-success update-status-btn" 
+            data-order-id="{{ order.id }}" data-status="completed">Mark Completed</button>
+    <button class="btn btn-sm btn-outline-warning update-status-btn" 
+            data-order-id="{{ order.id }}" data-status="processing">Mark Processing</button>
+    <button class="btn btn-sm btn-outline-danger update-status-btn" 
+            data-order-id="{{ order.id }}" data-status="cancelled">Cancel</button>
+    <button class="btn btn-sm btn-outline-info update-payment-btn" 
+            data-order-id="{{ order.id }}" data-paid="true">Mark Paid</button>
+    <button class="btn btn-sm btn-outline-secondary update-payment-btn" 
+            data-order-id="{{ order.id }}" data-paid="false">Mark Unpaid</button>
+</div>
+{% endblock %}
+
+{% block javascripts %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    // Update quantity
+    document.querySelectorAll('.update-qty').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const row = btn.closest('tr');
+            const itemId = row.dataset.id;
+            const change = btn.dataset.change;
+
+            const response = await fetch(`/admin/orders/item/${itemId}/update-quantity`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ change: parseInt(change) })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                row.querySelector('.item-qty').textContent = data.newQuantity;
+                row.querySelector('.item-total').textContent = `₱${data.itemTotal.toFixed(2)}`;
+                document.getElementById('order-total').textContent = data.orderTotal.toFixed(2);
+            } else {
+                alert(data.message);
+            }
+        });
+    });
+
+    // Remove item
+    document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const row = btn.closest('tr');
+            const itemId = row.dataset.id;
+
+            const response = await fetch(`/admin/orders/item/${itemId}/remove`, {
+                method: 'DELETE'
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                row.remove();
+                document.getElementById('order-total').textContent = data.orderTotal.toFixed(2);
+            } else {
+                alert(data.message);
+            }
+        });
+    });
+
+    // Update status
+    document.querySelectorAll('.update-status-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const orderId = btn.dataset.orderId;
+            const newStatus = btn.dataset.status;
+
+            const response = await fetch(`/admin/orders/${orderId}/update-status`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: newStatus })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('order-status').textContent = newStatus;
+                alert(data.message);
+            } else {
+                alert(data.message);
+            }
+        });
+    });
+
+    // Update payment
+    document.querySelectorAll('.update-payment-btn').forEach(btn => {
+        btn.addEventListener('click', async () => {
+            const orderId = btn.dataset.orderId;
+            const isPaid = btn.dataset.paid === "true";
+
+            const response = await fetch(`/admin/orders/${orderId}/update-payment`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ isPaid: isPaid })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                document.getElementById('payment-status').textContent = isPaid ? "Paid" : "Unpaid";
+                alert(data.message);
+            } else {
+                alert(data.message);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
