@@ -1,89 +1,314 @@
 {% extends 'base.html.twig' %}
-
 {% block title %}My Profile{% endblock %}
 
 {% block body %}
-<div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
+<style>
+    :root {
+        --pink: #e91e8c;
+        --pink-dark: #c0166f;
+        --pink-light: #fce4f3;
+        --pink-soft: #fdf5fb;
+        --border: #f0f0f0;
+        --text-primary: #111;
+        --text-secondary: #4b5563;
+        --text-muted: #9ca3af;
+        --radius: 16px;
+        --shadow: 0 2px 12px rgba(0,0,0,0.06);
+        --shadow-pink: 0 8px 32px rgba(233,30,140,0.12);
+    }
 
-            {# Success/Error Messages #}
-            {% for message in app.flashes('success') %}
-                <div class="alert alert-success alert-dismissible fade show" role="alert">
-                    <i class="bi bi-check-circle me-2"></i>{{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
-            {% for message in app.flashes('error') %}
-                <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                    <i class="bi bi-exclamation-triangle me-2"></i>{{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                </div>
-            {% endfor %}
+    body { background: #f8f8f8; }
 
-            <div class="card shadow-sm">
-                <div class="card-header bg-primary text-white">
-                    <h2 class="mb-0">My Profile</h2>
-                </div>
-                <div class="card-body">
-                    {{ form_start(profileForm) }}
+    .profile-wrap {
+        max-width: 680px;
+        margin: 3rem auto;
+        padding: 0 1rem;
+    }
 
-                        <div class="text-center mb-4">
-                            {% if app.user.userProfile and app.user.userProfile.profilePicture %}
-                                <img src="{{ app.user.userProfile.getProfilePictureUrl() }}" 
-                                     class="rounded-circle img-thumbnail" 
-                                     style="width:120px;height:120px;" alt="Profile Picture">
-                            {% else %}
-                                <img src="/images/default-avatar.png" 
-                                     class="rounded-circle img-thumbnail" 
-                                     style="width:120px;height:120px;" alt="Default Avatar">
-                            {% endif %}
-                        </div>
+    /* ALERTS */
+    .alert-pink {
+        background: var(--pink-soft);
+        border: 1px solid var(--pink-light);
+        border-left: 3px solid var(--pink);
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        font-size: 0.875rem;
+        color: var(--pink-dark);
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 1rem;
+    }
+    .alert-success-custom {
+        background: #ecfdf3;
+        border: 1px solid #a7f3d0;
+        border-left: 3px solid #10b981;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        font-size: 0.875rem;
+        color: #065f46;
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 1rem;
+    }
+    .alert-error-custom {
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+        border-left: 3px solid #ef4444;
+        border-radius: 10px;
+        padding: 0.85rem 1rem;
+        font-size: 0.875rem;
+        color: #991b1b;
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 1rem;
+    }
+    .alert-dismiss {
+        margin-left: auto; background: none; border: none;
+        cursor: pointer; color: inherit; opacity: 0.6;
+        font-size: 1rem; padding: 0;
+    }
+    .alert-dismiss:hover { opacity: 1; }
 
-                        <div class="mb-3">
-                            {{ form_label(profileForm.address) }}
-                            {{ form_widget(profileForm.address, {'attr': {'class': 'form-control', 'placeholder': 'Enter your address'}}) }}
-                            {{ form_errors(profileForm.address) }}
-                        </div>
+    /* PROFILE CARD */
+    .profile-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-pink);
+        overflow: hidden;
+    }
 
-                        <div class="mb-3">
-                            {{ form_label(profileForm.city) }}
-                            {{ form_widget(profileForm.city, {'attr': {'class': 'form-control', 'placeholder': 'Enter your city'}}) }}
-                            {{ form_errors(profileForm.city) }}
-                        </div>
+    /* CARD HEADER */
+    .profile-card-header {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        padding: 1.5rem 2rem;
+        display: flex; align-items: center; gap: 12px;
+    }
+    .profile-card-header i {
+        font-size: 1.25rem; color: rgba(255,255,255,0.8);
+    }
+    .profile-card-header h2 {
+        font-size: 1.1rem; font-weight: 800;
+        color: #fff; margin: 0; letter-spacing: -0.01em;
+    }
+    .profile-card-header p {
+        font-size: 0.78rem; color: rgba(255,255,255,0.7);
+        margin: 2px 0 0;
+    }
 
-                        <div class="mb-3">
-                            {{ form_label(profileForm.state) }}
-                            {{ form_widget(profileForm.state, {'attr': {'class': 'form-control', 'placeholder': 'Enter your state'}}) }}
-                            {{ form_errors(profileForm.state) }}
-                        </div>
+    /* AVATAR SECTION */
+    .avatar-section {
+        display: flex; flex-direction: column; align-items: center;
+        padding: 2rem 2rem 1.25rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--pink-soft);
+    }
+    .avatar-wrap {
+        position: relative; width: 110px; height: 110px;
+    }
+    .avatar-img {
+        width: 110px; height: 110px; border-radius: 50%;
+        object-fit: cover;
+        border: 3px solid #fff;
+        box-shadow: 0 4px 20px rgba(233,30,140,0.2);
+    }
+    .avatar-badge {
+        position: absolute; bottom: 4px; right: 4px;
+        width: 28px; height: 28px; border-radius: 50%;
+        background: var(--pink); color: #fff;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 0.75rem; border: 2px solid #fff;
+        box-shadow: 0 2px 6px rgba(233,30,140,0.3);
+    }
+    .avatar-upload-label {
+        font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.07em;
+        color: var(--text-muted); margin-top: 1rem; margin-bottom: 4px;
+    }
+    .avatar-hint {
+        font-size: 0.72rem; color: var(--text-muted); margin-top: 4px;
+    }
 
-                        <div class="mb-3">
-                            {{ form_label(profileForm.zipCode) }}
-                            {{ form_widget(profileForm.zipCode, {'attr': {'class': 'form-control', 'placeholder': 'Enter your zip code'}}) }}
-                            {{ form_errors(profileForm.zipCode) }}
-                        </div>
+    /* FORM BODY */
+    .profile-form-body { padding: 1.75rem 2rem; }
 
-                        <div class="mb-3">
-                            {{ form_label(profileForm.dateOfBirth) }}
-                            {{ form_widget(profileForm.dateOfBirth, {'attr': {'class': 'form-control'}}) }}
-                            {{ form_errors(profileForm.dateOfBirth) }}
-                        </div>
+    .form-section-title {
+        font-size: 0.68rem; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        color: var(--text-muted);
+        display: flex; align-items: center; gap: 8px;
+        margin-bottom: 1rem; margin-top: 1.5rem;
+    }
+    .form-section-title::after {
+        content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+    .form-section-title:first-child { margin-top: 0; }
 
-                        <div class="mb-3">
-                            {{ form_label(profileForm.gender) }}
-                            {{ form_widget(profileForm.gender, {'attr': {'class': 'form-select'}}) }}
-                            {{ form_errors(profileForm.gender) }}
-                        </div>
+    .field-label {
+        font-size: 0.75rem; font-weight: 700;
+        color: var(--text-secondary); margin-bottom: 5px;
+        display: block; letter-spacing: 0.02em;
+    }
+    .form-control, .form-select {
+        border: 1.5px solid var(--border);
+        border-radius: 10px;
+        font-size: 0.875rem;
+        padding: 0.6rem 0.9rem;
+        color: var(--text-primary);
+        background: #fff;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(233,30,140,0.1);
+        outline: none;
+    }
+    .form-control::placeholder { color: var(--text-muted); }
 
-                        <button type="submit" class="btn btn-primary w-100">
-                            <i class="bi bi-save me-2"></i>Update Profile
-                        </button>
+    /* FILE INPUT */
+    .form-control[type="file"] {
+        padding: 0.45rem 0.9rem;
+        font-size: 0.82rem;
+        cursor: pointer;
+    }
+    .form-control[type="file"]::-webkit-file-upload-button {
+        background: var(--pink-soft);
+        border: 1px solid var(--pink-light);
+        color: var(--pink);
+        border-radius: 6px;
+        padding: 0.25rem 0.75rem;
+        font-size: 0.78rem; font-weight: 600;
+        cursor: pointer; margin-right: 8px;
+        transition: all 0.15s;
+    }
+    .form-control[type="file"]::-webkit-file-upload-button:hover {
+        background: var(--pink); color: #fff;
+    }
 
-                    {{ form_end(profileForm) }}
-                </div>
+    /* FORM ERRORS */
+    .form-error {
+        font-size: 0.75rem; color: #dc2626;
+        margin-top: 4px; display: flex; align-items: center; gap: 4px;
+    }
+
+    /* SUBMIT BUTTON */
+    .btn-save {
+        width: 100%; padding: 0.85rem;
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: #fff; border: none; border-radius: 10px;
+        font-size: 0.9rem; font-weight: 700; cursor: pointer;
+        transition: all 0.18s; margin-top: 1.5rem;
+        box-shadow: 0 4px 14px rgba(233,30,140,0.3);
+        display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn-save:hover {
+        opacity: 0.92; transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(233,30,140,0.4);
+    }
+</style>
+
+<div class="profile-wrap">
+
+    {# FLASH MESSAGES #}
+    {% for message in app.flashes('success') %}
+        <div class="alert-success-custom">
+            <i class="bi bi-check-circle"></i>
+            <span>{{ message }}</span>
+            <button class="alert-dismiss" onclick="this.parentElement.remove()">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    {% endfor %}
+    {% for message in app.flashes('error') %}
+        <div class="alert-error-custom">
+            <i class="bi bi-exclamation-triangle"></i>
+            <span>{{ message }}</span>
+            <button class="alert-dismiss" onclick="this.parentElement.remove()">
+                <i class="bi bi-x"></i>
+            </button>
+        </div>
+    {% endfor %}
+
+    <div class="profile-card">
+
+        <!-- HEADER -->
+        <div class="profile-card-header">
+            <i class="bi bi-person-circle"></i>
+            <div>
+                <h2>My Profile</h2>
+                <p>Manage your personal information</p>
             </div>
         </div>
+
+        {{ form_start(profileForm, {'attr': {'enctype': 'multipart/form-data'}}) }}
+
+        <!-- AVATAR -->
+        <div class="avatar-section">
+            <div class="avatar-wrap">
+                {% if app.user.userProfile and app.user.userProfile.profilePicture %}
+                    <img src="{{ asset('uploads/profiles/' ~ app.user.userProfile.profilePicture) }}"
+                         class="avatar-img" alt="Profile Picture">
+                {% else %}
+                    <img src="/images/default-avatar.png"
+                         class="avatar-img" alt="Default Avatar">
+                {% endif %}
+                <div class="avatar-badge"><i class="bi bi-camera"></i></div>
+            </div>
+            <div class="avatar-upload-label">Profile Photo</div>
+            {{ form_widget(profileForm.profilePicture, {'attr': {'class': 'form-control mt-1'}}) }}
+            {{ form_errors(profileForm.profilePicture) }}
+            <div class="avatar-hint">Max 2MB · JPG, PNG, GIF</div>
+        </div>
+
+        <!-- FORM -->
+        <div class="profile-form-body">
+
+            <div class="form-section-title">Address Information</div>
+
+            <div class="mb-3">
+                <label class="field-label">{{ form_label(profileForm.address)|striptags }}</label>
+                {{ form_widget(profileForm.address, {'attr': {'class': 'form-control', 'placeholder': 'Enter your address'}}) }}
+                {{ form_errors(profileForm.address) }}
+            </div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="field-label">{{ form_label(profileForm.city)|striptags }}</label>
+                    {{ form_widget(profileForm.city, {'attr': {'class': 'form-control', 'placeholder': 'City'}}) }}
+                    {{ form_errors(profileForm.city) }}
+                </div>
+                <div class="col-md-6">
+                    <label class="field-label">{{ form_label(profileForm.state)|striptags }}</label>
+                    {{ form_widget(profileForm.state, {'attr': {'class': 'form-control', 'placeholder': 'State / Province'}}) }}
+                    {{ form_errors(profileForm.state) }}
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label class="field-label">{{ form_label(profileForm.zipCode)|striptags }}</label>
+                {{ form_widget(profileForm.zipCode, {'attr': {'class': 'form-control', 'placeholder': 'Zip / Postal Code'}}) }}
+                {{ form_errors(profileForm.zipCode) }}
+            </div>
+
+            <div class="form-section-title">Personal Details</div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-md-6">
+                    <label class="field-label">{{ form_label(profileForm.dateOfBirth)|striptags }}</label>
+                    {{ form_widget(profileForm.dateOfBirth, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(profileForm.dateOfBirth) }}
+                </div>
+                <div class="col-md-6">
+                    <label class="field-label">{{ form_label(profileForm.gender)|striptags }}</label>
+                    {{ form_widget(profileForm.gender, {'attr': {'class': 'form-select'}}) }}
+                    {{ form_errors(profileForm.gender) }}
+                </div>
+            </div>
+
+            <button type="submit" class="btn-save">
+                <i class="bi bi-save"></i> Save Changes
+            </button>
+
+        </div>
+
+        {{ form_end(profileForm) }}
     </div>
 </div>
 {% endblock %}

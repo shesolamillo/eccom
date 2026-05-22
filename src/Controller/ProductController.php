@@ -23,8 +23,10 @@ class ProductController extends AbstractController
         $categoryId = $request->query->get('category');
         $typeId = $request->query->get('type');
 
-         $categoryId = $categoryId !== null && $categoryId !== '' ? (int) $categoryId : null;
-            $typeId     = $typeId !== null && $typeId !== '' ? (int) $typeId : null;
+        $audience = $request->query->get('audience');
+
+        $categoryId = $categoryId ? (int) $categoryId : null;
+        $typeId = $typeId ? (int) $typeId : null;
 
 
 
@@ -32,12 +34,18 @@ class ProductController extends AbstractController
         $categories = $categoryRepository->findAllActive();
         $types = $productTypeRepository->findAllActive();
 
+        $petCategories = $categoryRepository->findByType('pet');
+        $humanCategories = $categoryRepository->findByType('human');
+
         return $this->render('product/index.html.twig', [
             'products' => $products,
             'categories' => $categories,
             'types' => $types,
+            'petCategories' => $petCategories,
+            'humanCategories' => $humanCategories,
             'selectedCategory' => $categoryId,
             'selectedType' => $typeId,
+            'selectedAudience' => $audience,
         ]);
     }
 

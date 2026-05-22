@@ -96,127 +96,6 @@
     </div>
 </div>
 
-<!-- Products Table -->
-<div class="card admin-chart">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">All Products ({{ products|length }})</h5>
-        <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" onclick="exportProducts()">
-                <i class="bi bi-download me-1"></i>Export
-            </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="printTable()">
-                <i class="bi bi-printer me-1"></i>Print
-            </button>
-        </div>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 data-table" id="productsTable">
-                <thead class="bg-light">
-                    <tr>
-                        <th width="50">
-                            <input type="checkbox" class="form-check-input" id="selectAllHeader" onclick="toggleSelectAll()">
-                        </th>
-                        <th>ID</th>
-                        <th>Product</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Stock</th>
-                        <th>Status</th>
-                        <th>Sales</th>
-                        <th>Last Updated</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for product in products %}
-                    <tr id="product-{{ product.id }}">
-                        <td>
-                            <input type="checkbox" class="form-check-input product-checkbox" 
-                                   value="{{ product.id }}" 
-                                   onchange="updateBulkActions()">
-                        </td>
-                        <td>{{ product.id }}</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                {% if product.photo %}
-                                    <img src="{{ asset('uploads/products/' ~ product.photo) }}" 
-                                        alt="{{ product.name }}" class="rounded me-2" width="40" height="40"
-                                        style="object-fit: cover;">
-                                {% else %}
-                                    <div class="rounded bg-light d-flex align-items-center justify-content-center me-2" 
-                                        style="width: 40px; height: 40px;">
-                                        <i class="bi bi-image text-muted"></i>
-                                    </div>
-                                {% endif %}
-                                <div>
-                                    <strong>{{ product.name }}</strong>
-                                    <div class="text-muted small">{{ product.sku|default('N/A') }}</div>
-                                </div>
-                            </div>
-                        </td>
-                        <td>{{ product.category.name|default('N/A') }}</td>
-                        <td class="fw-bold">₱{{ product.price|number_format(2) }}</td>
-                        <td>
-                            {% if product.stock %}
-                                {% set stockClass = product.stock.quantity > 20 ? 'success' : (product.stock.quantity > 10 ? 'warning' : 'danger') %}
-                                <span class="badge bg-{{ stockClass }}">
-                                    {{ product.stock.quantity }}
-                                    {% if product.stock.quantity <= (product.stock.reorderPoint|default(5)) %}
-                                        <i class="bi bi-exclamation-triangle ms-1"></i>
-                                    {% endif %}
-                                </span>
-                            {% else %}
-                                <span class="badge bg-secondary">0</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if product.isAvailable %}
-                                <span class="badge bg-success">Available</span>
-                            {% else %}
-                                <span class="badge bg-danger">Unavailable</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="badge bg-info">{{ product.totalSold|default(0) }} sold</span>
-                        </td>
-                        <td>
-                            <small>{{ product.updatedAt|date('M d, Y') }}</small>
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm" role="group">
-                                <a href="{{ path('staff_product_show', {'id': product.id}) }}" 
-                                   class="btn btn-outline-info" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a href="{{ path('staff_product_edit', {'id': product.id}) }}" 
-                                   class="btn btn-outline-primary" title="Edit">
-                                    <i class="bi bi-pencil"></i>
-                                </a>
-                                <button type="button" class="btn btn-outline-danger" title="Delete"
-                                        onclick="confirmDeleteProduct({{ product.id }}, '{{ product.name|e('js') }}')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="10" class="text-center text-muted py-4">
-                            <i class="bi bi-bag-x fs-1"></i>
-                            <p class="mt-2">No products found</p>
-                            <a href="{{ path('staff_product_new') }}" class="btn btn-primary">
-                                Add Your First Product
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
-
 <!-- Product Stats -->
 <div class="row mt-4">
     <div class="col-md-3">
@@ -283,6 +162,128 @@
         </div>
     </div>
 </div>
+<!-- Products Table -->
+<div class="card admin-chart">
+    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">All Products ({{ products|length }})</h5>
+        <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-outline-secondary" onclick="exportProducts()">
+                <i class="bi bi-download me-1"></i>Export
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="printTable()">
+                <i class="bi bi-printer me-1"></i>Print
+            </button>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" id="productsTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th width="50">
+                            <input type="checkbox" class="form-check-input" id="selectAllHeader" onclick="toggleSelectAll()">
+                        </th>
+                        <th>ID</th>
+                        <th>Product</th>
+                        <th>Category</th>
+                        <th>Price</th>
+                        <th>Stock</th>
+                        <th>Status</th>
+                        <th>Sales</th>
+                        <th>Last Updated</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr id="product-{{ product.id }}">
+                        <td>
+                            <input type="checkbox" class="form-check-input product-checkbox" 
+                                   value="{{ product.id }}" 
+                                   onchange="updateBulkActions()">
+                        </td>
+                        <td>{{ product.id }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                {% if product.photo %}
+                                    <img src="{{ asset('uploads/products/' ~ product.photo) }}" 
+                                        alt="{{ product.name }}" class="rounded me-2" width="40" height="40"
+                                        style="object-fit: cover;">
+                                {% else %}
+                                    <div class="rounded bg-light d-flex align-items-center justify-content-center me-2" 
+                                        style="width: 40px; height: 40px;">
+                                        <i class="bi bi-image text-muted"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <strong>{{ product.name }}</strong>
+                                    <div class="text-muted small">{{ product.sku|default('N/A') }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ product.clothesCategory ? product.clothesCategory.name : 'N/A' }}</td>
+                        <td class="fw-bold">₱{{ product.price|number_format(2) }}</td>
+                        <td>
+                            {% if product.stock %}
+                                {% set stockClass = product.stock.quantity > 20 ? 'success' : (product.stock.quantity > 10 ? 'warning' : 'danger') %}
+                                <span class="badge bg-{{ stockClass }}">
+                                    {{ product.stock.quantity }}
+                                    {% if product.stock.quantity <= (product.stock.reorderPoint|default(5)) %}
+                                        <i class="bi bi-exclamation-triangle ms-1"></i>
+                                    {% endif %}
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary">0</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if product.isAvailable %}
+                                <span class="badge bg-success">Available</span>
+                            {% else %}
+                                <span class="badge bg-danger">Unavailable</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-info">{{ product.totalSold|default(0) }} sold</span>
+                        </td>
+                        
+                            <td><small>{{ product.updatedAt ? product.updatedAt|date('M d, Y') : product.createdAt|date('M d, Y') }}</small></td>
+                        
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ path('staff_product_show', {'id': product.id}) }}" 
+                                   class="btn btn-outline-info" title="View">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ path('staff_product_edit', {'id': product.id}) }}" 
+                                   class="btn btn-outline-primary" title="Edit">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                <button type="button" class="btn btn-outline-danger" title="Delete"
+                                        onclick="confirmDeleteProduct({{ product.id }}, '{{ product.name|e('js') }}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="10" class="text-center text-muted py-4">
+                            <i class="bi bi-bag-x fs-1"></i>
+                            <p class="mt-2">No products found</p>
+                            <a href="{{ path('staff_product_new') }}" class="btn btn-primary">
+                                Add Your First Product
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
 {% endblock %}
 
 {% block javascripts %}

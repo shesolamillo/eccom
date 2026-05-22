@@ -2,307 +2,576 @@
 {% extends 'layouts/admin.html.twig' %}
 
 {% block title %}User Management - SMSol Studio{% endblock %}
-
-{% block breadcrumb %}
-<li class="breadcrumb-item active">Users</li>
-{% endblock %}
-
+{% block breadcrumb %}<li class="breadcrumb-item active">Users</li>{% endblock %}
 {% block page_title %}User Management{% endblock %}
 {% block page_description %}Manage system users and their roles{% endblock %}
 
 {% block page_actions %}
-<button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addUserModal">
+<button type="button" class="btn btn-pink" data-bs-toggle="modal" data-bs-target="#addUserModal">
     <i class="bi bi-person-plus me-2"></i>Add User
 </button>
 {% endblock %}
 
 {% block admin_content %}
-<!-- Users Table -->
-<div class="card admin-chart">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">All Users</h5>
+<style>
+    :root {
+        --pink: #e91e8c;
+        --pink-dark: #c0166f;
+        --pink-light: #fce4f3;
+        --pink-soft: #fdf5fb;
+        --surface: #ffffff;
+        --surface-2: #f8f9fb;
+        --border: #eaecf0;
+        --border-strong: #d0d5dd;
+        --text-primary: #101828;
+        --text-secondary: #475467;
+        --text-muted: #98a2b3;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 16px;
+        --shadow-sm: 0 1px 2px rgba(16,24,40,0.05);
+        --shadow-md: 0 4px 8px -2px rgba(16,24,40,0.08), 0 2px 4px -2px rgba(16,24,40,0.04);
+        --shadow-lg: 0 12px 32px -4px rgba(16,24,40,0.1), 0 4px 8px -2px rgba(16,24,40,0.06);
+    }
+
+    /* ── BUTTONS ── */
+    .btn-pink {
+        background: var(--pink);
+        color: #fff;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem;
+        font-weight: 600;
+        padding: 0.55rem 1.2rem;
+        transition: all 0.18s;
+        box-shadow: 0 1px 2px rgba(233,30,140,0.2);
+    }
+    .btn-pink:hover {
+        background: var(--pink-dark);
+        color: #fff;
+        box-shadow: 0 4px 12px rgba(233,30,140,0.35);
+        transform: translateY(-1px);
+    }
+    .btn-soft {
+        background: var(--surface-2);
+        border: 1px solid var(--border);
+        color: var(--text-secondary);
+        border-radius: var(--radius-sm);
+        font-size: 0.8rem;
+        font-weight: 500;
+        padding: 0.45rem 0.9rem;
+        transition: all 0.15s;
+        cursor: pointer;
+    }
+    .btn-soft:hover {
+        background: var(--border);
+        color: var(--text-primary);
+        border-color: var(--border-strong);
+    }
+
+    /* ── STAT CARDS ── */
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        padding: 1.4rem 1.5rem;
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: box-shadow 0.2s, transform 0.2s;
+        position: relative;
+        overflow: hidden;
+    }
+    .stat-card:hover {
+        box-shadow: var(--shadow-md);
+        transform: translateY(-2px);
+    }
+    .stat-card .bg-glow {
+        position: absolute;
+        top: -20px; right: -20px;
+        width: 80px; height: 80px;
+        border-radius: 50%;
+        opacity: 0.07;
+    }
+    .stat-icon {
+        width: 48px; height: 48px;
+        border-radius: var(--radius-sm);
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.25rem; flex-shrink: 0;
+    }
+    .si-pink   { background: var(--pink-light); color: var(--pink); }
+    .si-red    { background: #fef3f2; color: #d92d20; }
+    .si-amber  { background: #fffaeb; color: #b54708; }
+    .si-green  { background: #ecfdf3; color: #027a48; }
+    .glow-pink  { background: var(--pink); }
+    .glow-red   { background: #d92d20; }
+    .glow-amber { background: #b54708; }
+    .glow-green { background: #027a48; }
+
+    .stat-label {
+        font-size: 0.72rem; font-weight: 600;
+        letter-spacing: 0.06em; text-transform: uppercase;
+        color: var(--text-muted); margin-bottom: 3px;
+    }
+    .stat-value {
+        font-size: 1.85rem; font-weight: 800;
+        color: var(--text-primary); line-height: 1;
+        letter-spacing: -0.02em;
+    }
+
+    /* ── TABLE CARD ── */
+    .table-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+    }
+    .table-card-header {
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between;
+        gap: 1rem;
+    }
+    .table-card-title {
+        font-size: 0.95rem; font-weight: 700;
+        color: var(--text-primary); margin: 0;
+        display: flex; align-items: center; gap: 10px;
+    }
+    .title-pill {
+        background: var(--pink-soft);
+        color: var(--pink);
+        border: 1px solid var(--pink-light);
+        font-size: 0.72rem; font-weight: 700;
+        padding: 0.15em 0.6em;
+        border-radius: 20px;
+    }
+
+    /* ── TABLE ── */
+    .u-table thead tr {
+        background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
+    }
+    .u-table thead th {
+        font-size: 0.7rem; font-weight: 700;
+        letter-spacing: 0.07em; text-transform: uppercase;
+        color: var(--text-muted);
+        padding: 0.8rem 1.25rem;
+        border: none; white-space: nowrap;
+    }
+    .u-table tbody td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        border-bottom: 1px solid var(--border);
+    }
+    .u-table tbody tr:last-child td { border-bottom: none; }
+    .u-table tbody tr { transition: background 0.1s; }
+    .u-table tbody tr:hover { background: var(--pink-soft); }
+
+    /* ── AVATAR ── */
+    .u-avatar {
+        width: 38px; height: 38px; border-radius: 50%;
+        object-fit: cover; flex-shrink: 0;
+        box-shadow: 0 0 0 2px var(--border);
+    }
+    .u-avatar-init {
+        width: 38px; height: 38px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--pink) 0%, var(--pink-dark) 100%);
+        color: #fff; font-size: 0.72rem; font-weight: 800;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0; letter-spacing: 0.03em;
+        box-shadow: 0 2px 6px rgba(233,30,140,0.3);
+    }
+    .u-name { font-weight: 600; color: var(--text-primary); font-size: 0.875rem; line-height: 1.3; }
+    .u-sub  { font-size: 0.72rem; color: var(--text-muted); margin-top: 1px; }
+
+    /* ── BADGES ── */
+    .b-role, .b-status {
+        display: inline-flex; align-items: center; gap: 4px;
+        padding: 0.28em 0.65em;
+        border-radius: 6px;
+        font-size: 0.7rem; font-weight: 700;
+        letter-spacing: 0.04em; text-transform: uppercase;
+        border: 1px solid transparent;
+    }
+    .b-role::before, .b-status::before {
+        content: ''; width: 5px; height: 5px;
+        border-radius: 50%; display: inline-block;
+    }
+    .b-admin   { background: #fef3f2; color: #b42318; border-color: #fecdca; }
+    .b-admin::before { background: #b42318; }
+    .b-staff   { background: #fffaeb; color: #93370d; border-color: #fedf89; }
+    .b-staff::before { background: #93370d; }
+    .b-user    { background: var(--surface-2); color: var(--text-secondary); border-color: var(--border); }
+    .b-user::before { background: var(--text-muted); }
+    .b-active  { background: #ecfdf3; color: #027a48; border-color: #abefc6; }
+    .b-active::before { background: #027a48; }
+    .b-inactive{ background: #fef3f2; color: #b42318; border-color: #fecdca; }
+    .b-inactive::before { background: #b42318; }
+
+    /* ── ACTION BUTTONS ── */
+    .act {
+        width: 30px; height: 30px; border-radius: var(--radius-sm);
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.78rem; border: 1px solid var(--border);
+        transition: all 0.15s; text-decoration: none;
+        cursor: pointer; background: var(--surface); padding: 0;
+        color: var(--text-secondary);
+    }
+    .act:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+    .act.edit:hover    { background: var(--pink-soft); border-color: var(--pink-light); color: var(--pink); }
+    .act.promote:hover { background: #ecfdf3; border-color: #abefc6; color: #027a48; }
+    .act.demote:hover  { background: #fffaeb; border-color: #fedf89; color: #93370d; }
+    .act.delete:hover  { background: #fef3f2; border-color: #fecdca; color: #b42318; }
+
+    /* ── EMPTY STATE ── */
+    .empty-wrap { padding: 4.5rem 1rem; text-align: center; }
+    .empty-wrap .e-icon {
+        width: 72px; height: 72px; border-radius: 20px;
+        background: var(--pink-soft);
+        border: 1px solid var(--pink-light);
+        color: var(--pink); font-size: 2rem;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1.25rem;
+    }
+    .empty-wrap h6 { font-weight: 700; color: var(--text-primary); margin-bottom: 4px; }
+    .empty-wrap p  { color: var(--text-muted); font-size: 0.85rem; margin: 0; }
+
+    /* ── MODAL ── */
+    .modal-content {
+        border: none; border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-lg); overflow: hidden;
+    }
+    .modal-header {
+        padding: 1.35rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface);
+    }
+    .modal-title-wrap { display: flex; align-items: center; gap: 10px; }
+    .modal-title-icon {
+        width: 36px; height: 36px; border-radius: var(--radius-sm);
+        background: var(--pink-soft); border: 1px solid var(--pink-light);
+        color: var(--pink); font-size: 1rem;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .modal-title-text { font-size: 1rem; font-weight: 700; color: var(--text-primary); }
+    .modal-title-sub  { font-size: 0.78rem; color: var(--text-muted); margin-top: 1px; }
+    .modal-body { padding: 1.5rem; background: var(--surface-2); }
+    .modal-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--border); background: var(--surface); }
+
+    .field-label {
+        font-size: 0.78rem; font-weight: 600;
+        color: var(--text-secondary); margin-bottom: 5px; display: block;
+    }
+    .form-control, .form-select {
+        border: 1px solid var(--border-strong);
+        border-radius: var(--radius-sm);
+        font-size: 0.875rem; padding: 0.6rem 0.9rem;
+        background: var(--surface); color: var(--text-primary);
+        box-shadow: var(--shadow-sm);
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(233,30,140,0.1);
+        outline: none;
+    }
+    .form-control::placeholder { color: var(--text-muted); }
+</style>
+
+<input type="hidden" id="csrf_token_delete" value="{{ csrf_token('delete_user') }}">
+<input type="hidden" id="csrf_token_add"    value="{{ csrf_token('add_user') }}">
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="bg-glow glow-pink"></div>
+            <div class="stat-icon si-pink"><i class="bi bi-people-fill"></i></div>
+            <div>
+                <div class="stat-label">Total Users</div>
+                <div class="stat-value">{{ users|length }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="bg-glow glow-red"></div>
+            <div class="stat-icon si-red"><i class="bi bi-shield-fill-check"></i></div>
+            <div>
+                <div class="stat-label">Admins</div>
+                <div class="stat-value">{{ users|filter(u => 'ROLE_ADMIN' in u.roles)|length }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="bg-glow glow-amber"></div>
+            <div class="stat-icon si-amber"><i class="bi bi-person-badge-fill"></i></div>
+            <div>
+                <div class="stat-label">Staff</div>
+                <div class="stat-value">{{ users|filter(u => 'ROLE_STAFF' in u.roles)|length }}</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="stat-card">
+            <div class="bg-glow glow-green"></div>
+            <div class="stat-icon si-green"><i class="bi bi-check-circle-fill"></i></div>
+            <div>
+                <div class="stat-label">Active</div>
+                <div class="stat-value">{{ users|filter(u => u.isActive)|length }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- USERS TABLE -->
+<div class="table-card">
+    <div class="table-card-header">
+        <h5 class="table-card-title">
+            All Users
+            <span class="title-pill">{{ users|length }} total</span>
+        </h5>
         <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" onclick="printTable()">
+            <button class="btn-soft" onclick="printTable()">
                 <i class="bi bi-printer me-1"></i>Print
             </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="exportTableToCSV('users.csv')">
-                <i class="bi bi-download me-1"></i>Export
+            <button class="btn-soft" onclick="exportTableToCSV('users.csv')">
+                <i class="bi bi-download me-1"></i>Export CSV
             </button>
         </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 data-table">
-                <thead class="bg-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Email</th>
-                        <th>Phone</th>
-                        <th>Role</th>
-                        <th>Status</th>
-                        <th>Joined</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for user in users %}
-                    <tr>
-                        <td>{{ user.id }}</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                {% if user.userProfile and user.userProfile.profilePicture %}
-                                    <img src="{{ asset('uploads/profiles/' ~ user.userProfile.profilePicture) }}" 
-                                         alt="{{ user.firstName }}" class="rounded-circle me-2" width="32" height="32">
-                                {% else %}
-                                    <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" 
-                                         style="width: 32px; height: 32px;">
-                                        <i class="bi bi-person text-white"></i>
-                                    </div>
-                                {% endif %}
-                                <div>
-                                    <strong>{{ user.firstName }} {{ user.lastName }}</strong>
+
+    <div class="table-responsive">
+        <table class="table u-table mb-0 data-table">
+            <thead>
+                <tr>
+                    <th>User</th>
+                    <th>Contact</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Joined</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for user in users %}
+                <tr>
+                    <td>
+                        <div class="d-flex align-items-center gap-3">
+                            {% if user.userProfile and user.userProfile.profilePicture %}
+                                <img src="{{ asset('uploads/profiles/' ~ user.userProfile.profilePicture) }}"
+                                     alt="{{ user.firstName }}" class="u-avatar">
+                            {% else %}
+                                <div class="u-avatar-init">
+                                    {{ user.firstName|first|upper }}{{ user.lastName|first|upper }}
                                 </div>
+                            {% endif %}
+                            <div>
+                                <div class="u-name">{{ user.firstName }} {{ user.lastName }}</div>
+                                <div class="u-sub">#{{ user.id }}</div>
                             </div>
-                        </td>
-                        <td>{{ user.email }}</td>
-                        <td>{{ user.phoneNumber|default('N/A') }}</td>
-                        <td>
-                            {% if 'ROLE_ADMIN' in user.roles %}
-                                <span class="badge bg-danger">Admin</span>
-                            {% elseif 'ROLE_STAFF' in user.roles %}
-                                <span class="badge bg-warning">Staff</span>
-                            {% else %}
-                                <span class="badge bg-secondary">User</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if user.isActive %}
-                                <span class="badge bg-success">Active</span>
-                            {% else %}
-                                <span class="badge bg-danger">Inactive</span>
-                            {% endif %}
-                        </td>
-                        <td>{{ user.createdAt|date('M d, Y') }}</td>
-                        <td>
-                            <div class="btn-group btn-group-sm" role="group">
-                                {% if user.id is not null %}
-                                    <a href="{{ path('admin_user_edit', {'id': user.id}) }}" 
-                                       class="btn btn-outline-primary" title="Edit">
-                                        <i class="bi bi-pencil"></i>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="u-name" style="font-weight:500">{{ user.email }}</div>
+                        <div class="u-sub">{{ user.phoneNumber|default('No phone') }}</div>
+                    </td>
+                    <td>
+                        {% if 'ROLE_ADMIN' in user.roles %}
+                            <span class="b-role b-admin">Admin</span>
+                        {% elseif 'ROLE_STAFF' in user.roles %}
+                            <span class="b-role b-staff">Staff</span>
+                        {% else %}
+                            <span class="b-role b-user">User</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if user.isActive %}
+                            <span class="b-status b-active">Active</span>
+                        {% else %}
+                            <span class="b-status b-inactive">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="u-name" style="font-weight:500">{{ user.createdAt|date('M d, Y') }}</div>
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1 justify-content-end">
+                            {% if user.id is not null %}
+                                <a href="{{ path('admin_user_edit', {'id': user.id}) }}"
+                                   class="act edit" title="Edit user">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                {% if 'ROLE_ADMIN' in user.roles %}
+                                    <a href="{{ path('admin_user_demote', {'id': user.id}) }}"
+                                       class="act demote" title="Demote to Staff"
+                                       onclick="return confirm('Demote this admin to staff role?')">
+                                        <i class="bi bi-arrow-down"></i>
                                     </a>
-                                    
-                                    {% if 'ROLE_ADMIN' in user.roles %}
-                                        <a href="{{ path('admin_user_demote', {'id': user.id}) }}" 
-                                           class="btn btn-outline-warning" title="Demote to Staff"
-                                           onclick="return confirm('Demote this admin to staff role?')">
-                                            <i class="bi bi-arrow-down"></i>
-                                        </a>
-                                    {% elseif 'ROLE_STAFF' in user.roles %}
-                                        <a href="{{ path('admin_user_promote', {'id': user.id}) }}" 
-                                           class="btn btn-outline-success" title="Promote to Admin"
-                                           onclick="return confirm('Promote this staff to admin role?')">
-                                            <i class="bi bi-arrow-up"></i>
-                                        </a>
-                                        <a href="{{ path('admin_user_demote', {'id': user.id}) }}" 
-                                           class="btn btn-outline-warning" title="Demote to User"
-                                           onclick="return confirm('Demote this staff to user role?')">
-                                            <i class="bi bi-arrow-down"></i>
-                                        </a>
-                                    {% else %}
-                                        <a href="{{ path('admin_user_promote', {'id': user.id}) }}" 
-                                           class="btn btn-outline-success" title="Promote to Staff"
-                                           onclick="return confirm('Promote this user to staff role?')">
-                                            <i class="bi bi-arrow-up"></i>
-                                        </a>
-                                    {% endif %}
+                                {% elseif 'ROLE_STAFF' in user.roles %}
+                                    <a href="{{ path('admin_user_promote', {'id': user.id}) }}"
+                                       class="act promote" title="Promote to Admin"
+                                       onclick="return confirm('Promote this staff to admin role?')">
+                                        <i class="bi bi-arrow-up"></i>
+                                    </a>
+                                    <a href="{{ path('admin_user_demote', {'id': user.id}) }}"
+                                       class="act demote" title="Demote to User"
+                                       onclick="return confirm('Demote this staff to user role?')">
+                                        <i class="bi bi-arrow-down"></i>
+                                    </a>
+                                {% else %}
+                                    <a href="{{ path('admin_user_promote', {'id': user.id}) }}"
+                                       class="act promote" title="Promote to Staff"
+                                       onclick="return confirm('Promote this user to staff role?')">
+                                        <i class="bi bi-arrow-up"></i>
+                                    </a>
                                 {% endif %}
-                                
-                                <button type="button" class="btn btn-outline-danger" title="Delete"
-                                        onclick="confirmDeleteUser({{ user.id }}, '{{ user.firstName }}')">
-                                    <i class="bi bi-trash"></i>
-                                </button>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
-                            <i class="bi bi-people fs-1"></i>
-                            <p class="mt-2">No users found</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                            {% endif %}
+                            <button type="button" class="act delete" title="Delete user"
+                                    onclick="confirmDeleteUser({{ user.id }}, '{{ user.firstName }}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-wrap">
+                            <div class="e-icon"><i class="bi bi-people"></i></div>
+                            <h6>No users yet</h6>
+                            <p>Add your first user to get started.</p>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
 </div>
 
-<!-- User Stats -->
-<div class="row mt-4">
-    <div class="col-md-3">
-        <div class="card stats-card border-left-primary h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Total Users</h6>
-                        <h3 class="fw-bold">{{ users|length }}</h3>
-                    </div>
-                    <div class="stats-icon bg-primary">
-                        <i class="bi bi-people text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-danger h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Admins</h6>
-                        <h3 class="fw-bold">{{ users|filter(u => 'ROLE_ADMIN' in u.roles)|length }}</h3>
-                    </div>
-                    <div class="stats-icon bg-danger">
-                        <i class="bi bi-shield-check text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-warning h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Staff</h6>
-                        <h3 class="fw-bold">{{ users|filter(u => 'ROLE_STAFF' in u.roles)|length }}</h3>
-                    </div>
-                    <div class="stats-icon bg-warning">
-                        <i class="bi bi-person-badge text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-success h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Active</h6>
-                        <h3 class="fw-bold">{{ users|filter(u => u.isActive)|length }}</h3>
-                    </div>
-                    <div class="stats-icon bg-success">
-                        <i class="bi bi-check-circle text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Add User Modal -->
+<!-- ADD USER MODAL -->
 <div class="modal fade" id="addUserModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Add New User</h5>
+                <div class="modal-title-wrap">
+                    <div class="modal-title-icon"><i class="bi bi-person-plus"></i></div>
+                    <div>
+                        <div class="modal-title-text">Add New User</div>
+                        <div class="modal-title-sub">Fill in the details to create a new account</div>
+                    </div>
+                </div>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body">
                 <form id="addUserForm">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">First Name</label>
-                            <input type="text" class="form-control" name="firstName" required>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="field-label">First Name</label>
+                            <input type="text" class="form-control" name="firstName" required placeholder="Juan">
                         </div>
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Last Name</label>
-                            <input type="text" class="form-control" name="lastName" required>
+                        <div class="col-md-6">
+                            <label class="field-label">Last Name</label>
+                            <input type="text" class="form-control" name="lastName" required placeholder="Dela Cruz">
                         </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Email Address</label>
-                        <input type="email" class="form-control" name="email" required>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Phone Number</label>
-                        <input type="tel" class="form-control" name="phoneNumber">
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Role</label>
-                        <select class="form-select" name="role" required>
-                            <option value="ROLE_USER">Regular User</option>
-                            <option value="ROLE_STAFF">Staff</option>
-                            <option value="ROLE_ADMIN">Administrator</option>
-                        </select>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Initial Password</label>
-                        <input type="password" class="form-control" name="password" required>
+                        <div class="col-md-6">
+                            <label class="field-label">Email Address</label>
+                            <input type="email" class="form-control" name="email" required placeholder="[email]">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="field-label">Phone Number</label>
+                            <input type="tel" class="form-control" name="phoneNumber" placeholder="+63 9XX XXX XXXX">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="field-label">Role</label>
+                            <select class="form-select" name="role" required>
+                                <option value="ROLE_USER">Regular User</option>
+                                <option value="ROLE_STAFF">Staff</option>
+                                <option value="ROLE_ADMIN">Administrator</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="field-label">Initial Password</label>
+                            <input type="password" class="form-control" name="password" required placeholder="••••••••">
+                        </div>
                     </div>
                 </form>
             </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary" onclick="addUser()">Add User</button>
+            <div class="modal-footer justify-content-between">
+                <button type="button" class="btn-soft" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-pink" onclick="addUser()">
+                    <i class="bi bi-person-plus me-1"></i>Create User
+                </button>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block javascripts %}
 <script>
 function confirmDeleteUser(userId, userName) {
     if (confirm(`Are you sure you want to delete user "${userName}"? This action cannot be undone.`)) {
-        // Implement delete functionality
-        alert('Delete functionality to be implemented');
+        const csrfToken = document.getElementById('csrf_token_delete')?.value;
+        fetch(`/admin/users/${userId}/delete`, {
+            method: 'DELETE',
+            headers: { 'X-CSRF-Token': csrfToken, 'Content-Type': 'application/json' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) { alert(data.message); location.reload(); }
+            else alert('Error: ' + data.error);
+        })
+        .catch(error => alert('Error: ' + error.message));
     }
 }
 
 function addUser() {
     const form = document.getElementById('addUserForm');
     if (form.checkValidity()) {
-        // Implement add user functionality
-        alert('Add user functionality to be implemented');
-        document.getElementById('addUserModal').querySelector('.btn-close').click();
-        form.reset();
+        const formData = new FormData(form);
+        const csrfToken = document.getElementById('csrf_token_add')?.value;
+        fetch('/admin/users/add', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRF-Token': csrfToken }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('User added successfully!');
+                document.getElementById('addUserModal').querySelector('.btn-close').click();
+                location.reload();
+            } else alert('Error: ' + data.error);
+        })
+        .catch(error => alert('Error: ' + error.message));
     } else {
         form.classList.add('was-validated');
     }
 }
 
-function printTable() {
-    window.print();
-}
+function printTable() { window.print(); }
 
 function exportTableToCSV(filename) {
     const csv = [];
     const rows = document.querySelectorAll("table tr");
-    
     for (let i = 0; i < rows.length; i++) {
         const row = [], cols = rows[i].querySelectorAll("td, th");
-        
         for (let j = 0; j < cols.length; j++) {
             let data = cols[j].innerText.replace(/(\r\n|\n|\r)/gm, "").replace(/(\s\s)/gm, " ");
             data = data.replace(/"/g, '""');
             row.push('"' + data + '"');
         }
-        
         csv.push(row.join(","));
     }
-
-    const csvFile = new Blob([csv.join("\n")], {type: "text/csv"});
+    const csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
     const downloadLink = document.createElement("a");
     downloadLink.download = filename;
     downloadLink.href = window.URL.createObjectURL(csvFile);

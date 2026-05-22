@@ -35,7 +35,8 @@ class StaffProductController extends AbstractController
         // Apply filters
         $products = $productRepository->findBy(['isAvailable' => true]);
         if ($categoryId) {
-            $products = array_filter($products, fn($p) => $p->getCategory() && $p->getCategory()->getId() == $categoryId);
+            $products = array_filter($products, fn($p) => $p->getClothesCategory() && $p->getClothesCategory()->getId() == $categoryId);
+
         }
         
         // Get statistics for the dashboard
@@ -199,17 +200,24 @@ class StaffProductController extends AbstractController
             }
             
             // Delete associated stock if exists
-            if ($product->getStock()) {
-                $entityManager->remove($product->getStock());
-            }
-            
-            // Delete image file if exists
-            if ($product->getPhoto()) {
-                $imagePath = $this->getParameter('products_directory') . '/' . $product->getPhoto();
-                if (file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-            }
+           $stock = $product->getStock();
+if ($stock !== null) {
+    foreach ($stock->getAdjustments() as $adjustment) {
+        $entityManager->remove($adjustment);
+    }
+    $entityManager->remove($stock);
+}
+
+// Delete image file if exists
+if ($product->getPhoto()) {
+    $imagePath = $this->getParameter('products_directory') . '/' . $product->getPhoto();
+    if (file_exists($imagePath)) {
+        unlink($imagePath);
+    }
+}
+
+$entityManager->remove($product);
+$entityManager->flush();
             
             $entityManager->remove($product);
             $entityManager->flush();
@@ -251,16 +259,16 @@ class StaffProductController extends AbstractController
                 'message' => 'Invalid CSRF token'
             ], 403);
         }
-        $product->setIsAvailable(!$product->isAvailable());
+        $product->setIsAvailable(!$product->isIsAvailable());
 
         $entityManager->flush();
         
         return new JsonResponse([
             'success' => true,
             'message' => 'Product status updated successfully.',
-            'isAvailable' => $product->isAvailable(),
-            'statusText' => $product->isAvailable() ? 'Available' : 'Unavailable',
-            'statusClass' => $product->isAvailable() ? 'success' : 'danger'
+            'isAvailable' => $product->isIsAvailable(),
+            'statusText' => $product->isIsAvailable() ? 'Available' : 'Unavailable',
+            'statusClass' => $product->isIsAvailable() ? 'success' : 'danger'
         ]);
     }
 

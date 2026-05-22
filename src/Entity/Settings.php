@@ -39,24 +39,31 @@ class Settings
     private ?int $id = null;
 
     #[ORM\Column(length: 100, unique: true)]
+    #[Groups(['settings:read'])]
     private ?string $settingKey = null;
 
     #[ORM\Column(length: 500, nullable: true)]
+    #[Groups(['settings:read'])]
     private ?string $settingValue = null;
 
     #[ORM\Column(length: 50)]
+    #[Groups(['settings:read'])]
     private ?string $dataType = 'string';
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['settings:read'])]
     private ?string $description = null;
 
     #[ORM\Column]
+    #[Groups(['settings:read'])]
     private ?bool $isPublic = false;
 
     #[ORM\Column]
+    #[Groups(['settings:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['settings:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()

@@ -1,121 +1,288 @@
 {% extends 'layouts/admin.html.twig' %}
 
 {% block title %}Admin Dashboard - SMSol Studio{% endblock %}
-
 {% block page_title %}Admin Dashboard{% endblock %}
 {% block page_description %}System overview and management{% endblock %}
 
 {% block page_actions %}
-<a href="{{ path('admin_analytics') }}" class="btn btn-primary">
+<a href="{{ path('admin_analytics') }}" class="btn btn-pink">
     <i class="bi bi-bar-chart me-2"></i>View Analytics
 </a>
 {% endblock %}
 
 {% block admin_content %}
 
+<style>
+    :root {
+        --pink: #e91e8c;
+        --pink-light: #f8d7ea;
+        --pink-dark: #c0166f;
+        --pink-soft: #fdf0f7;
+    }
+
+    .btn-pink {
+        background: var(--pink);
+        color: #fff;
+        border: none;
+        border-radius: 8px;
+        font-weight: 500;
+        transition: background 0.2s;
+    }
+    .btn-pink:hover { background: var(--pink-dark); color: #fff; }
+
+    .stat-card {
+        border: none;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 2px 12px rgba(233,30,140,0.08);
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 24px rgba(233,30,140,0.15);
+    }
+    .stat-card .card-body {
+        padding: 1.5rem;
+    }
+    .stat-icon {
+        width: 56px;
+        height: 56px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+    }
+    .icon-pink   { background: var(--pink-light); color: var(--pink); }
+    .icon-green  { background: #d4f5e9; color: #1a9e6a; }
+    .icon-yellow { background: #fff3cd; color: #d4a017; }
+    .icon-blue   { background: #dbeafe; color: #2563eb; }
+
+    .stat-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #9ca3af;
+    }
+    .stat-value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.2;
+    }
+    .stat-sub { font-size: 0.78rem; }
+
+    .section-card {
+        border: none;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(233,30,140,0.07);
+        overflow: hidden;
+    }
+    .section-card .card-header {
+        background: #fff;
+        border-bottom: 2px solid var(--pink-light);
+        padding: 1rem 1.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .section-card .card-header h5 {
+        font-weight: 700;
+        color: #1f2937;
+        margin: 0;
+        font-size: 1rem;
+    }
+    .section-card .card-header h5::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 18px;
+        background: var(--pink);
+        border-radius: 4px;
+        margin-right: 10px;
+        vertical-align: middle;
+    }
+
+    .quick-action-btn {
+        background: var(--pink-soft);
+        border: 1.5px solid var(--pink-light);
+        border-radius: 14px;
+        color: #1f2937;
+        font-weight: 500;
+        font-size: 0.85rem;
+        padding: 1.1rem 0.5rem;
+        transition: all 0.2s;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+    }
+    .quick-action-btn i { color: var(--pink); font-size: 1.5rem; }
+    .quick-action-btn:hover {
+        background: var(--pink);
+        border-color: var(--pink);
+        color: #fff;
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(233,30,140,0.25);
+    }
+    .quick-action-btn:hover i { color: #fff; }
+
+    .table thead th {
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: #6b7280;
+        background: var(--pink-soft);
+        border-bottom: 2px solid var(--pink-light);
+        padding: 0.85rem 1rem;
+    }
+    .table tbody td {
+        padding: 0.85rem 1rem;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        color: #374151;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .table tbody tr:hover { background: var(--pink-soft); }
+
+    .badge-status {
+        padding: 0.35em 0.75em;
+        border-radius: 20px;
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.04em;
+    }
+
+    .btn-outline-pink {
+        border: 1.5px solid var(--pink);
+        color: var(--pink);
+        border-radius: 8px;
+        font-size: 0.82rem;
+        font-weight: 500;
+        background: transparent;
+        transition: all 0.2s;
+    }
+    .btn-outline-pink:hover { background: var(--pink); color: #fff; }
+
+    .empty-state {
+        padding: 3.5rem 1rem;
+        text-align: center;
+    }
+    .empty-state i {
+        font-size: 3rem;
+        color: var(--pink-light);
+        display: block;
+        margin-bottom: 1rem;
+    }
+</style>
+
 <!-- STATS CARDS -->
-<div class="row mb-4">
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body d-flex justify-content-between">
+<div class="row mb-4 g-3">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon icon-pink"><i class="bi bi-people"></i></div>
                 <div>
-                    <div class="text-muted text-uppercase small">Total Users</div>
-                    <div class="h4 fw-bold">{{ userStats.total|default(0) }}</div>
-                    <small class="text-success">
-                        {{ userStats.admins|default(0) }} admins •
-                        {{ userStats.staff|default(0) }} staff
-                    </small>
-                </div>
-                <i class="bi bi-people fs-1 text-primary"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body d-flex justify-content-between">
-                <div>
-                    <div class="text-muted text-uppercase small">Orders</div>
-                    <div class="h4 fw-bold">{{ orderStats.totalOrders|default(0) }}</div>
-                    <small class="text-danger">
-                        {{ orderStats.pendingCount|default(0) }} pending
-                    </small>
-                </div>
-                <i class="bi bi-cart-check fs-1 text-success"></i>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body d-flex justify-content-between">
-                <div>
-                    <div class="text-muted text-uppercase small">Revenue</div>
-                    <div class="h4 fw-bold">
-                        ₱{{ orderStats.totalRevenue|default(0)|number_format(2) }}
+                    <div class="stat-label">Total Users</div>
+                    <div class="stat-value">{{ userStats.total|default(0) }}</div>
+                    <div class="stat-sub text-muted">
+                        <span class="text-success fw-semibold">{{ userStats.admins|default(0) }} admins</span>
+                        &nbsp;·&nbsp;{{ userStats.staff|default(0) }} staff
                     </div>
                 </div>
-                <i class="bi bi-currency-dollar fs-1 text-warning"></i>
             </div>
         </div>
     </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-body d-flex justify-content-between">
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon icon-green"><i class="bi bi-cart-check"></i></div>
                 <div>
-                    <div class="text-muted text-uppercase small">Products</div>
-                    <div class="h4 fw-bold">
-                        {{ productStats.available|default(0) }}/{{ productStats.total|default(0) }}
+                    <div class="stat-label">Orders</div>
+                    <div class="stat-value">{{ orderStats.totalOrders|default(0) }}</div>
+                    <div class="stat-sub">
+                        <span class="text-danger fw-semibold">{{ orderStats.pendingCount|default(0) }} pending</span>
                     </div>
-                    <small class="text-warning">
-                        {{ stockStats.lowStockCount|default(0) }} low stock
-                    </small>
                 </div>
-                <i class="bi bi-box fs-1 text-info"></i>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon icon-yellow"><i class="bi bi-cash-coin"></i></div>
+                <div>
+                    <div class="stat-label">Revenue</div>
+                    <div class="stat-value">₱{{ orderStats.totalRevenue|default(0)|number_format(2) }}</div>
+                    <div class="stat-sub text-muted">Total earnings</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-3 col-md-6">
+        <div class="card stat-card h-100">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="stat-icon icon-blue"><i class="bi bi-box"></i></div>
+                <div>
+                    <div class="stat-label">Products</div>
+                    <div class="stat-value">{{ productStats.available|default(0) }}<span class="fs-6 text-muted fw-normal">/{{ productStats.total|default(0) }}</span></div>
+                    <div class="stat-sub">
+                        <span class="text-warning fw-semibold">{{ stockStats.lowStockCount|default(0) }} low stock</span>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- CHART + QUICK ACTIONS -->
-<div class="row mb-4">
-    <div class="col-lg-8">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Order Status</h5>
+<!-- ORDER STATUS + QUICK ACTIONS -->
+<div class="row mb-4 g-3">
+    <div class="col-lg-6">
+        <div class="card section-card h-100">
+            <div class="card-header">
+                <h5>Order Status</h5>
             </div>
-            <div class="card-body">
-                <canvas id="orderStatusChart"></canvas>
+            <div class="card-body d-flex align-items-center justify-content-center py-4">
+                <canvas id="orderStatusChart" style="max-height: 230px; width: 100%;"></canvas>
             </div>
         </div>
     </div>
 
-    <div class="col-lg-4">
-        <div class="card shadow-sm">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">Quick Actions</h5>
+    <div class="col-lg-6">
+        <div class="card section-card h-100">
+            <div class="card-header">
+                <h5>Quick Actions</h5>
             </div>
-            <div class="card-body">
+            <div class="card-body p-4">
                 <div class="row g-3">
                     <div class="col-6">
-                        <a href="{{ path('admin_users') }}" class="btn btn-light w-100">
-                            <i class="bi bi-people"></i><br>Users
+                        <a href="{{ path('admin_users') }}" class="quick-action-btn w-100">
+                            <i class="bi bi-people"></i>
+                            <span>Users</span>
                         </a>
                     </div>
                     <div class="col-6">
-                        <a href="{{ path('staff_product_new') }}" class="btn btn-light w-100">
-                            <i class="bi bi-plus-circle"></i><br>Add Product
+                        <a href="{{ path('staff_product_new') }}" class="quick-action-btn w-100">
+                            <i class="bi bi-plus-circle"></i>
+                            <span>Add Product</span>
                         </a>
                     </div>
                     <div class="col-6">
-                        <a href="{{ path('admin_activity_logs') }}" class="btn btn-light w-100">
-                            <i class="bi bi-list-check"></i><br>Logs
+                        <a href="{{ path('admin_activity_logs') }}" class="quick-action-btn w-100">
+                            <i class="bi bi-list-check"></i>
+                            <span>Logs</span>
                         </a>
                     </div>
                     <div class="col-6">
-                        <a href="{{ path('admin_settings') }}" class="btn btn-light w-100">
-                            <i class="bi bi-gear"></i><br>Settings
+                        <a href="{{ path('admin_settings') }}" class="quick-action-btn w-100">
+                            <i class="bi bi-gear"></i>
+                            <span>Settings</span>
                         </a>
                     </div>
                 </div>
@@ -125,51 +292,84 @@
 </div>
 
 <!-- RECENT ORDERS -->
-<div class="card shadow-sm">
-    <div class="card-header bg-white d-flex justify-content-between">
-        <h5 class="mb-0">Recent Orders</h5>
-        <a href="{{ path('staff_orders') }}" class="btn btn-sm btn-outline-primary">View All</a>
+{% if recentOrders|default([]) is not empty %}
+<div class="card section-card">
+    <div class="card-header">
+        <h5>Recent Orders</h5>
+        <a href="{{ path('staff_orders') }}" class="btn btn-outline-pink btn-sm">View All</a>
     </div>
-
     <div class="card-body p-0">
-        <table class="table mb-0">
-            <thead class="table-light">
-                <tr>
-                    <th>Order #</th>
-                    <th>Customer</th>
-                    <th>Date</th>
-                    <th>Total</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for order in recentOrders|default([]) %}
-                <tr>
-                    <td>{{ order.reference }}</td>
-                    <td>{{ order.user.firstName }} {{ order.user.lastName }}</td>
-                    <td>{{ order.createdAt|date('M d, Y') }}</td>
-                    <td>₱{{ order.total|number_format(2) }}</td>
-                    <td>
-                        <span class="badge bg-success">{{ order.status }}</span>
-                    </td>
-                </tr>
-                {% else %}
-                <tr>
-                    <td colspan="5" class="text-center text-muted py-4">
-                        No recent orders
-                    </td>
-                </tr>
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th>Order #</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                {% for order in recentOrders %}
+                    {% set statusColors = {
+                        'pending':    'warning',
+                        'accepted':   'info',
+                        'processing': 'primary',
+                        'completed':  'success',
+                        'cancelled':  'danger',
+                        'declined':   'danger'
+                    } %}
+                    <tr>
+                        <td><strong class="text-pink" style="color:var(--pink)">#{{ order.orderNumber|default('N/A') }}</strong></td>
+                        <td>
+                            {% if order.customer %}
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                                         style="width:30px;height:30px;background:var(--pink);font-size:0.75rem;flex-shrink:0">
+                                        {{ order.customer.firstName|first|upper }}
+                                    </div>
+                                    {{ order.customer.firstName }} {{ order.customer.lastName }}
+                                </div>
+                            {% else %}
+                                <span class="text-muted">Guest</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-muted">{{ order.createdAt|date('M d, Y') }}</td>
+                        <td><strong>₱{{ order.totalAmount|default(0)|number_format(2) }}</strong></td>
+                        <td>
+                            <span class="badge badge-status bg-{{ statusColors[order.status]|default('secondary') }}">
+                                {{ order.status|upper }}
+                            </span>
+                        </td>
+                    </tr>
                 {% endfor %}
-            </tbody>
-        </table>
+                </tbody>
+            </table>
+        </div>
     </div>
 </div>
+
+{% else %}
+<div class="card section-card">
+    <div class="card-body empty-state">
+        <i class="bi bi-cart-x"></i>
+        <h5 class="text-muted mb-1">No Recent Orders</h5>
+        <p class="text-muted mb-3">Orders will appear here once customers start purchasing.</p>
+        <a href="{{ path('admin_order_new') }}" class="btn btn-pink">
+            <i class="bi bi-plus-circle me-2"></i>Create First Order
+        </a>
+    </div>
+</div>
+{% endif %}
 
 {% endblock %}
 
 {% block javascripts %}
+{{ parent() }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', function () {
     const ctx = document.getElementById('orderStatusChart');
     if (!ctx) return;
 
@@ -183,8 +383,30 @@ document.addEventListener('DOMContentLoaded', () => {
                     {{ orderStats.processingCount|default(0) }},
                     {{ orderStats.completedCount|default(0) }},
                     {{ orderStats.cancelledCount|default(0) }}
-                ]
+                ],
+                backgroundColor: ['#fbbf24', '#e91e8c', '#10b981', '#ef4444'],
+                borderWidth: 3,
+                borderColor: '#fff',
+                hoverOffset: 6
             }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            cutout: '68%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        font: { size: 12, weight: '500' },
+                        boxWidth: 12,
+                        borderRadius: 4,
+                        padding: 12,
+                        color: '#374151'
+                    }
+                }
+            },
+            layout: { padding: 10 }
         }
     });
 });

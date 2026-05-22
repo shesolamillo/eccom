@@ -1,0 +1,77 @@
+{% extends 'layouts/admin.html.twig' %}
+{% block title %}Update Stock - SMSol Studio{% endblock %}
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('staff_stocks') }}">Stock</a></li>
+<li class="breadcrumb-item active">Update Stock</li>
+{% endblock %}
+{% block page_title %}Update Stock{% endblock %}
+{% block page_description %}Update stock for {{ stock.product.name }}{% endblock %}
+{% block page_actions %}
+<a href="{{ path('staff_stocks') }}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Back to Stock
+</a>
+{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-5">
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Update Stock</h5>
+            </div>
+            <div class="card-body">
+
+                {# Product Info #}
+                <div class="d-flex align-items-center mb-4 p-3 bg-light rounded">
+                    {% if stock.product.photo %}
+                        <img src="{{ asset('uploads/products/' ~ stock.product.photo) }}"
+                             alt="{{ stock.product.name }}"
+                             class="rounded me-3"
+                             style="width: 60px; height: 60px; object-fit: cover;">
+                    {% else %}
+                        <div class="bg-white rounded me-3 d-flex align-items-center justify-content-center"
+                             style="width: 60px; height: 60px;">
+                            <i class="bi bi-image text-muted fs-3"></i>
+                        </div>
+                    {% endif %}
+                    <div>
+                        <strong>{{ stock.product.name }}</strong>
+                        <div class="text-muted small">SKU: {{ stock.product.sku|default('N/A') }}</div>
+                        <div class="mt-1">
+                            <span class="badge bg-{{ stock.quantity <= 0 ? 'danger' : (stock.isIsLowStock ? 'warning' : 'success') }}">
+                                Current Stock: {{ stock.quantity }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {{ form_start(form) }}
+
+                <div class="mb-3">
+                    {{ form_label(form.quantity, 'New Quantity', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                    {{ form_widget(form.quantity, {'attr': {'class': 'form-control form-control-lg'}}) }}
+                    {{ form_errors(form.quantity) }}
+                </div>
+
+                <div class="mb-4">
+                    {{ form_label(form.minimumThreshold, 'Minimum Threshold', {'label_attr': {'class': 'form-label fw-semibold'}}) }}
+                    {{ form_widget(form.minimumThreshold, {'attr': {'class': 'form-control'}}) }}
+                    {{ form_errors(form.minimumThreshold) }}
+                    <div class="form-text">Alert when stock falls below this level</div>
+                </div>
+
+                <div class="d-flex justify-content-between">
+                    <a href="{{ path('staff_stocks') }}" class="btn btn-secondary">
+                        <i class="bi bi-x-circle me-1"></i>Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save me-1"></i>Update Stock
+                    </button>
+                </div>
+
+                {{ form_end(form) }}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

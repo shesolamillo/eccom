@@ -11,6 +11,7 @@ use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Form\ProfileFormType;
+use Symfony\Component\String\Slugger\SluggerInterface;
 
 
 
@@ -34,15 +35,52 @@ class UserDashboardController extends AbstractController
     }
 
      #[Route('/profile', name: 'app_profile')]
-    public function profile(Request $request, EntityManagerInterface $em): Response
+    public function profile(Request $request, EntityManagerInterface $em, SluggerInterface $slugger): Response
     {
         $user = $this->getUser();
+         if (!$user) {
+            return $this->redirectToRoute('app_login');
+        }
         $profile = $user->getUserProfile();
+
+        if (!$profile) {
+            $profile = new UserProfile();
+            $profile->setUser($user);
+            $em->persist($profile);
+            $em->flush();
+        }
 
         $form = $this->createForm(ProfileFormType::class, $profile);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            $profilePictureFile = $form->get('profilePicture')->getData();
+
+            if ($profilePictureFile) {
+                $originalFilename = pathinfo($profilePictureFile->getClientOriginalName(), PATHINFO_FILENAME);
+                $newFilename = $slugger->slug($originalFilename) . '-' . uniqid() . '.' . $profilePictureFile->guessExtension();
+                try{
+                $profilePictureFile->move(
+                    $this->getParameter('profiles_directory'),
+                    $newFilename
+                );
+
+                $oldProfilePicture = $profile->getProfilePicture();
+
+                 if ($oldProfilePicture && file_exists($this->getParameter('profiles_directory') . '/' . $oldProfilePicture)) {
+                        unlink($this->getParameter('profiles_directory') . '/' . $oldProfilePicture);
+                    }
+
+
+
+                $profile->setProfilePicture($newFilename);
+                $this->addFlash('success', 'Profile picture updated successfully!');
+                } catch (FileException $e) {
+                    $this->addFlash('error', 'Failed to uploading file: ' . $e->getMessage());
+                }
+            }
+
             $em->persist($profile);
             $em->flush();
 

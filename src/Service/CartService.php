@@ -133,7 +133,7 @@ class CartService
         foreach ($cart as $productId => $quantity) {
             $product = $this->em->getRepository(Product::class)->find($productId);
             
-            if ($product && $product->isAvailable() && $product->getStock()?->getQuantity() > 0) {
+            if ($product && $product->isIsAvailable() && $product->getStock()?->getQuantity() > 0) {
                 $items[] = [
                     'id' => $productId,
                     'product' => $product,
@@ -269,7 +269,7 @@ class CartService
         foreach ($cart as $productId => $quantity) {
             $product = $this->em->getRepository(Product::class)->find($productId);
 
-            if (!$product || !$product->isAvailable()) {
+            if (!$product || !$product->isIsAvailable()) {
                 $issues[] = "Product #$productId is no longer available";
                 unset($cart[$productId]);
             } elseif (!$product->getStock() || $product->getStock()->getQuantity() < $quantity) {

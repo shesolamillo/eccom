@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Payment Confirmation - Order #{{ order.orderNumber }}</title>
+</head>
+<body style="font-family: Arial, sans-serif;">
+    <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 style="color: #2c3e50;">SMSol Studio</h2>
+        </div>
+        
+        <div style="background-color: #d4edda; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
+            <h3 style="color: #155724; margin-top: 0;">✓ Payment Successful!</h3>
+            <p>Your payment of <strong>₱{{ order.totalAmount|number_format(2) }}</strong> has been deducted from your account.</p>
+            <p><strong>Order #:</strong> {{ order.orderNumber }}</p>
+            <p><strong>Transaction Date:</strong> {{ "now"|date('F d, Y h:i A') }}</p>
+        </div>
+        
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+            <h4>Payment Details:</h4>
+            <p><strong>Payment Method:</strong> {{ order.paymentMethod|upper }}</p>
+            {% if order.accountInfo %}
+            <p><strong>Account:</strong> {{ order.accountInfo }}</p>
+            {% endif %}
+            <p><strong>Reference:</strong> {{ order.paymentReference|default('N/A') }}</p>
+        </div>
+        
+        <div style="margin-top: 30px; text-align: center;">
+            <p>Thank you for your purchase!</p>
+            <p style="font-size: 12px; color: #6c757d;">SMSol Studio | 123 Fashion Street, Makati City</p>
+        </div>
+    </div>
+</body>
+</html>

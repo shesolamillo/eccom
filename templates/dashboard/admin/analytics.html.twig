@@ -1,0 +1,347 @@
+{% extends 'base.html.twig' %}
+{% block title %}Admin Analytics - SMSol Studio{% endblock %}
+
+{% block body %}
+<style>
+    :root {
+        --pink: #e91e8c;
+        --pink-dark: #c0166f;
+        --pink-light: #f8d7ea;
+        --pink-soft: #fdf0f7;
+    }
+
+    body { background: #f9fafb; }
+
+    .analytics-wrap {
+        max-width: 1300px;
+        margin: 0 auto;
+        padding: 2rem 1.5rem;
+    }
+
+    /* HEADER */
+    .analytics-header {
+        background: linear-gradient(135deg, var(--pink) 0%, var(--pink-dark) 100%);
+        border-radius: 18px;
+        padding: 2rem 2.5rem;
+        color: #fff;
+        margin-bottom: 1.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+    }
+    .analytics-header h2 {
+        font-size: 1.6rem;
+        font-weight: 700;
+        margin: 0;
+    }
+    .analytics-header p {
+        margin: 0.25rem 0 0;
+        opacity: 0.85;
+        font-size: 0.9rem;
+    }
+    .analytics-header .header-icon {
+        font-size: 3rem;
+        opacity: 0.25;
+    }
+
+    /* FILTERS */
+    .filter-bar {
+        display: flex;
+        gap: 0.5rem;
+        margin-bottom: 1.75rem;
+        flex-wrap: wrap;
+    }
+    .filter-bar a {
+        padding: 0.45rem 1.1rem;
+        border-radius: 20px;
+        font-size: 0.83rem;
+        font-weight: 500;
+        text-decoration: none;
+        border: 1.5px solid var(--pink-light);
+        color: var(--pink);
+        background: #fff;
+        transition: all 0.2s;
+    }
+    .filter-bar a:hover,
+    .filter-bar a.active {
+        background: var(--pink);
+        color: #fff;
+        border-color: var(--pink);
+    }
+
+    /* STAT CARDS */
+    .stat-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 1.25rem;
+        margin-bottom: 1.75rem;
+    }
+    .stat-card {
+        background: #fff;
+        border-radius: 16px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 12px rgba(233,30,140,0.08);
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 24px rgba(233,30,140,0.15);
+    }
+    .stat-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        flex-shrink: 0;
+    }
+    .icon-pink   { background: var(--pink-light); }
+    .icon-green  { background: #d4f5e9; }
+    .icon-blue   { background: #dbeafe; }
+    .stat-label {
+        font-size: 0.72rem;
+        font-weight: 600;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #9ca3af;
+        margin-bottom: 2px;
+    }
+    .stat-value {
+        font-size: 1.6rem;
+        font-weight: 700;
+        color: #1f2937;
+        line-height: 1.2;
+    }
+
+    /* CHART GRID */
+    .chart-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+    .chart-grid .chart-full { grid-column: 1 / -1; }
+
+    .chart-card {
+        background: #fff;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(233,30,140,0.07);
+        overflow: hidden;
+    }
+    .chart-card-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 2px solid var(--pink-light);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .chart-card-header::before {
+        content: '';
+        display: inline-block;
+        width: 4px;
+        height: 18px;
+        background: var(--pink);
+        border-radius: 4px;
+    }
+    .chart-card-header h4 {
+        margin: 0;
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1f2937;
+    }
+    .chart-card-body {
+        padding: 1.5rem;
+    }
+
+    @media (max-width: 768px) {
+        .chart-grid { grid-template-columns: 1fr; }
+        .chart-grid .chart-full { grid-column: 1; }
+    }
+</style>
+
+<div class="analytics-wrap">
+
+    <!-- HEADER -->
+    <div class="analytics-header">
+        <div>
+            <h2>Admin Analytics Dashboard</h2>
+            <p>Revenue, Orders, and Activity Overview</p>
+        </div>
+        <i class="bi bi-bar-chart-line header-icon"></i>
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-bar">
+        <a href="?filter=7days" class="{{ app.request.query.get('filter') == '7days' ? 'active' : '' }}">Last 7 Days</a>
+        <a href="?filter=month"  class="{{ app.request.query.get('filter') == 'month'  ? 'active' : '' }}">This Month</a>
+        <a href="?filter=year"   class="{{ app.request.query.get('filter') == 'year'   ? 'active' : '' }}">This Year</a>
+    </div>
+
+    <!-- STAT CARDS -->
+    <div class="stat-grid">
+        <div class="stat-card">
+            <div class="stat-icon icon-pink">💰</div>
+            <div>
+                <div class="stat-label">Total Revenue</div>
+                <div class="stat-value">₱{{ totalRevenue|default(0)|number_format(2) }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-green">🛒</div>
+            <div>
+                <div class="stat-label">Total Orders</div>
+                <div class="stat-value">{{ totalOrders|default(0) }}</div>
+            </div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon icon-blue">👤</div>
+            <div>
+                <div class="stat-label">Active Users</div>
+                <div class="stat-value">{{ totalUsers|default(0) }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHARTS -->
+    <div class="chart-grid">
+
+        <!-- Bar Chart - full width -->
+        <div class="chart-card chart-full">
+            <div class="chart-card-header">
+                <h4>Monthly Revenue</h4>
+            </div>
+            <div class="chart-card-body">
+                <canvas id="barChart" style="max-height: 280px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Line Chart -->
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <h4>Revenue Trend</h4>
+            </div>
+            <div class="chart-card-body">
+                <canvas id="lineChart" style="max-height: 240px;"></canvas>
+            </div>
+        </div>
+
+        <!-- Pie Chart -->
+        <div class="chart-card">
+            <div class="chart-card-header">
+                <h4>Revenue Distribution</h4>
+            </div>
+            <div class="chart-card-body d-flex justify-content-center">
+                <canvas id="pieChart" style="max-height: 240px;"></canvas>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const labels  = [{% for d in monthlyRevenue %}"{{ d.orderMonth }}",{% endfor %}];
+const revenue = [{% for d in monthlyRevenue %}{{ d.monthlyRevenue }},{% endfor %}];
+
+const pink      = '#e91e8c';
+const pinkLight = 'rgba(233,30,140,0.12)';
+const green     = '#10b981';
+const pieColors = ['#e91e8c','#f472b6','#fbbf24','#10b981','#3b82f6','#8b5cf6','#ef4444','#06b6d4'];
+
+Chart.defaults.font.family = "'Inter', 'Segoe UI', sans-serif";
+Chart.defaults.color = '#6b7280';
+
+// BAR
+new Chart(document.getElementById('barChart'), {
+    type: 'bar',
+    data: {
+        labels,
+        datasets: [{
+            label: 'Revenue (₱)',
+            data: revenue,
+            backgroundColor: pinkLight,
+            borderColor: pink,
+            borderWidth: 2,
+            borderRadius: 8,
+            borderSkipped: false
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false } },
+            y: {
+                grid: { color: '#f3f4f6' },
+                ticks: { callback: v => '₱' + v.toLocaleString() }
+            }
+        }
+    }
+});
+
+// LINE
+new Chart(document.getElementById('lineChart'), {
+    type: 'line',
+    data: {
+        labels,
+        datasets: [{
+            label: 'Trend (₱)',
+            data: revenue,
+            borderColor: pink,
+            backgroundColor: pinkLight,
+            borderWidth: 2.5,
+            pointBackgroundColor: pink,
+            pointRadius: 4,
+            pointHoverRadius: 6,
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: { legend: { display: false } },
+        scales: {
+            x: { grid: { display: false } },
+            y: {
+                grid: { color: '#f3f4f6' },
+                ticks: { callback: v => '₱' + v.toLocaleString() }
+            }
+        }
+    }
+});
+
+// PIE
+new Chart(document.getElementById('pieChart'), {
+    type: 'doughnut',
+    data: {
+        labels,
+        datasets: [{
+            data: revenue,
+            backgroundColor: pieColors,
+            borderWidth: 3,
+            borderColor: '#fff',
+            hoverOffset: 6
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        cutout: '60%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: { boxWidth: 12, padding: 12, font: { size: 11 } }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

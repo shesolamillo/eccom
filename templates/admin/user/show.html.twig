@@ -1,0 +1,134 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Customer Details - {{ user.firstName }} {{ user.lastName }}{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('admin_users') }}">Users</a></li>
+<li class="breadcrumb-item active">{{ user.firstName }} {{ user.lastName }}</li>
+{% endblock %}
+
+{% block page_title %}Customer Details{% endblock %}
+{% block page_description %}View customer information{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <a href="{{ path('admin_user_edit', {'id': user.id}) }}" class="btn btn-primary">
+        <i class="bi bi-pencil me-2"></i>Edit Customer
+    </a>
+    <a href="{{ path('admin_orders') }}?search={{ user.email }}" class="btn btn-secondary">
+        <i class="bi bi-list me-2"></i>View Orders
+    </a>
+    <a href="{{ path('admin_users') }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Users
+    </a>
+</div>
+{% endblock %}
+
+{% block admin_content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card text-center">
+            <div class="card-body">
+                <div class="rounded-circle bg-primary text-white d-flex align-items-center justify-content-center mx-auto mb-3" 
+                     style="width: 100px; height: 100px; font-size: 2.5rem;">
+                    {{ user.firstName|first|upper }}{{ user.lastName|first|upper }}
+                </div>
+                <h4>{{ user.firstName }} {{ user.lastName }}</h4>
+                <p class="text-muted">{{ user.email }}</p>
+                <p><span class="badge {{ 'ROLE_ADMIN' in user.roles ? 'bg-danger' : ('ROLE_STAFF' in user.roles ? 'bg-warning' : 'bg-secondary') }}">
+                    {{ 'ROLE_ADMIN' in user.roles ? 'Admin' : ('ROLE_STAFF' in user.roles ? 'Staff' : 'Customer') }}
+                </span></p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5>Personal Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Full Name:</div>
+                    <div class="col-md-8">{{ user.firstName }} {{ user.lastName }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Email Address:</div>
+                    <div class="col-md-8">{{ user.email }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Phone Number:</div>
+                    <div class="col-md-8">{{ user.phoneNumber|default('N/A') }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Status:</div>
+                    <div class="col-md-8">
+                        <span class="badge {{ user.isActive ? 'bg-success' : 'bg-danger' }}">
+                            {{ user.isActive ? 'Active' : 'Inactive' }}
+                        </span>
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Member Since:</div>
+                    <div class="col-md-8">{{ user.createdAt|date('F j, Y') }}</div>
+                </div>
+                {% if user.userProfile %}
+                <hr>
+                <h6 class="mt-3">Address Information</h6>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Address:</div>
+                    <div class="col-md-8">{{ user.userProfile.address|default('N/A') }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">City:</div>
+                    <div class="col-md-8">{{ user.userProfile.city|default('N/A') }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">State/Province:</div>
+                    <div class="col-md-8">{{ user.userProfile.state|default('N/A') }}</div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-4 fw-bold">Postal Code:</div>
+                    <div class="col-md-8">{{ user.userProfile.zipCode|default('N/A') }}</div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Order History</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Order #</th>
+                                <th>Date</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </thead>
+                        <tbody>
+                            {% for order in user.orders %}
+                            <tr>
+                                <td>#{{ order.orderNumber }}</td>
+                                <td>{{ order.createdAt|date('M d, Y') }}</td>
+                                <td>₱{{ order.totalAmount|number_format(2) }}</td>
+                                <td><span class="badge bg-{{ order.status == 'completed' ? 'success' : 'warning' }}">{{ order.status|upper }}</span></td>
+                                <td><a href="{{ path('admin_order_show', {'id': order.id}) }}" class="btn btn-sm btn-info">View</a></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">No orders yet</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

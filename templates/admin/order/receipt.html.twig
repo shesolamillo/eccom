@@ -1,0 +1,121 @@
+{# templates/admin/order/receipt.html.twig #}
+{% extends 'layouts/print.html.twig' %}
+
+{% block title %}Receipt - Order #{{ order.orderNumber }}{% endblock %}
+
+{% block body %}
+<div class="receipt-container">
+    <!-- Header -->
+    <div class="text-center mb-4">
+        <h2 class="mb-1">SMSol Studio</h2>
+        <p class="text-muted mb-1">123 Fashion Street, Makati City</p>
+        <p class="text-muted mb-1">Tel: (02) 1234-5678 | Email: info@smsolstudio.com</p>
+        <p class="text-muted mb-0">VAT Reg TIN: 123-456-789-000</p>
+    </div>
+    
+    <hr>
+    
+    <div class="text-center mb-4">
+        <h3>OFFICIAL RECEIPT</h3>
+        <span class="badge bg-danger mt-1">ADMIN COPY</span>
+    </div>
+    
+    <!-- Receipt Info -->
+    <div class="row mb-4">
+        <div class="col-sm-6">
+            <p><strong>Receipt #:</strong> {{ receipt.receiptNumber|default('RCP-' ~ order.id) }}</p>
+            <p><strong>Date Issued:</strong> {{ receipt.issuedDate|default('now')|date('F d, Y h:i A') }}</p>
+            <p><strong>Payment Method:</strong> {{ order.paymentMethod|upper }}</p>
+        </div>
+        <div class="col-sm-6 text-sm-end">
+            <p><strong>Order #:</strong> {{ order.orderNumber }}</p>
+            <p><strong>Order Date:</strong> {{ order.createdAt|date('F d, Y h:i A') }}</p>
+            <p><strong>Status:</strong> {{ order.status|upper }}</p>
+        </div>
+    </div>
+    
+    <!-- Customer Info -->
+    <div class="card bg-light mb-4">
+        <div class="card-body">
+            <h6>BILLED TO:</h6>
+            <p class="mb-1"><strong>{{ order.customer.firstName }} {{ order.customer.lastName }}</strong></p>
+            <p class="mb-1">{{ order.customer.email }}</p>
+            <p class="mb-0">{{ order.customer.phoneNumber|default('N/A') }}</p>
+        </div>
+    </div>
+    
+    <!-- Items Table -->
+    <div class="table-responsive mb-4">
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>#</th>
+                    <th>Product</th>
+                    <th class="text-center">Qty</th>
+                    <th class="text-end">Unit Price</th>
+                    <th class="text-end">Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in order.orderItems %}
+                <tr>
+                    <td>{{ loop.index }}</td>
+                    <td>
+                        <strong>{{ item.product.name }}</strong><br>
+                        <small class="text-muted">{{ item.product.productType.name }}</small>
+                    </td>
+                    <td class="text-center">{{ item.quantity }}</td>
+                    <td class="text-end">₱{{ item.unitPrice|number_format(2) }}</td>
+                    <td class="text-end">₱{{ item.totalPrice|number_format(2) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot class="table-light">
+                <tr>
+                    <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                    <td class="text-end">₱{{ (order.totalAmount - order.deliveryFee)|number_format(2) }}</td>
+                </tr>
+                {% if order.deliveryFee > 0 %}
+                <tr>
+                    <td colspan="4" class="text-end"><strong>Delivery Fee:</strong></td>
+                    <td class="text-end">₱{{ order.deliveryFee|number_format(2) }}</td>
+                </tr>
+                {% endif %}
+                <tr class="table-active">
+                    <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
+                    <td class="text-end"><strong>₱{{ order.totalAmount|number_format(2) }}</strong></td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+    
+    <!-- Footer -->
+    <hr>
+    <div class="text-center">
+        <p class="text-muted mb-1">Thank you for your purchase!</p>
+        <p class="text-muted small">This is a computer-generated receipt. No signature required.</p>
+        <p class="text-muted small mt-2">
+            Printed on {{ "now"|date('F d, Y h:i A') }} by {{ app.user.firstName }} {{ app.user.lastName }}
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+.receipt-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+    font-family: Arial, sans-serif;
+}
+@media print {
+    .receipt-container {
+        padding: 0;
+    }
+    .no-print {
+        display: none;
+    }
+}
+</style>
+{% endblock %}

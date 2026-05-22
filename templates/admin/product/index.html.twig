@@ -1,49 +1,358 @@
 {% extends 'layouts/admin.html.twig' %}
-
 {% block title %}Product Management{% endblock %}
-
 {% block page_title %}Product Management{% endblock %}
 {% block page_description %}Manage your products{% endblock %}
 
 {% block admin_content %}
-<div class="card">
-    <div class="card-header bg-white">
-        <h5 class="mb-0">All Products</h5>
+<style>
+    :root {
+        --pink: #e91e8c;
+        --pink-dark: #c0166f;
+        --pink-light: #fce4f3;
+        --pink-soft: #fdf5fb;
+        --border: #f0f0f0;
+        --text-primary: #0f0f0f;
+        --text-secondary: #4b5563;
+        --text-muted: #9ca3af;
+        --radius: 16px;
+        --shadow: 0 4px 24px rgba(233,30,140,0.08), 0 1px 4px rgba(0,0,0,0.04);
+        --shadow-lg: 0 8px 40px rgba(233,30,140,0.12), 0 2px 8px rgba(0,0,0,0.05);
+    }
+
+    /* ── STATS ROW ── */
+    .stat-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .stat-box {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.1rem 1.25rem;
+        box-shadow: var(--shadow);
+        display: flex; align-items: center; gap: 12px;
+        transition: transform 0.18s, box-shadow 0.18s;
+        position: relative; overflow: hidden;
+    }
+    .stat-box:hover { transform: translateY(-2px); box-shadow: var(--shadow-lg); }
+    .stat-box::after {
+        content: ''; position: absolute;
+        top: 0; left: 0; right: 0; height: 3px;
+    }
+    .stat-box.s-pink::after  { background: var(--pink); }
+    .stat-box.s-green::after { background: #10b981; }
+    .stat-box.s-red::after   { background: #ef4444; }
+    .stat-box.s-amber::after { background: #f59e0b; }
+    .stat-icon {
+        width: 44px; height: 44px; border-radius: 12px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; flex-shrink: 0;
+    }
+    .si-pink  { background: var(--pink-light); color: var(--pink); }
+    .si-green { background: #d1fae5; color: #059669; }
+    .si-red   { background: #fee2e2; color: #dc2626; }
+    .si-amber { background: #fef3c7; color: #d97706; }
+    .stat-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-muted); }
+    .stat-value { font-size: 1.6rem; font-weight: 800; color: var(--text-primary); line-height: 1; letter-spacing: -0.02em; }
+
+    /* ── TABLE CARD ── */
+    .table-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-lg);
+        overflow: hidden;
+    }
+    .table-card-header {
+        padding: 1.1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between;
+        background: #fff;
+    }
+    .table-card-title {
+        font-size: 0.9rem; font-weight: 800;
+        color: var(--text-primary); margin: 0;
+        display: flex; align-items: center; gap: 10px;
+        letter-spacing: -0.01em;
+    }
+    .title-accent {
+        width: 4px; height: 20px;
+        background: linear-gradient(180deg, var(--pink), var(--pink-dark));
+        border-radius: 4px; flex-shrink: 0;
+    }
+    .total-pill {
+        background: var(--pink-soft);
+        border: 1px solid var(--pink-light);
+        color: var(--pink);
+        font-size: 0.7rem; font-weight: 700;
+        padding: 0.2em 0.65em; border-radius: 20px;
+    }
+
+    /* ── TABLE ── */
+    .p-table { border-collapse: separate; border-spacing: 0; }
+    .p-table thead th {
+        font-size: 0.65rem; font-weight: 800;
+        letter-spacing: 0.1em; text-transform: uppercase;
+        color: var(--text-muted);
+        background: #fafafa;
+        border-bottom: 1px solid var(--border);
+        padding: 0.85rem 1.25rem;
+        white-space: nowrap;
+    }
+    .p-table tbody td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        border-bottom: 1px solid #f8f8f8;
+    }
+    .p-table tbody tr:last-child td { border-bottom: none; }
+    .p-table tbody tr { transition: background 0.1s; }
+    .p-table tbody tr:hover { background: var(--pink-soft); }
+
+    /* PRODUCT CELL */
+    .p-name { font-weight: 700; color: var(--text-primary); font-size: 0.9rem; line-height: 1.3; }
+    .p-id   { font-size: 0.68rem; color: var(--text-muted); font-weight: 500; margin-top: 2px; }
+
+    /* CATEGORY */
+    .cat-tag {
+        background: #f5f5f5; color: #333;
+        border: 1px solid #ebebeb;
+        font-size: 0.72rem; font-weight: 600;
+        padding: 0.22em 0.75em; border-radius: 20px;
+        display: inline-block; letter-spacing: 0.02em;
+    }
+
+    /* PRICE */
+    .price-val {
+        font-size: 0.95rem; font-weight: 800;
+        color: var(--pink); letter-spacing: -0.01em;
+    }
+
+    /* STOCK */
+    .stock-val { font-weight: 700; font-size: 0.9rem; }
+    .stock-ok   { color: #059669; }
+    .stock-low  { color: #d97706; }
+    .stock-out  { color: #dc2626; }
+    .stock-badge {
+        font-size: 0.62rem; font-weight: 700;
+        padding: 0.15em 0.5em; border-radius: 4px;
+        margin-left: 4px; vertical-align: middle;
+        text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .sb-low  { background: #fef3c7; color: #92400e; }
+    .sb-out  { background: #fee2e2; color: #991b1b; }
+
+    /* STATUS */
+    .b-on {
+        background: #ecfdf3; color: #065f46;
+        border: 1px solid #a7f3d0;
+        font-size: 0.68rem; font-weight: 800;
+        padding: 0.28em 0.8em; border-radius: 20px;
+        letter-spacing: 0.05em; text-transform: uppercase;
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .b-on::before {
+        content: ''; width: 6px; height: 6px; border-radius: 50%;
+        background: #10b981;
+        animation: blink 2s ease-in-out infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .b-off {
+        background: #f9fafb; color: #6b7280;
+        border: 1px solid #e5e7eb;
+        font-size: 0.68rem; font-weight: 800;
+        padding: 0.28em 0.8em; border-radius: 20px;
+        letter-spacing: 0.05em; text-transform: uppercase;
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .b-off::before {
+        content: ''; width: 6px; height: 6px; border-radius: 50%;
+        background: #9ca3af;
+    }
+
+    /* ACTION BUTTONS */
+    .act {
+        width: 32px; height: 32px; border-radius: 8px;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.78rem; border: 1px solid #ebebeb;
+        transition: all 0.15s; text-decoration: none;
+        cursor: pointer; background: #fff; padding: 0;
+        color: #bbb;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .act:hover { transform: translateY(-1px); }
+    .act.edit:hover {
+        background: var(--pink-soft); border-color: var(--pink-light);
+        color: var(--pink); box-shadow: 0 4px 12px rgba(233,30,140,0.2);
+    }
+    .act.delete:hover {
+        background: #fef2f2; border-color: #fecaca;
+        color: #dc2626; box-shadow: 0 4px 12px rgba(220,38,38,0.15);
+    }
+
+    /* EMPTY STATE */
+    .empty-state { padding: 5rem 1rem; text-align: center; }
+    .empty-icon {
+        width: 80px; height: 80px; border-radius: 20px;
+        background: var(--pink-soft); border: 1px solid var(--pink-light);
+        color: var(--pink); font-size: 2rem;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1.25rem;
+        box-shadow: 0 4px 20px rgba(233,30,140,0.15);
+    }
+    .empty-state h6 { font-weight: 800; color: var(--text-primary); margin-bottom: 4px; font-size: 1rem; }
+    .empty-state p  { color: var(--text-muted); font-size: 0.85rem; margin: 0; }
+
+    @media (max-width: 768px) {
+        .stat-strip { grid-template-columns: repeat(2, 1fr); }
+    }
+</style>
+
+{% set totalProducts   = products|length %}
+{% set availableCount  = products|filter(p => p.isAvailable)|length %}
+{% set unavailableCount = totalProducts - availableCount %}
+{% set lowStockCount   = products|filter(p => p.stock.quantity is defined and p.stock.quantity <= 5 and p.stock.quantity > 0)|length %}
+
+<!-- STAT STRIP -->
+<div class="stat-strip">
+    <div class="stat-box s-pink">
+        <div class="stat-icon si-pink"><i class="bi bi-bag-heart"></i></div>
+        <div>
+            <div class="stat-label">Total Products</div>
+            <div class="stat-value">{{ totalProducts }}</div>
+        </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Price</th>
-                        <th>Stock</th>
-                        <th>Status</th>
-                        <th>Actions</th>
-                    </thead>
-                <tbody>
-                    {% for product in products %}
-                    <tr>
-                        <td>{{ product.id }}</td>
-                        <td>{{ product.name }}</td>
-                        <td>{{ product.clothesCategory.name|default('N/A') }}</td>
-                        <td>₱{{ product.price|number_format(2) }}</td>
-                        <td>{{ product.stock.quantity|default(0) }}</td>
-                        <td>{{ product.isAvailable ? 'Available' : 'Unavailable' }}</td>
-                        <td>
-                            <a href="{{ path('admin_product_edit', {'id': product.id}) }}" class="btn btn-sm btn-primary">Edit</a>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="7" class="text-center">No products found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+    <div class="stat-box s-green">
+        <div class="stat-icon si-green"><i class="bi bi-check-circle"></i></div>
+        <div>
+            <div class="stat-label">Available</div>
+            <div class="stat-value">{{ availableCount }}</div>
+        </div>
+    </div>
+    <div class="stat-box s-red">
+        <div class="stat-icon si-red"><i class="bi bi-x-circle"></i></div>
+        <div>
+            <div class="stat-label">Unavailable</div>
+            <div class="stat-value">{{ unavailableCount }}</div>
+        </div>
+    </div>
+    <div class="stat-box s-amber">
+        <div class="stat-icon si-amber"><i class="bi bi-exclamation-triangle"></i></div>
+        <div>
+            <div class="stat-label">Low Stock</div>
+            <div class="stat-value">{{ lowStockCount }}</div>
         </div>
     </div>
 </div>
+
+<!-- TABLE CARD -->
+<div class="table-card">
+    <div class="table-card-header">
+        <h5 class="table-card-title">
+            <span class="title-accent"></span>
+            All Products
+            <span class="total-pill">{{ totalProducts }} items</span>
+        </h5>
+    </div>
+    <div class="table-responsive">
+        <table class="table p-table mb-0">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Stock</th>
+                    <th>Status</th>
+                    <th class="text-end">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for product in products %}
+                {% set qty = product.stock.quantity|default(0) %}
+                <tr>
+                    <td>
+                        <div class="p-name">{{ product.name }}</div>
+                        <div class="p-id">#{{ product.id }}</div>
+                    </td>
+                    <td>
+                        <span class="cat-tag">
+                            {{ product.clothesCategory.name|default('Uncategorized') }}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="price-val">₱{{ product.price|number_format(2) }}</span>
+                    </td>
+                    <td>
+                        <span class="stock-val {{ qty == 0 ? 'stock-out' : (qty <= 5 ? 'stock-low' : 'stock-ok') }}">
+                            {{ qty }}
+                        </span>
+                        {% if qty == 0 %}
+                            <span class="stock-badge sb-out">Out</span>
+                        {% elseif qty <= 5 %}
+                            <span class="stock-badge sb-low">Low</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if product.isAvailable %}
+                            <span class="b-on">Active</span>
+                        {% else %}
+                            <span class="b-off">Inactive</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="d-flex gap-1 justify-content-end">
+                            <a href="{{ path('admin_product_edit', {'id': product.id}) }}"
+                               class="act edit" title="Edit">
+                                <i class="bi bi-pencil"></i>
+                            </a>
+                            <button type="button" class="act delete" title="Delete"
+                                    onclick="confirmDelete({{ product.id }}, '{{ product.name|e('js') }}', '{{ csrf_token('delete' ~ product.id) }}')">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="6">
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="bi bi-bag-x"></i></div>
+                            <h6>No products yet</h6>
+                            <p>Start building your clothing catalog.</p>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<input type="hidden" id="csrf_token" value="{{ csrf_token('delete_product') }}">
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+function confirmDelete(productId, productName, token) {
+    if (!confirm(`Are you sure you want to delete "${productName}"?`)) return;
+    fetch(`/admin/products/${productId}/delete`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: `_token=${token}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) { location.reload(); }
+        else { alert('Error: ' + data.message); }
+    })
+    .catch(() => alert('Error deleting product'));
+}
+</script>
 {% endblock %}

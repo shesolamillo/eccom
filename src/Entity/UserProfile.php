@@ -32,42 +32,53 @@ class UserProfile
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['user_profile:read'])]
     private ?int $id = null;
 
     #[ORM\OneToOne(inversedBy: 'userProfile', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['user_profile:read'])]
     private ?User $user = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user_profile:read'])]
     private ?string $profilePicture = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user_profile:read'])]
     #[Assert\Length(max: 255)]
     private ?string $address = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['user_profile:read'])]
     #[Assert\Length(max: 100)]
     private ?string $city = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['user_profile:read'])]
     #[Assert\Length(max: 100)]
     private ?string $state = null;
 
     #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['user_profile:read'])]
     #[Assert\Length(max: 20)]
     private ?string $zipCode = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['user_profile:read'])]
     private ?\DateTimeImmutable $dateOfBirth = null;
 
     #[ORM\Column(length: 10, nullable: true)]
+    #[Groups(['user_profile:read'])]
     #[Assert\Choice(['male', 'female', 'other'])]
     private ?string $gender = null;
 
     #[ORM\Column]
+    #[Groups(['user_profile:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['user_profile:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()

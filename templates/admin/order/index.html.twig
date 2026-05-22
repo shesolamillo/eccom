@@ -1,6 +1,6 @@
+{# templates/order/admin/index.html.twig #}
 {% extends 'layouts/admin.html.twig' %}
-
-{% block title %}Order Management - Admin{% endblock %}
+{% block title %}Order Management - SMSol Studio{% endblock %}
 
 {% block breadcrumb %}
 <li class="breadcrumb-item active">Orders</li>
@@ -9,164 +9,428 @@
 {% block page_title %}Order Management{% endblock %}
 {% block page_description %}Manage and process customer orders{% endblock %}
 
-
 {% block page_actions %}
-<a href="{{ path('admin_order_new') }}" class="btn btn-primary">
-    <i class="bi bi-plus-circle me-2"></i>Create New Order
+<a href="{{ path('admin_order_new') }}" class="btn btn-pink">
+  <i class="bi bi-plus-circle me-2"></i>Create New Order
 </a>
 {% endblock %}
 
+{% block stylesheets %}
+{{ parent() }}
+<style>
+:root {
+  --pink:      #e91e8c;
+  --pink-dark: #c0166f;
+  --pink-light:#fce4f3;
+  --pink-soft: #fdf5fb;
+}
+
+/* ── STAT CARDS ─────────────────────────────────────── */
+.border-left-primary { border-left: 4px solid var(--pink); }
+.border-left-warning { border-left: 4px solid #ffc107; }
+.border-left-info    { border-left: 4px solid #17a2b8; }
+.border-left-success { border-left: 4px solid #28a745; }
+
+.admin-chart {
+  border: none;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07), 0 1px 3px rgba(0,0,0,0.05);
+  transition: transform 0.18s, box-shadow 0.18s;
+  background: #fff;
+}
+.admin-chart:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.1), 0 2px 6px rgba(238,77,45,0.08);
+}
+
+.stat-icon {
+  width: 48px; height: 48px;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.2rem;
+}
+.stat-icon.pink   { background: linear-gradient(135deg, var(--pink), var(--pink-dark)); }
+.stat-icon.yellow { background: linear-gradient(135deg, #ffc107, #e0a800); }
+.stat-icon.teal   { background: linear-gradient(135deg, #17a2b8, #117a8b); }
+.stat-icon.green  { background: linear-gradient(135deg, #28a745, #1e7e34); }
+
+.stat-label {
+  font-size: 0.72rem; font-weight: 700;
+  text-transform: uppercase; letter-spacing: 0.07em;
+  color: #b0b8c1; margin-bottom: 4px;
+}
+.stat-value { font-size: 1.8rem; font-weight: 900; color: #1a1a2e; line-height: 1; }
+
+/* ── FILTER CARD ─────────────────────────────────────── */
+.filter-card {
+  border-radius: 10px;
+  border: 1px solid #f0f0f0;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+.filter-card .form-control,
+.filter-card .form-select {
+  border-radius: 8px;
+  border: 1.5px solid #e8e8e8;
+  font-size: 0.875rem;
+  background: #fafafa;
+}
+.filter-card .form-control:focus,
+.filter-card .form-select:focus {
+  border-color: var(--pink);
+  box-shadow: 0 0 0 3px rgba(238,77,45,0.1);
+  background: #fff;
+}
+.input-group-text {
+  background: #fafafa;
+  border: 1.5px solid #e8e8e8;
+  border-right: none;
+  color: #b0b8c1;
+  border-radius: 8px 0 0 8px !important;
+}
+
+.btn-pink {
+  background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+  color: #fff; border: none; border-radius: 8px;
+  font-weight: 700; font-size: 0.875rem;
+  padding: 0.5rem 1.25rem;
+  box-shadow: 0 4px 12px rgba(238,77,45,0.35);
+  transition: all 0.18s;
+}
+.btn-pink:hover { opacity: 0.92; transform: translateY(-1px); color: #fff; }
+
+.btn-reset {
+  border-radius: 8px; font-size: 0.875rem; font-weight: 600;
+  border: 1.5px solid #e8e8e8; color: #666; background: #fafafa;
+  transition: all 0.15s;
+}
+.btn-reset:hover { border-color: var(--pink); color: var(--pink); background: var(--pink-soft); }
+
+/* ── TABLE CARD ──────────────────────────────────────── */
+.orders-card {
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid #f0f0f0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+.orders-card .card-header {
+  background: #fff;
+  padding: 1rem 1.25rem;
+  border-bottom: 2px solid #f5f5f5;
+}
+.orders-card .card-header h5 {
+  color: #1a1a2e; font-weight: 800; margin: 0; font-size: 0.95rem;
+}
+.orders-card .card-header h5 i { color: var(--pink); }
+.badge-count {
+  background: var(--pink-light);
+  color: var(--pink); font-weight: 700;
+  border-radius: 20px; padding: 0.25rem 0.75rem;
+  font-size: 0.78rem;
+}
+
+.table th {
+  font-size: 0.7rem; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.08em;
+  color: #b0b8c1; border: none;
+  background: #fafafa;
+  padding: 0.75rem 1rem;
+  border-bottom: 2px solid #f0f0f0;
+}
+.table td {
+  padding: 0.85rem 1rem;
+  vertical-align: middle;
+  border-color: #f5f5f5;
+  font-size: 0.875rem;
+}
+.table tbody tr { transition: background 0.12s; }
+.table tbody tr:hover { background: var(--pink-soft); }
+
+/* ── CELL STYLES ─────────────────────────────────────── */
+.order-number { font-weight: 800; color: var(--pink); font-size: 0.9rem; }
+.customer-name { font-weight: 700; color: #1a1a2e; font-size: 0.875rem; }
+.customer-email { font-size: 0.72rem; color: #b0b8c1; margin-top: 2px; }
+.date-main { font-size: 0.82rem; font-weight: 600; color: #374151; }
+.date-time { font-size: 0.7rem; color: #b0b8c1; margin-top: 2px; }
+.total-amount { font-weight: 900; color: var(--pink); font-size: 0.9rem; }
+
+/* ── BADGES ──────────────────────────────────────────── */
+.badge-status {
+  border-radius: 6px;
+  padding: 0.3rem 0.7rem;
+  font-size: 0.68rem; font-weight: 800;
+  letter-spacing: 0.06em;
+  display: inline-block;
+}
+.badge-pending    { background: #fff8e1; color: #d48806; }
+.badge-processing { background: #e6f4ff; color: #0958d9; }
+.badge-completed  { background: #f6ffed; color: #389e0d; }
+.badge-cancelled  { background: #fff1f0; color: #cf1322; }
+.badge-paid       { background: #f6ffed; color: #389e0d; }
+.badge-unpaid     { background: #fff8e1; color: #d48806; }
+.badge-urgent     { background: #fff1f0; color: #cf1322; font-size: 0.65rem; border-radius: 4px; }
+.badge-items      { background: #f5f5f5; color: #666; border-radius: 6px; padding: 0.3rem 0.7rem; font-size: 0.68rem; font-weight: 700; }
+
+/* ── ACTION BUTTONS ──────────────────────────────────── */
+.btn-action {
+  width: 30px; height: 30px;
+  border-radius: 6px;
+  border: 1px solid #e8e8e8;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 0.8rem; transition: all 0.15s;
+  background: #fafafa; color: #666;
+  text-decoration: none;
+}
+.btn-action:hover { background: var(--pink); color: #fff; border-color: var(--pink); }
+.btn-action.manage:hover  { background: #28a745; color: #fff; border-color: #28a745; }
+.btn-action.receipt:hover { background: #17a2b8; color: #fff; border-color: #17a2b8; }
+</style>
+{% endblock %}
+
 {% block admin_content %}
-<!-- Order Stats -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card stats-card border-left-primary h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Total Orders</h6>
-                        <h3 class="fw-bold mb-0">{{ totalOrders|default(0) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-primary">
-                        <i class="bi bi-cart text-white"></i>
-                    </div>
-                </div>
-            </div>
+
+<!-- Stat Cards -->
+<div class="row mb-4 g-3">
+  <div class="col-md-3">
+    <div class="card admin-chart border-left-primary h-100">
+      <div class="card-body d-flex justify-content-between align-items-center py-3">
+        <div>
+          <div class="stat-label">Total Orders</div>
+          <div class="stat-value">{{ totalOrders|default(0) }}</div>
         </div>
+        <div class="stat-icon pink"><i class="bi bi-cart text-white"></i></div>
+      </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-warning h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Pending</h6>
-                        <h3 class="fw-bold mb-0">{{ pendingOrders|default(0) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-warning">
-                        <i class="bi bi-clock-history text-white"></i>
-                    </div>
-                </div>
-            </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card admin-chart border-left-warning h-100">
+      <div class="card-body d-flex justify-content-between align-items-center py-3">
+        <div>
+          <div class="stat-label">Pending</div>
+          <div class="stat-value">{{ pendingOrders|default(0) }}</div>
         </div>
+        <div class="stat-icon yellow"><i class="bi bi-clock-history text-white"></i></div>
+      </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-info h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Processing</h6>
-                        <h3 class="fw-bold mb-0">{{ processingOrders|default(0) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-info">
-                        <i class="bi bi-gear text-white"></i>
-                    </div>
-                </div>
-            </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card admin-chart border-left-info h-100">
+      <div class="card-body d-flex justify-content-between align-items-center py-3">
+        <div>
+          <div class="stat-label">Processing</div>
+          <div class="stat-value">{{ processingOrders|default(0) }}</div>
         </div>
+        <div class="stat-icon teal"><i class="bi bi-gear text-white"></i></div>
+      </div>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-success h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Completed</h6>
-                        <h3 class="fw-bold mb-0">{{ completedOrders|default(0) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-success">
-                        <i class="bi bi-check-circle text-white"></i>
-                    </div>
-                </div>
-            </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card admin-chart border-left-success h-100">
+      <div class="card-body d-flex justify-content-between align-items-center py-3">
+        <div>
+          <div class="stat-label">Completed</div>
+          <div class="stat-value">{{ completedOrders|default(0) }}</div>
         </div>
+        <div class="stat-icon green"><i class="bi bi-check-circle text-white"></i></div>
+      </div>
     </div>
+  </div>
+</div>
+
+<!-- Search & Filter -->
+<div class="card filter-card mb-4">
+  <div class="card-body py-3">
+    <div class="row g-2 align-items-center">
+      <div class="col-md-4">
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-search"></i></span>
+          <input type="text" id="searchOrders" class="form-control"
+                 placeholder="Search order #, customer, email..."
+                 style="border-left:none; border-radius:0 8px 8px 0;">
+        </div>
+      </div>
+      <div class="col-md-3">
+        <select id="statusFilter" class="form-select">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="processing">Processing</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+      <div class="col-md-3">
+        <select id="paymentFilter" class="form-select">
+          <option value="">All Payment</option>
+          <option value="paid">Paid</option>
+          <option value="unpaid">Unpaid</option>
+        </select>
+      </div>
+      <div class="col-md-2">
+        <button class="btn btn-reset w-100" onclick="resetFilters()">
+          <i class="bi bi-arrow-repeat me-1"></i>Reset
+        </button>
+      </div>
+    </div>
+  </div>
 </div>
 
 <!-- Orders Table -->
-<div class="card admin-chart">
-    <div class="card-header bg-white border-0">
-        <h5 class="mb-0">All Orders</h5>
+<div class="card orders-card">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5><i class="bi bi-bag-check me-2"></i>All Orders</h5>
+    <span class="badge-count">{{ orders|length }} orders</span>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0" id="ordersTable">
+        <thead>
+          <tr>
+            <th>Order #</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Items</th>
+            <th>Total</th>
+            <th>Status</th>
+            <th>Payment</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for order in orders %}
+          <tr class="order-row"
+              data-order-number="{{ order.orderNumber|lower }}"
+              data-customer-name="{{ order.customer.firstName }} {{ order.customer.lastName|lower }}"
+              data-customer-email="{{ order.customer.email|lower }}"
+              data-status="{{ order.status }}"
+              data-paid="{{ order.isPaid ? 'paid' : 'unpaid' }}">
+
+            <td>
+              <span class="order-number">#{{ order.orderNumber }}</span>
+              {% if order.isUrgent %}
+                <span class="badge badge-urgent ms-1">
+                  <i class="bi bi-exclamation-triangle me-1"></i>URGENT
+                </span>
+              {% endif %}
+            </td>
+
+            <td>
+              <div class="customer-name">{{ order.customer.firstName }} {{ order.customer.lastName }}</div>
+              <div class="customer-email">{{ order.customer.email }}</div>
+            </td>
+
+            <td>
+              <div class="date-main">{{ order.createdAt|date('M d, Y') }}</div>
+              <div class="date-time">{{ order.createdAt|date('h:i A') }}</div>
+            </td>
+
+            <td>
+              <span class="badge-items">{{ order.orderItems|length }} items</span>
+            </td>
+
+            <td>
+              <span class="total-amount">₱{{ order.totalAmount|number_format(2) }}</span>
+            </td>
+
+            <td>
+              {% set statusClass = order.status == 'pending' ? 'badge-pending'
+                : (order.status == 'processing' ? 'badge-processing'
+                : (order.status == 'completed'  ? 'badge-completed'
+                : 'badge-cancelled')) %}
+              <span class="badge-status {{ statusClass }}">{{ order.status|upper }}</span>
+            </td>
+
+            <td>
+              <span class="badge-status {{ order.isPaid ? 'badge-paid' : 'badge-unpaid' }}">
+                {{ order.isPaid ? 'PAID' : 'UNPAID' }}
+              </span>
+            </td>
+
+            <td>
+              <div class="d-flex gap-1">
+                <a href="{{ path('admin_order_show',   {'id': order.id}) }}" class="btn-action view"    title="View"><i class="bi bi-eye"></i></a>
+                <a href="{{ path('admin_order_manage', {'id': order.id}) }}" class="btn-action manage"  title="Manage"><i class="bi bi-gear"></i></a>
+                <a href="{{ path('admin_receipt_generate', {'id': order.id}) }}" class="btn-action receipt" title="Receipt" target="_blank"><i class="bi bi-receipt"></i></a>
+              </div>
+            </td>
+
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="8" class="text-center py-5">
+              <i class="bi bi-bag-x fs-1 d-block mb-3" style="color:#e8e8e8;"></i>
+              <div style="font-weight:700; color:#1a1a2e; margin-bottom:6px;">No orders yet</div>
+              <div style="font-size:0.82rem; color:#b0b8c1; margin-bottom:16px;">Create your first order to get started</div>
+              <a href="{{ path('admin_order_new') }}" class="btn btn-pink btn-sm">
+                <i class="bi bi-plus-circle me-1"></i>Create New Order
+              </a>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 data-table">
-                <thead class="bg-light">
-                    <tr>
-                        <th>Order #</th>
-                        <th>Customer</th>
-                        <th>Date</th>
-                        <th>Items</th>
-                        <th>Total</th>
-                        <th>Status</th>
-                        <th>Payment</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for order in orders %}
-                    <tr>
-                        <td>
-                            <strong>{{ order.orderNumber }}</strong>
-                            {% if order.isUrgent %}
-                                <span class="badge bg-danger ms-1">Urgent</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {{ order.customer.firstName }} {{ order.customer.lastName }}<br>
-                            <small class="text-muted">{{ order.customer.email }}</small>
-                        </td>
-                        <td>{{ order.createdAt|date('M d, Y h:i A') }}</td>
-                        <td>{{ order.orderItems|length }} items</td>
-                        <td class="fw-bold">₱{{ order.totalAmount|number_format(2) }}</td>
-                        <td>
-                            {% if order.status == 'pending' %}
-                                <span class="badge bg-warning">Pending</span>
-                            {% elseif order.status == 'processing' %}
-                                <span class="badge bg-info">Processing</span>
-                            {% elseif order.status == 'completed' %}
-                                <span class="badge bg-success">Completed</span>
-                            {% elseif order.status == 'cancelled' %}
-                                <span class="badge bg-secondary">Cancelled</span>
-                            {% elseif order.status == 'declined' %}
-                                <span class="badge bg-danger">Declined</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            {% if order.isPaid %}
-                                <span class="badge bg-success">Paid</span>
-                            {% else %}
-                                <span class="badge bg-warning">Unpaid</span>
-                            {% endif %}
-                        </td>
-                        <td>
-                            <div class="btn-group btn-group-sm">
-                                <a href="{{ path('admin_order_manage', {'id': order.id}) }}" 
-                                   class="btn btn-outline-primary" title="Manage">
-                                    <i class="bi bi-gear"></i>
-                                </a>
-                                <a href="{{ path('admin_order_show', {'id': order.id}) }}" 
-                                   class="btn btn-outline-info" title="View">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                            </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="8" class="text-center text-muted py-4">
-                            <i class="bi bi-cart-x fs-1"></i>
-                            <p class="mt-2">No orders found</p>
-                            <a href="{{ path('admin_order_new') }}" class="btn btn-primary">
-                                Create Your First Order
-                            </a>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
+  </div>
 </div>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+const searchInput   = document.getElementById('searchOrders');
+const statusFilter  = document.getElementById('statusFilter');
+const paymentFilter = document.getElementById('paymentFilter');
+
+function filterOrders() {
+  const searchTerm   = searchInput.value.toLowerCase();
+  const statusValue  = statusFilter.value;
+  const paymentValue = paymentFilter.value;
+  const rows = document.querySelectorAll('.order-row');
+  let visibleCount = 0;
+
+  rows.forEach(row => {
+    let show = true;
+    if (searchTerm) {
+      const o = row.dataset.orderNumber   || '';
+      const n = row.dataset.customerName  || '';
+      const e = row.dataset.customerEmail || '';
+      if (!o.includes(searchTerm) && !n.includes(searchTerm) && !e.includes(searchTerm)) show = false;
+    }
+    if (show && statusValue  && row.dataset.status !== statusValue)  show = false;
+    if (show && paymentValue && row.dataset.paid   !== paymentValue) show = false;
+    row.style.display = show ? '' : 'none';
+    if (show) visibleCount++;
+  });
+
+  let noResultsRow = document.getElementById('noResultsRow');
+  if (visibleCount === 0 && rows.length > 0) {
+    if (!noResultsRow) {
+      const tbody = document.querySelector('#ordersTable tbody');
+      noResultsRow = document.createElement('tr');
+      noResultsRow.id = 'noResultsRow';
+      noResultsRow.innerHTML = `
+        <td colspan="8" class="text-center py-5">
+          <i class="bi bi-search fs-1 d-block mb-3" style="color:#e8e8e8;"></i>
+          <div style="font-weight:700;color:#1a1a2e;margin-bottom:6px;">No matching orders</div>
+          <div style="font-size:0.82rem;color:#b0b8c1;">Try adjusting your search or filters</div>
+        </td>`;
+      tbody.appendChild(noResultsRow);
+    } else {
+      noResultsRow.style.display = '';
+    }
+  } else if (noResultsRow) {
+    noResultsRow.style.display = 'none';
+  }
+}
+
+function resetFilters() {
+  searchInput.value   = '';
+  statusFilter.value  = '';
+  paymentFilter.value = '';
+  filterOrders();
+}
+
+if (searchInput)   searchInput.addEventListener('keyup', filterOrders);
+if (statusFilter)  statusFilter.addEventListener('change', filterOrders);
+if (paymentFilter) paymentFilter.addEventListener('change', filterOrders);
+</script>
 {% endblock %}

@@ -38,21 +38,26 @@ class ProductType
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['product_type:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 100)]
+    #[Groups(['product_type:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
+    #[Groups(['product_type:read'])]
     private ?string $description = null;
 
     #[ORM\OneToMany(mappedBy: 'productType', targetEntity: Product::class)]
+    #[Groups(['product_type:read'])]
     private Collection $products;
 
     #[ORM\Column]
+    #[Groups(['product_type:read'])]
     private ?float $basePrice = null;
 
     #[ORM\Column]
@@ -62,7 +67,16 @@ class ProductType
     private ?bool $isActive = true;
 
     #[ORM\Column]
+    #[Groups(['product_type:read'])]
     private ?\DateTimeImmutable $createdAt = null;
+
+    #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['product_type:read'])]
+    private ?string $type = null;
+
+    #[ORM\ManyToOne(inversedBy: 'productTypes')]
+    #[ORM\JoinColumn(nullable: true)]
+    private ?ClothesCategory $category = null;
 
     public function __construct()
     {
@@ -171,5 +185,28 @@ class ProductType
     public function __toString(): string
     {
         return $this->name ?? '';
+    }
+
+    public function getType(): ?string
+    {
+        return $this->type;
+    }
+
+    public function setType(string $type): static
+    {
+        $this->type = $type;
+
+        return $this;
+    }
+
+    public function getCategory(): ?ClothesCategory
+    {
+        return $this->category;
+    }
+
+    public function setCategory(?ClothesCategory $category): static
+    {
+        $this->category = $category;
+        return $this;
     }
 }

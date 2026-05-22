@@ -18,6 +18,13 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
         TokenInterface $token
     ): RedirectResponse {
         $user = $token->getUser();
+        if (method_exists($user, 'isVerified') && !$user->isVerified()) {
+            // Log them out by invalidating the session
+            $request->getSession()->invalidate();
+            $request->getSession()->getFlashBag()->add('error', 'Please verify your email before logging in. Check your inbox.');
+            return new RedirectResponse($this->router->generate('app_login'));
+        }
+
         $roles = $user->getRoles();
 
         if (in_array('ROLE_ADMIN', $roles, true)) {

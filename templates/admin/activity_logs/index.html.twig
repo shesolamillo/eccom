@@ -2,263 +2,480 @@
 {% extends 'layouts/admin.html.twig' %}
 
 {% block title %}Activity Logs - SMSol Studio{% endblock %}
-
-{% block breadcrumb %}
-<li class="breadcrumb-item active">Activity Logs</li>
-{% endblock %}
-
+{% block breadcrumb %}<li class="breadcrumb-item active">Activity Logs</li>{% endblock %}
 {% block page_title %}Activity Logs{% endblock %}
 {% block page_description %}Monitor system activities and user actions{% endblock %}
 
 {% block page_actions %}
 <div class="d-flex gap-2">
-    <button type="button" class="btn btn-outline-secondary" onclick="exportLogs('csv')">
-        <i class="bi bi-download me-2"></i>Export CSV
+    <button type="button" class="btn-ghost-action" onclick="exportLogs('csv')">
+        <i class="bi bi-download me-1"></i> Export CSV
     </button>
-    <button type="button" class="btn btn-outline-secondary" onclick="clearOldLogs()">
-        <i class="bi bi-trash me-2"></i>Clear Old Logs
+    <button type="button" class="btn-danger-action" onclick="clearOldLogs()">
+        <i class="bi bi-trash me-1"></i> Clear Old Logs
     </button>
 </div>
 {% endblock %}
 
 {% block admin_content %}
-<!-- Filters -->
-<div class="card admin-chart mb-4">
-    <div class="card-body">
-        <form method="get" class="row g-3">
-            <div class="col-md-3">
-                <label class="form-label">Date Range</label>
-                <select name="date_range" class="form-select" onchange="this.form.submit()">
-                    <option value="today" {{ app.request.get('date_range') == 'today' ? 'selected' : '' }}>Today</option>
-                    <option value="week" {{ app.request.get('date_range') == 'week' ? 'selected' : '' }}>This Week</option>
-                    <option value="month" {{ app.request.get('date_range') == 'month' ? 'selected' : '' }}>This Month</option>
-                    <option value="all" {{ app.request.get('date_range') == 'all' ? 'selected' : '' }}>All Time</option>
-                </select>
+<style>
+    :root {
+        --pink: #e91e8c;
+        --pink-dark: #c0166f;
+        --pink-light: #fce4f3;
+        --pink-soft: #fdf5fb;
+        --border: #eaecf0;
+        --surface: #ffffff;
+        --surface-2: #f8f9fb;
+        --text-primary: #101828;
+        --text-secondary: #475467;
+        --text-muted: #98a2b3;
+        --radius: 12px;
+        --shadow: 0 1px 4px rgba(16,24,40,0.05), 0 4px 12px rgba(16,24,40,0.04);
+        --shadow-pink: 0 4px 16px rgba(233,30,140,0.1);
+    }
+
+    /* PAGE ACTION BUTTONS */
+    .btn-ghost-action {
+        background: var(--surface); border: 1px solid var(--border);
+        color: var(--text-secondary); border-radius: 8px;
+        font-size: 0.82rem; font-weight: 500;
+        padding: 0.45rem 0.9rem; cursor: pointer;
+        transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .btn-ghost-action:hover { border-color: var(--pink); color: var(--pink); background: var(--pink-soft); }
+    .btn-danger-action {
+        background: #fff5f5; border: 1px solid #fecaca;
+        color: #dc2626; border-radius: 8px;
+        font-size: 0.82rem; font-weight: 500;
+        padding: 0.45rem 0.9rem; cursor: pointer;
+        transition: all 0.15s; display: inline-flex; align-items: center; gap: 4px;
+    }
+    .btn-danger-action:hover { background: #dc2626; color: #fff; border-color: #dc2626; }
+
+    /* FILTER CARD */
+    .filter-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+    .filter-label {
+        font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.07em;
+        color: var(--text-muted); margin-bottom: 5px; display: block;
+    }
+    .form-select, .form-control {
+        border: 1.5px solid var(--border);
+        border-radius: 8px; font-size: 0.875rem;
+        padding: 0.55rem 0.85rem;
+        color: var(--text-primary); background: var(--surface);
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-select:focus, .form-control:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(233,30,140,0.1);
+        outline: none;
+    }
+    .btn-filter {
+        background: var(--pink); color: #fff; border: none;
+        border-radius: 8px; font-size: 0.82rem; font-weight: 600;
+        padding: 0.55rem 1rem; cursor: pointer; transition: all 0.15s;
+        display: inline-flex; align-items: center; gap: 5px;
+    }
+    .btn-filter:hover { background: var(--pink-dark); }
+    .btn-clear-filter {
+        background: var(--surface); border: 1px solid var(--border);
+        color: var(--text-muted); border-radius: 8px;
+        font-size: 0.82rem; font-weight: 500;
+        padding: 0.55rem 0.9rem; text-decoration: none;
+        display: inline-flex; align-items: center; gap: 5px;
+        transition: all 0.15s;
+    }
+    .btn-clear-filter:hover { border-color: var(--text-muted); color: var(--text-primary); }
+
+    /* STAT CARDS */
+    .stat-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.4rem;
+        box-shadow: var(--shadow);
+        display: flex; align-items: center; gap: 12px;
+        transition: transform 0.18s, box-shadow 0.18s;
+        position: relative; overflow: hidden;
+    }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-pink); }
+    .stat-card::after {
+        content: ''; position: absolute;
+        top: 0; left: 0; right: 0; height: 3px;
+    }
+    .sc-pink::after  { background: var(--pink); }
+    .sc-green::after { background: #10b981; }
+    .sc-amber::after { background: #f59e0b; }
+    .sc-red::after   { background: #ef4444; }
+    .stat-icon {
+        width: 44px; height: 44px; border-radius: 10px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1.2rem; flex-shrink: 0;
+    }
+    .si-pink  { background: var(--pink-light); color: var(--pink); }
+    .si-green { background: #d1fae5; color: #059669; }
+    .si-amber { background: #fef3c7; color: #d97706; }
+    .si-red   { background: #fee2e2; color: #dc2626; }
+    .stat-label {
+        font-size: 0.68rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.08em;
+        color: var(--text-muted); margin-bottom: 2px;
+    }
+    .stat-value {
+        font-size: 1.65rem; font-weight: 800;
+        color: var(--text-primary); line-height: 1; letter-spacing: -0.02em;
+    }
+
+    /* SECTION CARD */
+    .section-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: 1.5rem;
+    }
+    .section-card-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid var(--border);
+        display: flex; align-items: center; justify-content: space-between;
+        background: var(--surface);
+    }
+    .section-card-title {
+        font-size: 0.9rem; font-weight: 700;
+        color: var(--text-primary); margin: 0;
+        display: flex; align-items: center; gap: 8px;
+    }
+    .section-card-title::before {
+        content: ''; width: 4px; height: 18px;
+        background: var(--pink); border-radius: 4px;
+        display: inline-block;
+    }
+    .icon-btn {
+        width: 30px; height: 30px; border-radius: 7px;
+        border: 1px solid var(--border); background: var(--surface);
+        color: var(--text-muted); cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.8rem; transition: all 0.15s;
+    }
+    .icon-btn:hover { border-color: var(--pink); color: var(--pink); background: var(--pink-soft); }
+
+    /* TABLE */
+    .log-table thead th {
+        font-size: 0.65rem; font-weight: 800;
+        letter-spacing: 0.09em; text-transform: uppercase;
+        color: var(--text-muted); background: var(--surface-2);
+        border-bottom: 1px solid var(--border);
+        padding: 0.8rem 1.25rem; white-space: nowrap;
+    }
+    .log-table tbody td {
+        padding: 0.85rem 1.25rem;
+        vertical-align: middle;
+        font-size: 0.875rem;
+        color: var(--text-secondary);
+        border-bottom: 1px solid #f3f4f6;
+    }
+    .log-table tbody tr:last-child td { border-bottom: none; }
+    .log-table tbody tr { transition: background 0.1s; }
+    .log-table tbody tr:hover { background: var(--pink-soft); }
+
+    /* USER CELL */
+    .user-avatar {
+        width: 30px; height: 30px; border-radius: 50%;
+        object-fit: cover; flex-shrink: 0;
+        border: 1px solid var(--border);
+    }
+    .user-avatar-init {
+        width: 30px; height: 30px; border-radius: 50%;
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: #fff; font-size: 0.68rem; font-weight: 700;
+        display: flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+    }
+    .user-name  { font-weight: 600; color: var(--text-primary); font-size: 0.85rem; }
+    .user-email { font-size: 0.72rem; color: var(--text-muted); }
+
+    /* ACTION BADGES */
+    .action-badge {
+        font-size: 0.68rem; font-weight: 800;
+        padding: 0.28em 0.75em; border-radius: 6px;
+        letter-spacing: 0.04em; text-transform: uppercase;
+        display: inline-flex; align-items: center; gap: 4px;
+        border: 1px solid transparent;
+    }
+    .ab-login  { background: #ecfdf3; color: #027a48; border-color: #a7f3d0; }
+    .ab-create { background: var(--pink-soft); color: var(--pink); border-color: var(--pink-light); }
+    .ab-update { background: #fffbeb; color: #92400e; border-color: #fde68a; }
+    .ab-delete { background: #fef2f2; color: #b91c1c; border-color: #fecaca; }
+    .ab-other  { background: var(--surface-2); color: var(--text-muted); border-color: var(--border); }
+
+    /* LOG DETAILS */
+    .log-entity { font-weight: 600; color: var(--text-primary); font-size: 0.85rem; }
+    .log-desc   { font-size: 0.75rem; color: var(--text-muted); margin-top: 1px; }
+    .ip-code {
+        font-family: monospace; font-size: 0.78rem;
+        background: var(--surface-2); color: var(--text-secondary);
+        padding: 0.15em 0.5em; border-radius: 4px;
+        border: 1px solid var(--border);
+    }
+    .log-date { font-size: 0.85rem; color: var(--text-primary); font-weight: 500; }
+    .log-time { font-size: 0.72rem; color: var(--text-muted); }
+
+    /* VIEW BUTTON */
+    .btn-view-log {
+        width: 28px; height: 28px; border-radius: 7px;
+        border: 1px solid var(--border); background: var(--surface);
+        color: var(--text-muted); cursor: pointer;
+        display: inline-flex; align-items: center; justify-content: center;
+        font-size: 0.78rem; transition: all 0.15s;
+    }
+    .btn-view-log:hover { border-color: var(--pink); color: var(--pink); background: var(--pink-soft); }
+
+    /* EMPTY STATE */
+    .empty-state { padding: 4rem 1rem; text-align: center; }
+    .empty-icon {
+        width: 64px; height: 64px; border-radius: 16px;
+        background: var(--pink-soft); border: 1px solid var(--pink-light);
+        color: var(--pink); font-size: 1.75rem;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1rem;
+    }
+    .empty-state p { color: var(--text-muted); font-size: 0.875rem; margin: 0; }
+
+    /* PAGINATION */
+    .pagination .page-link {
+        border: 1px solid var(--border); color: var(--text-secondary);
+        border-radius: 7px !important; margin: 0 2px;
+        font-size: 0.82rem; font-weight: 600;
+        padding: 0.4rem 0.75rem; transition: all 0.15s;
+    }
+    .pagination .page-link:hover { border-color: var(--pink); color: var(--pink); background: var(--pink-soft); }
+    .pagination .page-item.active .page-link {
+        background: var(--pink); border-color: var(--pink); color: #fff;
+        box-shadow: 0 2px 8px rgba(233,30,140,0.25);
+    }
+    .pagination .page-item.disabled .page-link { opacity: 0.4; }
+
+    /* MODAL */
+    .modal-content { border: none; border-radius: var(--radius); box-shadow: 0 20px 60px rgba(0,0,0,0.12); overflow: hidden; }
+    .modal-header {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        border: none; padding: 1.1rem 1.5rem;
+    }
+    .modal-header .modal-title { color: #fff; font-weight: 700; font-size: 0.95rem; }
+    .modal-header .btn-close { filter: brightness(0) invert(1); }
+    .modal-body { padding: 1.5rem; background: var(--surface-2); }
+    .modal-footer { border-top: 1px solid var(--border); background: var(--surface); padding: 0.85rem 1.5rem; }
+</style>
+
+<input type="hidden" name="_csrf_token" id="csrf_token" value="{{ csrf_token('clear_logs') }}">
+
+<!-- FILTERS -->
+<div class="filter-card">
+    <form method="get" class="row g-3 align-items-end">
+        <div class="col-md-3">
+            <label class="filter-label">Date Range</label>
+            <select name="date_range" id="date_range_select" class="form-select" onchange="this.form.submit()">
+                <option value="today"  {{ app.request.get('date_range') == 'today'  ? 'selected' : '' }}>Today</option>
+                <option value="week"   {{ app.request.get('date_range') == 'week'   ? 'selected' : '' }}>This Week</option>
+                <option value="month"  {{ app.request.get('date_range') == 'month'  ? 'selected' : '' }}>This Month</option>
+                <option value="all"    {{ app.request.get('date_range') == 'all'    ? 'selected' : '' }}>All Time</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="filter-label">User</label>
+            <select name="user" class="form-select" onchange="this.form.submit()">
+                <option value="">All Users</option>
+                {% for user in allUsers|default([]) %}
+                    <option value="{{ user.id }}" {{ app.request.get('user') == user.id ? 'selected' : '' }}>
+                        {{ user.firstName }} {{ user.lastName }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="filter-label">Action Type</label>
+            <select name="action_type" class="form-select" onchange="this.form.submit()">
+                <option value="">All Actions</option>
+                <option value="login"  {{ app.request.get('action_type') == 'login'  ? 'selected' : '' }}>Login</option>
+                <option value="create" {{ app.request.get('action_type') == 'create' ? 'selected' : '' }}>Create</option>
+                <option value="update" {{ app.request.get('action_type') == 'update' ? 'selected' : '' }}>Update</option>
+                <option value="delete" {{ app.request.get('action_type') == 'delete' ? 'selected' : '' }}>Delete</option>
+            </select>
+        </div>
+        <div class="col-md-3 d-flex gap-2">
+            <button type="submit" class="btn-filter">
+                <i class="bi bi-funnel"></i> Filter
+            </button>
+            <a href="{{ path('admin_activity_logs') }}" class="btn-clear-filter">
+                <i class="bi bi-x-circle"></i> Clear
+            </a>
+        </div>
+    </form>
+</div>
+
+<!-- STAT CARDS -->
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="stat-card sc-pink">
+            <div class="stat-icon si-pink"><i class="bi bi-list-check"></i></div>
+            <div>
+                <div class="stat-label">Total Logs</div>
+                <div class="stat-value">{{ totalLogs }}</div>
             </div>
-            
-            <div class="col-md-3">
-                <label class="form-label">User</label>
-                <select name="user" class="form-select" onchange="this.form.submit()">
-                    <option value="">All Users</option>
-                    {% for user in allUsers|default([]) %}
-                        <option value="{{ user.id }}" {{ app.request.get('user') == user.id ? 'selected' : '' }}>
-                            {{ user.firstName }} {{ user.lastName }}
-                        </option>
-                    {% endfor %}
-                </select>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card sc-green">
+            <div class="stat-icon si-green"><i class="bi bi-calendar-day"></i></div>
+            <div>
+                <div class="stat-label">Today</div>
+                <div class="stat-value">{{ todayCount|default(0) }}</div>
             </div>
-            
-            <div class="col-md-3">
-                <label class="form-label">Action Type</label>
-                <select name="action_type" class="form-select" onchange="this.form.submit()">
-                    <option value="">All Actions</option>
-                    <option value="login" {{ app.request.get('action_type') == 'login' ? 'selected' : '' }}>Login</option>
-                    <option value="create" {{ app.request.get('action_type') == 'create' ? 'selected' : '' }}>Create</option>
-                    <option value="update" {{ app.request.get('action_type') == 'update' ? 'selected' : '' }}>Update</option>
-                    <option value="delete" {{ app.request.get('action_type') == 'delete' ? 'selected' : '' }}>Delete</option>
-                </select>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card sc-amber">
+            <div class="stat-icon si-amber"><i class="bi bi-people"></i></div>
+            <div>
+                <div class="stat-label">Active Users</div>
+                <div class="stat-value">{{ activeUsers|default(0) }}</div>
             </div>
-            
-            <div class="col-md-3 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary me-2">
-                    <i class="bi bi-filter me-2"></i>Apply Filters
-                </button>
-                <a href="{{ path('admin_activity_logs') }}" class="btn btn-outline-secondary">
-                    Clear
-                </a>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="stat-card sc-red">
+            <div class="stat-icon si-red"><i class="bi bi-exclamation-triangle"></i></div>
+            <div>
+                <div class="stat-label">Errors</div>
+                <div class="stat-value">{{ errorCount|default(0) }}</div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 
-<!-- Stats -->
-<div class="row mb-4">
-    <div class="col-md-3">
-        <div class="card stats-card border-left-primary h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Total Logs</h6>
-                        <h3 class="fw-bold">{{ totalLogs }}</h3>
-                    </div>
-                    <div class="stats-icon bg-primary">
-                        <i class="bi bi-list-check text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- ACTIVITY CHART -->
+<div class="section-card">
+    <div class="section-card-header">
+        <h5 class="section-card-title">Activity Overview (Last 30 Days)</h5>
     </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-success h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Today's Activities</h6>
-                        <h3 class="fw-bold">{{ todayCount|default(0) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-success">
-                        <i class="bi bi-calendar-day text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-warning h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Active Users</h6>
-                        <h3 class="fw-bold">{{ activeUsers|default(0) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-warning">
-                        <i class="bi bi-people text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-3">
-        <div class="card stats-card border-left-info h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">System Errors</h6>
-                        <h3 class="fw-bold">{{ errorCount|default(0) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-info">
-                        <i class="bi bi-exclamation-triangle text-white"></i>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Activity Chart -->
-<div class="card admin-chart mb-4">
-    <div class="card-header bg-white border-0">
-        <h5 class="mb-0">Activity Overview (Last 30 Days)</h5>
-    </div>
-    <div class="card-body">
-        <div class="chart-container" style="height: 300px;">
+    <div class="p-4">
+        <div class="chart-container" style="height:280px;">
             <canvas id="activityChart"></canvas>
         </div>
     </div>
 </div>
 
-<!-- Activity Logs Table -->
-<div class="card admin-chart">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Activity Logs</h5>
-        <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" onclick="refreshLogs()">
+<!-- LOGS TABLE -->
+<div class="section-card">
+    <div class="section-card-header">
+        <h5 class="section-card-title">Activity Logs</h5>
+        <div class="d-flex gap-1">
+            <button class="icon-btn" onclick="refreshLogs()" title="Refresh">
                 <i class="bi bi-arrow-clockwise"></i>
             </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="printTable()">
+            <button class="icon-btn" onclick="printTable()" title="Print">
                 <i class="bi bi-printer"></i>
             </button>
         </div>
     </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 data-table" id="logsTable">
-                <thead class="bg-light">
-                    <tr>
-                        <th>ID</th>
-                        <th>User</th>
-                        <th>Action</th>
-                        <th>Details</th>
-                        <th>IP Address</th>
-                        <th>Timestamp</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in logs %}
-                    <tr>
-                        <td>{{ log.id }}</td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                {% if log.user %}
-                                    {% if log.user.userProfile and log.user.userProfile.profilePicture %}
-                                        <img src="{{ asset('uploads/profiles/' ~ log.user.userProfile.profilePicture) }}" 
-                                             alt="{{ log.user.firstName }}" class="rounded-circle me-2" width="28" height="28">
-                                    {% else %}
-                                        <div class="rounded-circle bg-secondary d-flex align-items-center justify-content-center me-2" 
-                                             style="width: 28px; height: 28px;">
-                                            <i class="bi bi-person text-white"></i>
-                                        </div>
-                                    {% endif %}
-                                    <div>
-                                        <div>{{ log.user.firstName }} {{ log.user.lastName }}</div>
-                                        <small class="text-muted">{{ log.user.email }}</small>
-                                    </div>
+
+    <div class="table-responsive">
+        <table class="table log-table mb-0" id="logsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                    <th>IP Address</th>
+                    <th>Timestamp</th>
+                    <th class="text-end">View</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for log in logs %}
+                <tr>
+                    <td><span style="font-size:0.72rem;color:var(--text-muted);font-weight:500">#{{ log.id }}</span></td>
+                    <td>
+                        <div class="d-flex align-items-center gap-2">
+                            {% if log.user %}
+                                {% if log.user.userProfile and log.user.userProfile.profilePicture %}
+                                    <img src="{{ asset('uploads/profiles/' ~ log.user.userProfile.profilePicture) }}"
+                                         alt="{{ log.user.firstName }}" class="user-avatar">
                                 {% else %}
-                                    <span class="text-muted">System</span>
+                                    <div class="user-avatar-init">
+                                        {{ log.user.firstName|first|upper }}{{ log.user.lastName|first|upper }}
+                                    </div>
                                 {% endif %}
-                            </div>
-                        </td>
-                        <td>
-                            {% if log.action == 'login' %}
-                                <span class="badge bg-success">Login</span>
-                            {% elseif log.action == 'create' %}
-                                <span class="badge bg-primary">Create</span>
-                            {% elseif log.action == 'update' %}
-                                <span class="badge bg-warning">Update</span>
-                            {% elseif log.action == 'delete' %}
-                                <span class="badge bg-danger">Delete</span>
+                                <div>
+                                    <div class="user-name">{{ log.user.firstName }} {{ log.user.lastName }}</div>
+                                    <div class="user-email">{{ log.user.email }}</div>
+                                </div>
                             {% else %}
-                                <span class="badge bg-secondary">{{ log.action|default('unknown') }}</span>
+                                <span style="font-size:0.82rem;color:var(--text-muted)">System</span>
                             {% endif %}
-                        </td>   
-                        <td>
-                            <div class="log-details">
-                                <strong>{{ log.entityType|default('System') }}</strong>
-                                <small class="text-muted d-block">{{ log.description|default('No details') }}</small>
-                            </div>
-                        </td>
-                        <td>
-                            <code>{{ log.ipAddress|default('N/A') }}</code>
-                        </td>
-                        <td>
-                            <div>{{ log.createdAt|date('M d, Y') }}</div>
-                            <small class="text-muted">{{ log.createdAt|date('h:i A') }}</small>
-                        </td>
-                        <td>
-                            <button type="button" class="btn btn-sm btn-outline-info" 
-                                    onclick="viewLogDetails({{ log.id }})" title="View Details">
-                                <i class="bi bi-eye"></i>
-                            </button>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="7" class="text-center text-muted py-4">
-                            <i class="bi bi-list-check fs-1"></i>
-                            <p class="mt-2">No activity logs found</p>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+                        </div>
+                    </td>
+                    <td>
+                        {% if log.action == 'login' %}
+                            <span class="action-badge ab-login">Login</span>
+                        {% elseif log.action == 'create' %}
+                            <span class="action-badge ab-create">Create</span>
+                        {% elseif log.action == 'update' %}
+                            <span class="action-badge ab-update">Update</span>
+                        {% elseif log.action == 'delete' %}
+                            <span class="action-badge ab-delete">Delete</span>
+                        {% else %}
+                            <span class="action-badge ab-other">{{ log.action|default('Unknown') }}</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="log-entity">{{ log.entity|default('System') }}</div>
+                        <div class="log-desc">{{ log.description|default('No details')|slice(0,60) }}{% if log.description|length > 60 %}...{% endif %}</div>
+                    </td>
+                    <td><span class="ip-code">{{ log.ipAddress|default('N/A') }}</span></td>
+                    <td>
+                        <div class="log-date">{{ log.createdAt|date('M d, Y') }}</div>
+                        <div class="log-time">{{ log.createdAt|date('h:i A') }}</div>
+                    </td>
+                    <td class="text-end">
+                        <button type="button" class="btn-view-log"
+                                onclick="viewLogDetails({{ log.id }})" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </td>
+                </tr>
+            {% else %}
+                <tr>
+                    <td colspan="7">
+                        <div class="empty-state">
+                            <div class="empty-icon"><i class="bi bi-list-check"></i></div>
+                            <p>No activity logs found</p>
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
     </div>
-    
-    <!-- Pagination -->
+
     {% if totalPages > 1 %}
-    <div class="card-footer">
-        <nav aria-label="Page navigation">
+    <div style="padding:1rem 1.5rem;border-top:1px solid var(--border);background:var(--surface-2)">
+        <nav>
             <ul class="pagination justify-content-center mb-0">
                 <li class="page-item {{ currentPage == 1 ? 'disabled' : '' }}">
-                    <a class="page-link" href="{{ path('admin_activity_logs', {'page': currentPage - 1}) }}">
-                        Previous
-                    </a>
+                    <a class="page-link" href="{{ path('admin_activity_logs', {'page': currentPage - 1}) }}">Previous</a>
                 </li>
-                
                 {% for i in range(1, totalPages) %}
                     {% if i >= currentPage - 2 and i <= currentPage + 2 %}
                         <li class="page-item {{ currentPage == i ? 'active' : '' }}">
@@ -266,11 +483,8 @@
                         </li>
                     {% endif %}
                 {% endfor %}
-                
                 <li class="page-item {{ currentPage == totalPages ? 'disabled' : '' }}">
-                    <a class="page-link" href="{{ path('admin_activity_logs', {'page': currentPage + 1}) }}">
-                        Next
-                    </a>
+                    <a class="page-link" href="{{ path('admin_activity_logs', {'page': currentPage + 1}) }}">Next</a>
                 </li>
             </ul>
         </nav>
@@ -278,187 +492,238 @@
     {% endif %}
 </div>
 
-<!-- Log Details Modal -->
+<!-- LOG DETAILS MODAL -->
 <div class="modal fade" id="logDetailsModal" tabindex="-1">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Log Details</h5>
+                <h5 class="modal-title"><i class="bi bi-file-text me-2"></i>Log Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
             <div class="modal-body" id="logDetailsContent">
-                Loading...
+                <div class="text-center py-4">
+                    <div class="spinner-border" style="color:var(--pink);width:2rem;height:2rem"></div>
+                </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn-ghost-action" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block javascripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+let activityChart = null;
+let orderStatusChart = null;
+
 document.addEventListener('DOMContentLoaded', function() {
-    // Activity Chart
-    const activityCtx = document.getElementById('activityChart').getContext('2d');
-    new Chart(activityCtx, {
-        type: 'bar',
+    if (activityChart)     { activityChart.destroy();     activityChart = null; }
+    if (orderStatusChart)  { orderStatusChart.destroy();  orderStatusChart = null; }
+
+    {% if activitySummary is defined and activitySummary.dates is defined and activitySummary.dates|length > 0 %}
+    const activityData = {{ activitySummary|json_encode|raw }};
+    const ctx = document.getElementById('activityChart').getContext('2d');
+    activityChart = new Chart(ctx, {
+        type: 'line',
         data: {
-            labels: {{ activitySummary.dates|default(['Jan 1', 'Jan 2', 'Jan 3', 'Jan 4', 'Jan 5', 'Jan 6', 'Jan 7'])|json_encode|raw }},
+            labels: activityData.dates,
             datasets: [
                 {
                     label: 'Logins',
-                    data: {{ activitySummary.logins|default([12, 19, 8, 15, 12, 18, 14])|json_encode|raw }},
-                    backgroundColor: '#198754',
-                    borderColor: '#198754',
-                    borderWidth: 1
+                    data: activityData.logins,
+                    backgroundColor: 'rgba(16,185,129,0.1)',
+                    borderColor: '#10b981',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#10b981',
+                    pointRadius: 3, fill: true, tension: 0.4
                 },
                 {
                     label: 'Updates',
-                    data: {{ activitySummary.updates|default([8, 12, 6, 9, 7, 10, 8])|json_encode|raw }},
-                    backgroundColor: '#ffc107',
-                    borderColor: '#ffc107',
-                    borderWidth: 1
+                    data: activityData.updates,
+                    backgroundColor: 'rgba(245,158,11,0.1)',
+                    borderColor: '#f59e0b',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#f59e0b',
+                    pointRadius: 3, fill: true, tension: 0.4
                 },
                 {
                     label: 'Creates',
-                    data: {{ activitySummary.creates|default([5, 8, 3, 6, 4, 7, 5])|json_encode|raw }},
-                    backgroundColor: '#0dcaf0',
-                    borderColor: '#0dcaf0',
-                    borderWidth: 1
+                    data: activityData.creates,
+                    backgroundColor: 'rgba(233,30,140,0.08)',
+                    borderColor: '#e91e8c',
+                    borderWidth: 2,
+                    pointBackgroundColor: '#e91e8c',
+                    pointRadius: 3, fill: true, tension: 0.4
                 }
             ]
         },
         options: {
-            responsive: true,
-            maintainAspectRatio: false,
+            responsive: true, maintainAspectRatio: false,
             plugins: {
                 legend: {
                     position: 'top',
+                    labels: { font: { size: 12 }, boxWidth: 12, padding: 16 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: ctx => `${ctx.dataset.label}: ${ctx.raw} activity(s)`
+                    }
                 }
             },
             scales: {
                 y: {
                     beginAtZero: true,
-                    ticks: {
-                        stepSize: 5
-                    }
+                    grid: { color: '#f3f4f6' },
+                    ticks: { stepSize: 1, precision: 0, color: '#9ca3af', font: { size: 11 } }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { maxRotation: 45, autoSkip: true, maxTicksLimit: 15, color: '#9ca3af', font: { size: 11 } }
                 }
             }
         }
     });
+    {% else %}
+    const chartContainer = document.querySelector('.chart-container');
+    if (chartContainer) {
+        chartContainer.innerHTML = `
+            <div class="d-flex flex-column align-items-center justify-content-center h-100">
+                <div style="width:56px;height:56px;border-radius:14px;background:var(--pink-soft);
+                            border:1px solid var(--pink-light);color:var(--pink);font-size:                            1.5rem;display:flex;align-items:center;justify-content:center;margin-bottom:1rem">
+                    <i class="bi bi-bar-chart-line"></i>
+                </div>
+                <p style="color:var(--text-muted);font-size:0.875rem;margin:0">No activity data available for the last 30 days.</p>
+                <small style="color:var(--text-muted);font-size:0.75rem">Start using the system to see activity statistics.</small>
+            </div>`;
+    }
+    {% endif %}
 });
 
 function viewLogDetails(logId) {
     fetch(`/admin/activity-log/${logId}/details`)
-        .then(response => response.json())
+        .then(r => r.json())
         .then(data => {
             document.getElementById('logDetailsContent').innerHTML = `
-                <div class="row">
+                <div class="row g-3">
                     <div class="col-md-6">
-                        <h6>Log Information</h6>
-                        <table class="table table-sm">
-                            <tr>
-                                <th>ID:</th>
-                                <td>${data.id}</td>
-                            </tr>
-                            <tr>
-                                <th>Action Type:</th>
-                                <td><span class="badge bg-${getBadgeColor(data.actionType)}">${data.actionType}</span></td>
-                            </tr>
-                            <tr>
-                                <th>Entity Type:</th>
-                                <td>${data.entityType || 'N/A'}</td>
-                            </tr>
-                            <tr>
-                                <th>Entity ID:</th>
-                                <td>${data.entityId || 'N/A'}</td>
-                            </tr>
-                        </table>
-                    </div>
-                    <div class="col-md-6">
-                        <h6>User Information</h6>
-                        <table class="table table-sm">
-                            <tr>
-                                <th>User:</th>
-                                <td>${data.userName || 'System'}</td>
-                            </tr>
-                            <tr>
-                                <th>IP Address:</th>
-                                <td><code>${data.ipAddress || 'N/A'}</code></td>
-                            </tr>
-                            <tr>
-                                <th>User Agent:</th>
-                                <td><small class="text-muted">${data.userAgent || 'N/A'}</small></td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <h6>Description</h6>
-                        <div class="card">
-                            <div class="card-body">
-                                ${data.description || 'No description available'}
+                        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem">
+                            <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.75rem">
+                                Log Information
                             </div>
+                            <table class="table table-sm table-borderless mb-0" style="font-size:0.85rem">
+                                <tr>
+                                    <td style="color:var(--text-muted);width:40%">ID</td>
+                                    <td><code style="background:var(--surface-2);padding:0.1em 0.4em;border-radius:4px">#${data.id}</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="color:var(--text-muted)">Action</td>
+                                    <td><span class="action-badge ab-${data.actionType?.toLowerCase() || 'other'}">${(data.actionType || 'Unknown').toUpperCase()}</span></td>
+                                </tr>
+                                <tr>
+                                    <td style="color:var(--text-muted)">Entity</td>
+                                    <td style="font-weight:600">${data.entityType || 'N/A'} ${data.entityId ? '(ID: ' + data.entityId + ')' : ''}</td>
+                                </tr>
+                                <tr>
+                                    <td style="color:var(--text-muted)">Timestamp</td>
+                                    <td>${data.createdAt || 'N/A'}</td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
-                </div>
-                ${data.changes ? `
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <h6>Changes Made</h6>
-                        <div class="card">
-                            <div class="card-body">
-                                <pre class="mb-0"><code>${JSON.stringify(data.changes, null, 2)}</code></pre>
+                    <div class="col-md-6">
+                        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem">
+                            <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.75rem">
+                                User Information
                             </div>
+                            <table class="table table-sm table-borderless mb-0" style="font-size:0.85rem">
+                                <tr>
+                                    <td style="color:var(--text-muted);width:40%">User</td>
+                                    <td style="font-weight:600">${data.userName || 'System'}</td>
+                                </tr>
+                                <tr>
+                                    <td style="color:var(--text-muted)">IP Address</td>
+                                    <td><code style="background:var(--surface-2);padding:0.1em 0.4em;border-radius:4px">${data.ipAddress || 'N/A'}</code></td>
+                                </tr>
+                                <tr>
+                                    <td style="color:var(--text-muted)">User Agent</td>
+                                    <td><small style="color:var(--text-muted)">${data.userAgent ? data.userAgent.substring(0,60) + (data.userAgent.length > 60 ? '...' : '') : 'N/A'}</small></td>
+                                </tr>
+                            </table>
                         </div>
                     </div>
-                </div>
-                ` : ''}
-            `;
-            
+                    <div class="col-12">
+                        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem">
+                            <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.75rem">
+                                Description
+                            </div>
+                            <p style="font-size:0.875rem;color:var(--text-secondary);margin:0">${data.description || 'No description available'}</p>
+                        </div>
+                    </div>
+                    ${data.changes ? `
+                    <div class="col-12">
+                        <div style="background:#fff;border:1px solid var(--border);border-radius:10px;padding:1rem">
+                            <div style="font-size:0.72rem;font-weight:800;text-transform:uppercase;letter-spacing:0.08em;color:var(--text-muted);margin-bottom:0.75rem">
+                                Changes Made
+                            </div>
+                            <pre style="font-size:0.78rem;background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:0.85rem;margin:0;white-space:pre-wrap;color:var(--text-secondary)">${JSON.stringify(data.changes, null, 2)}</pre>
+                        </div>
+                    </div>` : ''}
+                </div>`;
             new bootstrap.Modal(document.getElementById('logDetailsModal')).show();
         })
         .catch(error => {
             document.getElementById('logDetailsContent').innerHTML = `
-                <div class="alert alert-danger">
-                    Error loading log details: ${error.message}
-                </div>
-            `;
+                <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:0.85rem;font-size:0.875rem;color:#b91c1c;display:flex;align-items:center;gap:8px">
+                    <i class="bi bi-exclamation-triangle"></i> Error loading log details: ${error.message}
+                </div>`;
             new bootstrap.Modal(document.getElementById('logDetailsModal')).show();
         });
 }
 
 function getBadgeColor(actionType) {
-    switch(actionType) {
-        case 'login': return 'success';
+    switch(actionType?.toLowerCase()) {
+        case 'login':  return 'success';
         case 'create': return 'primary';
         case 'update': return 'warning';
         case 'delete': return 'danger';
-        default: return 'secondary';
+        default:       return 'secondary';
     }
 }
 
 function exportLogs(format) {
-    alert(`Exporting logs in ${format.toUpperCase()} format...`);
-    // Implement export functionality
+    const dateRange  = document.querySelector('select[name="date_range"]')?.value || 'week';
+    const userId     = document.querySelector('select[name="user"]')?.value || '';
+    const actionType = document.querySelector('select[name="action_type"]')?.value || '';
+    let url = `/admin/activity-logs/export?format=${format}`;
+    if (dateRange)  url += `&date_range=${dateRange}`;
+    if (userId)     url += `&user=${userId}`;
+    if (actionType) url += `&action_type=${actionType}`;
+    window.location.href = url;
 }
 
 function clearOldLogs() {
-    if (confirm('Are you sure you want to clear logs older than 30 days?')) {
-        alert('Clearing old logs...');
-        // Implement clear functionality
-    }
+    if (!confirm('Clear logs older than 30 days? This cannot be undone.')) return;
+    if (!confirm('Are you ABSOLUTELY sure?')) return;
+    const csrfToken = document.querySelector('input[name="_csrf_token"]')?.value || '';
+    fetch('/admin/activity-logs/clear-old', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrfToken },
+        body: JSON.stringify({})
+    })
+    .then(r => { if (!r.ok) return r.text().then(t => { throw new Error(t); }); return r.json(); })
+    .then(data => {
+        if (data.success) { alert(data.message); location.reload(); }
+        else alert('Error: ' + (data.message || 'Unknown error'));
+    })
+    .catch(error => alert('Error clearing logs: ' + error.message));
 }
 
-function refreshLogs() {
-    location.reload();
-}
-
-function printTable() {
-    window.print();
-}
+function refreshLogs() { location.reload(); }
+function printTable()   { window.print(); }
 </script>
 {% endblock %}
+

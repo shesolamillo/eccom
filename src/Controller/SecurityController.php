@@ -15,6 +15,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Http\Authentication\AuthenticationUtils;
+use App\Service\EmailVerificationService;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use App\Service\ActivityLogger;
+
 
 class SecurityController extends AbstractController
 {
@@ -27,6 +31,22 @@ class SecurityController extends AbstractController
 
         $error = $authenticationUtils->getLastAuthenticationError();
         $lastUsername = $authenticationUtils->getLastUsername();
+
+        if (!$error && $this->getUser()) {
+            $activityLogger->log(
+                ActivityLog::ACTION_LOGIN,
+                'User',
+                $this->getUser()->getId(),
+                'User logged in successfully'
+            );
+
+            $activityLogger->log(
+                ActivityLog::ACTION_UPDATE,
+                'Order',
+                $order->getId(),
+                "Order status updated to {$order->getStatus()}"
+            );
+        }
 
         return $this->render('security/login.html.twig', [
             'last_username' => $lastUsername,
@@ -41,7 +61,7 @@ class SecurityController extends AbstractController
     }
 
     #[Route('/register', name: 'app_register')]
-    public function register(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager): Response
+    public function register(Request $request, UserPasswordHasherInterface $passwordHasher, EntityManagerInterface $entityManager,  EmailVerificationService $emailVerificationService): Response
     {
         if ($this->getUser()) {
             return $this->redirectToRoute('app_dashboard');
@@ -52,9 +72,22 @@ class SecurityController extends AbstractController
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
+
+            $existingUser = $entityManager->getRepository(User::class)->findOneBy(['email' => $user->getEmail()]);
+            if ($existingUser) {
+                $this->addFlash('error', 'This email is already registered.');
+                return $this->redirectToRoute('app_register');
+            }
+
+
             $user->setPassword(
                 $passwordHasher->hashPassword($user, $form->get('plainPassword')->getData())
             );
+
+            $verificationToken = $emailVerificationService->generateVerificationToken();
+
+            $user->setVerificationToken($verificationToken);
+            $user->setIsVerified(false);
 
             $userProfile = new UserProfile();
             $userProfile->setUser($user);
@@ -62,8 +95,16 @@ class SecurityController extends AbstractController
 
             $entityManager->persist($user);
             $entityManager->flush();
+            
+            $verificationUrl = $this->generateUrl(
+                'app_verify_email',
+                ['token' => $verificationToken],
+                UrlGeneratorInterface::ABSOLUTE_URL
+            );
 
-            $this->addFlash('success', 'Registration successful! You can now log in.');
+            $emailVerificationService->sendVerificationEmail($user, $verificationUrl);
+
+            $this->addFlash('success', 'Registration successful! Please check your email to verify your account.');
 
             return $this->redirectToRoute('app_login');
         }

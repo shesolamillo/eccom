@@ -75,4 +75,35 @@ class StockRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleResult();
     }
+
+    public function findFiltered(?string $search, ?string $status, string $sort = 'updated_desc'): array
+{
+    $qb = $this->createQueryBuilder('s')
+        ->leftJoin('s.product', 'p')
+        ->addSelect('p');
+
+    if ($search) {
+        $qb->andWhere('p.name LIKE :search OR p.sku LIKE :search')
+           ->setParameter('search', '%' . $search . '%');
+    }
+
+    if ($status === 'out_of_stock') {
+        $qb->andWhere('s.quantity = 0');
+    } elseif ($status === 'low_stock') {
+        $qb->andWhere('s.isLowStock = true AND s.quantity > 0');
+    } elseif ($status === 'in_stock') {
+        $qb->andWhere('s.isLowStock = false AND s.quantity > 0');
+    }
+
+    match($sort) {
+        'quantity_asc'  => $qb->orderBy('s.quantity', 'ASC'),
+        'quantity_desc' => $qb->orderBy('s.quantity', 'DESC'),
+        'name_asc'      => $qb->orderBy('p.name', 'ASC'),
+        'name_desc'     => $qb->orderBy('p.name', 'DESC'),
+        default         => $qb->orderBy('s.updatedAt', 'DESC'),
+    };
+
+    return $qb->getQuery()->getResult();
+}
+
 }

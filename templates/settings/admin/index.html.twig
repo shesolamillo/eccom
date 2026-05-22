@@ -1,0 +1,325 @@
+{# templates/admin/settings/index.html.twig #}
+{% extends 'layouts/admin.html.twig' %}
+{% block title %}System Settings - SMSol Studio{% endblock %}
+{% block page_title %}System Settings{% endblock %}
+
+{% block admin_content %}
+<style>
+:root {
+    --pink: #c2185b;
+    --pink-dark: #880e4f;
+    --pink-light: #fce4ec;
+    --pink-soft: #fdf5fb;
+    --border: #eaecf0;
+    --surface: #ffffff;
+    --surface-2: #f8f9fb;
+    --text-primary: #101828;
+    --text-secondary: #475467;
+    --text-muted: #98a2b3;
+    --radius: 12px;
+    --shadow: 0 1px 4px rgba(16,24,40,0.06);
+}
+.settings-wrap { max-width: 900px; margin: 0 auto; }
+.settings-tabs { display: flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 1.5rem; }
+.s-tab { flex: 1; padding: 0.55rem 1rem; border: none; background: transparent; border-radius: 8px; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.s-tab:hover { color: var(--pink); }
+.s-tab.active { background: var(--surface); color: var(--pink); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.s-panel { display: none; }
+.s-panel.active { display: block; }
+.s-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 1rem; overflow: hidden; }
+.s-card-head { padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--surface-2); display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); }
+.s-card-head::before { content: ''; width: 3px; height: 16px; background: var(--pink); border-radius: 3px; }
+.s-card-body { padding: 1.25rem; }
+.field-row { display: grid; grid-template-columns: 200px 1fr; gap: 1rem; align-items: start; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
+.field-row:last-child { border-bottom: none; padding-bottom: 0; }
+.field-row:first-child { padding-top: 0; }
+.field-meta { padding-top: 2px; }
+.field-name { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.field-desc { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
+.f-input, .f-select { border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.85rem; padding: 0.5rem 0.85rem; color: var(--text-primary); background: var(--surface); width: 100%; transition: border-color 0.15s, box-shadow 0.15s; }
+.f-input:focus, .f-select:focus { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(194,24,91,0.1); outline: none; }
+.form-check-input:checked { background-color: var(--pink); border-color: var(--pink); }
+.form-check-input:focus { box-shadow: 0 0 0 3px rgba(194,24,91,0.12); }
+.form-check-input { width: 2.5rem; height: 1.3rem; cursor: pointer; }
+.b-on  { background:#ecfdf3;color:#027a48;border:1px solid #a7f3d0;font-size:0.65rem;font-weight:700;padding:0.2em 0.6em;border-radius:20px; }
+.b-off { background:var(--surface-2);color:var(--text-muted);border:1px solid var(--border);font-size:0.65rem;font-weight:700;padding:0.2em 0.6em;border-radius:20px; }
+.btn-save { background: var(--pink); color: #fff; border: none; border-radius: 8px; padding: 0.6rem 1.5rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(194,24,91,0.25); }
+.btn-save:hover { background: var(--pink-dark); }
+.btn-cancel { background: var(--surface); border: 1.5px solid var(--border); color: var(--text-secondary); border-radius: 8px; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.btn-cancel:hover { border-color: var(--pink); color: var(--pink); }
+.key-tag { font-family: monospace; font-size: 0.75rem; background: var(--pink-soft); color: var(--pink); border: 1px solid var(--pink-light); padding: 0.15em 0.5em; border-radius: 5px; }
+.type-tag { font-size: 0.65rem; font-weight: 700; background: var(--surface-2); color: var(--text-muted); border: 1px solid var(--border); padding: 0.2em 0.55em; border-radius: 20px; text-transform: uppercase; }
+.add-row { display: grid; grid-template-columns: 1fr 140px 1fr; gap: 0.75rem; margin-bottom: 0.75rem; }
+.btn-add { background: var(--pink); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 1.25rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: background 0.15s; }
+.btn-add:hover { background: var(--pink-dark); }
+.help-box { background: var(--pink-soft); border: 1px solid var(--pink-light); border-left: 3px solid var(--pink); border-radius: var(--radius); padding: 1rem 1.25rem; display: flex; gap: 0.85rem; align-items: flex-start; font-size: 0.82rem; }
+.help-box i { color: var(--pink); flex-shrink: 0; margin-top: 2px; }
+.code-inline { font-family: monospace; font-size: 0.78rem; background: #fff; color: var(--pink); border: 1px solid var(--pink-light); padding: 0.15em 0.5em; border-radius: 5px; }
+@media(max-width:640px) {
+    .field-row { grid-template-columns: 1fr; }
+    .add-row { grid-template-columns: 1fr; }
+}
+</style>
+
+<div class="settings-wrap">
+
+{% if settings is empty %}
+<div style="background:#fffbeb;border:1px solid #fde68a;border-left:3px solid #f59e0b;border-radius:var(--radius);padding:1rem 1.25rem;font-size:0.875rem;color:#92400e;display:flex;align-items:center;gap:8px;">
+    <i class="bi bi-exclamation-triangle"></i>
+    No settings found. Run <code>php bin/console doctrine:fixtures:load</code> to seed defaults.
+</div>
+{% else %}
+
+{% set rendered_fields = [] %}
+
+<div class="settings-tabs">
+    <button class="s-tab active" onclick="switchTab('general', this)"><i class="bi bi-gear"></i> General</button>
+    <button class="s-tab" onclick="switchTab('email', this)"><i class="bi bi-envelope"></i> Email</button>
+    <button class="s-tab" onclick="switchTab('payment', this)"><i class="bi bi-credit-card"></i> Payment</button>
+    <button class="s-tab" onclick="switchTab('advanced', this)"><i class="bi bi-sliders2"></i> Advanced</button>
+</div>
+
+{{ form_start(form) }}
+
+{# ── GENERAL ── #}
+<div class="s-panel active" id="tab-general">
+    <div class="s-card">
+        <div class="s-card-head"><i class="bi bi-building"></i> Site Information</div>
+        <div class="s-card-body">
+            {% for setting in settings %}
+                {% if form[setting.settingKey] is defined %}
+                    {% set field = form[setting.settingKey] %}
+                    {% if 'site' in setting.settingKey or 'name' in setting.settingKey or 'logo' in setting.settingKey or 'timezone' in setting.settingKey or 'currency' in setting.settingKey %}
+                        {% if setting.settingKey not in rendered_fields %}
+                            {% set rendered_fields = rendered_fields|merge([setting.settingKey]) %}
+                            <div class="field-row">
+                                <div class="field-meta">
+                                    <div class="field-name">{{ field.vars.label|default(setting.settingKey|replace({'_':' '})|title) }}</div>
+                                    {% if setting.description %}<div class="field-desc">{{ setting.description }}</div>{% endif %}
+                                </div>
+                                <div>
+                                    {% if field.vars.block_prefixes[1] == 'checkbox' %}
+                                        <div class="form-check form-switch d-flex align-items-center gap-2">
+                                            {{ form_widget(field, {'attr': {'class': 'form-check-input'}}) }}
+                                            <span class="{{ setting.typedValue ? 'b-on' : 'b-off' }}">{{ setting.typedValue ? 'Enabled' : 'Disabled' }}</span>
+                                        </div>
+                                    {% elseif field.vars.block_prefixes[1] == 'choice' %}
+                                        {{ form_widget(field, {'attr': {'class': 'f-select'}}) }}
+                                    {% elseif field.vars.block_prefixes[1] == 'textarea' %}
+                                        {{ form_widget(field, {'attr': {'class': 'f-input', 'rows': 3}}) }}
+                                    {% else %}
+                                        {{ form_widget(field, {'attr': {'class': 'f-input'}}) }}
+                                    {% endif %}
+                                    {{ form_errors(field) }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="s-card">
+        <div class="s-card-head"><i class="bi bi-toggles"></i> Features</div>
+        <div class="s-card-body">
+            {% for setting in settings %}
+                {% if form[setting.settingKey] is defined %}
+                    {% set field = form[setting.settingKey] %}
+                    {% if setting.dataType == 'boolean' and 'site' not in setting.settingKey %}
+                        {% if setting.settingKey not in rendered_fields %}
+                            {% set rendered_fields = rendered_fields|merge([setting.settingKey]) %}
+                            <div class="field-row">
+                                <div class="field-meta">
+                                    <div class="field-name">{{ field.vars.label|default(setting.settingKey|replace({'_':' '})|title) }}</div>
+                                    {% if setting.description %}<div class="field-desc">{{ setting.description }}</div>{% endif %}
+                                </div>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="form-check form-switch mb-0">
+                                        {{ form_widget(field, {'attr': {'class': 'form-check-input'}}) }}
+                                    </div>
+                                    <span class="{{ setting.typedValue ? 'b-on' : 'b-off' }}">{{ setting.typedValue ? 'On' : 'Off' }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# ── EMAIL ── #}
+<div class="s-panel" id="tab-email">
+    <div class="s-card">
+        <div class="s-card-head"><i class="bi bi-envelope-at"></i> SMTP Configuration</div>
+        <div class="s-card-body">
+            {% for setting in settings %}
+                {% if form[setting.settingKey] is defined %}
+                    {% set field = form[setting.settingKey] %}
+                    {% if 'smtp' in setting.settingKey or 'mail' in setting.settingKey or 'sender' in setting.settingKey or 'email' in setting.settingKey %}
+                        {% if setting.settingKey not in rendered_fields %}
+                            {% set rendered_fields = rendered_fields|merge([setting.settingKey]) %}
+                            <div class="field-row">
+                                <div class="field-meta">
+                                    <div class="field-name">{{ field.vars.label|default(setting.settingKey|replace({'_':' '})|title) }}</div>
+                                    {% if setting.description %}<div class="field-desc">{{ setting.description }}</div>{% endif %}
+                                </div>
+                                <div>
+                                    {% if 'password' in setting.settingKey or 'secret' in setting.settingKey %}
+                                        {{ form_widget(field, {'attr': {'class': 'f-input', 'type': 'password'}}) }}
+                                    {% elseif field.vars.block_prefixes[1] == 'choice' %}
+                                        {{ form_widget(field, {'attr': {'class': 'f-select'}}) }}
+                                    {% else %}
+                                        {{ form_widget(field, {'attr': {'class': 'f-input'}}) }}
+                                    {% endif %}
+                                    {{ form_errors(field) }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# ── PAYMENT ── #}
+<div class="s-panel" id="tab-payment">
+    <div class="s-card">
+        <div class="s-card-head"><i class="bi bi-wallet2"></i> Payment Gateway</div>
+        <div class="s-card-body">
+            {% for setting in settings %}
+                {% if form[setting.settingKey] is defined %}
+                    {% set field = form[setting.settingKey] %}
+                    {% if 'paypal' in setting.settingKey or 'stripe' in setting.settingKey or 'payment' in setting.settingKey or 'currency' in setting.settingKey or 'tax' in setting.settingKey %}
+                        {% if setting.settingKey not in rendered_fields %}
+                            {% set rendered_fields = rendered_fields|merge([setting.settingKey]) %}
+                            <div class="field-row">
+                                <div class="field-meta">
+                                    <div class="field-name">{{ field.vars.label|default(setting.settingKey|replace({'_':' '})|title) }}</div>
+                                    {% if setting.description %}<div class="field-desc">{{ setting.description }}</div>{% endif %}
+                                </div>
+                                <div>
+                                    {% if 'secret' in setting.settingKey or 'key' in setting.settingKey %}
+                                        {{ form_widget(field, {'attr': {'class': 'f-input', 'type': 'password'}}) }}
+                                    {% elseif field.vars.block_prefixes[1] == 'checkbox' %}
+                                        <div class="form-check form-switch d-flex align-items-center gap-2">
+                                            {{ form_widget(field, {'attr': {'class': 'form-check-input'}}) }}
+                                            <span class="{{ setting.typedValue ? 'b-on' : 'b-off' }}">{{ setting.typedValue ? 'Enabled' : 'Disabled' }}</span>
+                                        </div>
+                                    {% elseif field.vars.block_prefixes[1] == 'choice' %}
+                                        {{ form_widget(field, {'attr': {'class': 'f-select'}}) }}
+                                    {% else %}
+                                        {{ form_widget(field, {'attr': {'class': 'f-input'}}) }}
+                                    {% endif %}
+                                    {{ form_errors(field) }}
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{# ── ADVANCED ── #}
+<div class="s-panel" id="tab-advanced">
+    <div class="s-card">
+        <div class="s-card-head"><i class="bi bi-code-square"></i> All Remaining Settings</div>
+        <div class="s-card-body">
+            {% for setting in settings %}
+                {% if form[setting.settingKey] is defined %}
+                    {% set field = form[setting.settingKey] %}
+                    {% if setting.settingKey not in rendered_fields %}
+                        {% set rendered_fields = rendered_fields|merge([setting.settingKey]) %}
+                        <div class="field-row">
+                            <div class="field-meta">
+                                <div class="field-name"><span class="key-tag">{{ setting.settingKey }}</span></div>
+                                <div class="field-desc" style="margin-top:4px;"><span class="type-tag">{{ setting.dataType }}</span></div>
+                            </div>
+                            <div>
+                                {% if field.vars.block_prefixes[1] == 'checkbox' %}
+                                    <div class="form-check form-switch">
+                                        {{ form_widget(field, {'attr': {'class': 'form-check-input'}}) }}
+                                    </div>
+                                {% elseif field.vars.block_prefixes[1] == 'choice' %}
+                                    {{ form_widget(field, {'attr': {'class': 'f-select'}}) }}
+                                {% elseif field.vars.block_prefixes[1] == 'textarea' %}
+                                    {{ form_widget(field, {'attr': {'class': 'f-input', 'rows': 2}}) }}
+                                {% else %}
+                                    {{ form_widget(field, {'attr': {'class': 'f-input'}}) }}
+                                {% endif %}
+                                {{ form_errors(field) }}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="s-card">
+        <div class="s-card-head"><i class="bi bi-plus-circle"></i> Add New Setting</div>
+        <div class="s-card-body">
+            <form action="{{ path('admin_settings_add') }}" method="post">
+                <div class="add-row">
+                    <input type="text" name="key" class="f-input" placeholder="setting_key" required>
+                    <select name="type" class="f-select">
+                        <option value="string">String</option>
+                        <option value="integer">Integer</option>
+                        <option value="float">Float</option>
+                        <option value="boolean">Boolean</option>
+                        <option value="text">Text</option>
+                    </select>
+                    <input type="text" name="value" class="f-input" placeholder="Default value">
+                </div>
+                <div style="margin-bottom:0.75rem;">
+                    <input type="text" name="description" class="f-input" placeholder="Description (optional)">
+                </div>
+                <button type="submit" class="btn-add">
+                    <i class="bi bi-plus-circle"></i> Add Setting
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="help-box">
+        <i class="bi bi-question-circle"></i>
+        <div>
+            <div style="font-weight:700;color:var(--text-primary);margin-bottom:4px;font-size:0.85rem;">Usage in code</div>
+            <div style="color:var(--text-muted);">
+                PHP: <span class="code-inline">$settingsService->get('site_name')</span>
+                &nbsp;&nbsp;
+                Twig: <span class="code-inline">{{ '{{ settingsService.get("site_name") }}' }}</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="d-flex justify-content-end gap-2 mt-3">
+    <a href="{{ path('admin_settings') }}" class="btn-cancel">
+        <i class="bi bi-arrow-repeat"></i> Reset
+    </a>
+    <button type="submit" class="btn-save" id="saveBtn">
+        <i class="bi bi-check-lg"></i> Save Changes
+    </button>
+</div>
+
+{{ form_end(form) }}
+{% endif %}
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+function switchTab(name, el) {
+    document.querySelectorAll('.s-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.s-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    el.classList.add('active');
+}
+</script>
+{% endblock %}

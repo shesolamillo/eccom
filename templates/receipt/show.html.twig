@@ -1,0 +1,273 @@
+{% extends 'layouts/admin.html.twig' %}
+
+{% block title %}Receipt #{{ receipt.receiptNumber }} - SMSol Studio{% endblock %}
+
+{% block breadcrumb %}
+<li class="breadcrumb-item"><a href="{{ path('staff_orders') }}">Orders</a></li>
+<li class="breadcrumb-item"><a href="{{ path('staff_order_manage', {'id': order.id}) }}">Order #{{ order.orderNumber }}</a></li>
+<li class="breadcrumb-item active">Receipt</li>
+{% endblock %}
+
+{% block page_title %}Receipt #{{ receipt.receiptNumber }}{% endblock %}
+{% block page_description %}Official receipt for order #{{ order.orderNumber }}{% endblock %}
+
+{% block page_actions %}
+<div class="btn-group">
+    <button onclick="window.print()" class="btn btn-primary">
+        <i class="bi bi-printer me-2"></i>Print Receipt
+    </button>
+    <a href="{{ path('staff_order_manage', {'id': order.id}) }}" class="btn btn-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Order
+    </a>
+</div>
+{% endblock %}
+
+{% block admin_content %}
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <!-- Receipt Card -->
+        <div class="card" id="receiptContent">
+            <div class="card-body p-4 p-lg-5">
+                <!-- Header -->
+                <div class="text-center mb-4">
+                    <h2 class="mb-1">SMSol Studio</h2>
+                    <p class="text-muted mb-1">123 Fashion Street, Makati City</p>
+                    <p class="text-muted mb-1">Tel: (02) 1234-5678 | Email: info@smsolstudio.com</p>
+                    <p class="text-muted mb-0">VAT Reg TIN: 123-456-789-000</p>
+                </div>
+                
+                <hr class="my-4">
+                
+                <!-- Title -->
+                <div class="text-center mb-4">
+                    <h3 class="fw-bold">OFFICIAL RECEIPT</h3>
+                </div>
+                
+                <!-- Receipt Info -->
+                <div class="row mb-4">
+                    <div class="col-sm-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td width="40%"><strong>Receipt #:</strong></td>
+                                <td>{{ receipt.receiptNumber }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Date Issued:</strong></td>
+                                <td>{{ receipt.issuedDate|date('F d, Y h:i A') }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Payment Method:</strong></td>
+                                <td><span class="badge bg-success">{{ receipt.paymentMethod|upper }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-sm-6">
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td width="40%"><strong>Order #:</strong></td>
+                                <td>{{ order.orderNumber }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Order Date:</strong></td>
+                                <td>{{ order.createdAt|date('F d, Y h:i A') }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td><span class="badge bg-success">{{ order.status|upper }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Customer Info -->
+                <div class="card bg-light mb-4">
+                    <div class="card-body">
+                        <h6 class="mb-3">BILLED TO:</h6>
+                        <p class="mb-1"><strong>{{ order.customer.firstName }} {{ order.customer.lastName }}</strong></p>
+                        <p class="mb-1">{{ order.customer.email }}</p>
+                        <p class="mb-0">{{ order.customer.phoneNumber|default('N/A') }}</p>
+                    </div>
+                </div>
+                
+                <!-- Items Table -->
+                <div class="table-responsive mb-4">
+                    <table class="table table-bordered">
+                        <thead class="table-dark">
+                            <tr>
+                                <th width="5%">#</th>
+                                <th width="45%">Product</th>
+                                <th width="15%" class="text-center">Quantity</th>
+                                <th width="17%" class="text-end">Unit Price</th>
+                                <th width="18%" class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in order.orderItems %}
+                            <tr>
+                                <td>{{ loop.index }}</td>
+                                <td>
+                                    <strong>{{ item.product.name }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ item.product.productType.name }}</small>
+                                </td>
+                                <td class="text-center">{{ item.quantity }}</td>
+                                <td class="text-end">₱{{ item.unitPrice|number_format(2) }}</td>
+                                <td class="text-end">₱{{ (item.unitPrice * item.quantity)|number_format(2) }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Subtotal:</strong></td>
+                                <td class="text-end">₱{{ receipt.subtotal|number_format(2) }}</td>
+                            </tr>
+                            {% if order.deliveryFee > 0 %}
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Delivery Fee:</strong></td>
+                                <td class="text-end">₱{{ order.deliveryFee|number_format(2) }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr class="table-active">
+                                <td colspan="4" class="text-end"><strong>TOTAL AMOUNT:</strong></td>
+                                <td class="text-end"><strong class="fs-5">₱{{ receipt.totalAmount|number_format(2) }}</strong></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                
+                <!-- Payment & Delivery Info -->
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <h6>PAYMENT DETAILS</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td width="40%"><strong>Payment Method:</strong></td>
+                                <td>{{ receipt.paymentMethod|upper }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Amount Paid:</strong></td>
+                                <td>₱{{ receipt.totalAmount|number_format(2) }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Payment Status:</strong></td>
+                                <td><span class="badge {{ order.isPaid ? 'bg-success' : 'bg-warning' }}">{{ order.isPaid ? 'PAID' : 'UNPAID' }}</span></td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>DELIVERY INFO</h6>
+                        <table class="table table-sm table-borderless">
+                            <tr>
+                                <td width="40%"><strong>Type:</strong></td>
+                                <td><span class="badge {{ order.deliveryType == 'delivery' ? 'bg-primary' : 'bg-secondary' }}">{{ order.deliveryType|upper }}</span></td>
+                            </tr>
+                            {% if order.deliveryAddress %}
+                            <tr>
+                                <td><strong>Address:</strong></td>
+                                <td>{{ order.deliveryAddress }}</td>
+                            </tr>
+                            {% endif %}
+                            {% if order.isUrgent %}
+                            <tr>
+                                <td><strong>Priority:</strong></td>
+                                <td><span class="badge bg-danger">URGENT</span></td>
+                            </tr>
+                            {% endif %}
+                        </table>
+                    </div>
+                </div>
+                
+                {% if order.notes %}
+                <div class="alert alert-info mb-4">
+                    <i class="bi bi-info-circle me-2"></i>
+                    <strong>Order Notes:</strong> {{ order.notes }}
+                </div>
+                {% endif %}
+                
+                <!-- Footer -->
+                <hr class="my-4">
+                <div class="text-center">
+                    <p class="text-muted mb-1">Thank you for your purchase!</p>
+                    <p class="text-muted mb-0 small">This is a computer-generated receipt. No signature required.</p>
+                    <p class="text-muted mt-3 small">
+                        <i class="bi bi-printer me-1"></i> Printed on {{ receipt.printedAt|date('F d, Y h:i A') }} 
+                        by {{ receipt.printedBy.firstName }} {{ receipt.printedBy.lastName }}
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Action Buttons at bottom -->
+        <div class="text-center mt-4 mb-5">
+            <button onclick="window.print()" class="btn btn-lg btn-primary">
+                <i class="bi bi-printer me-2"></i>Print Receipt
+            </button>
+            <a href="{{ path('staff_order_manage', {'id': order.id}) }}" class="btn btn-lg btn-secondary">
+                <i class="bi bi-arrow-left me-2"></i>Back to Order
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block stylesheets %}
+<style>
+@media print {
+    /* Hide everything except the receipt */
+    .navbar, .sidebar, footer, .breadcrumb, .page-actions, .btn-group, 
+    .btn-primary, .btn-secondary, .btn, .card-header, .card-footer,
+    .page-title, .page-description, .admin-chart .card-header {
+        display: none !important;
+    }
+    
+    /* Show receipt only */
+    #receiptContent, .card, .card-body {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+    
+    body, .container, .row, .col-lg-9 {
+        padding: 0 !important;
+        margin: 0 !important;
+        background: white !important;
+    }
+    
+    @page {
+        size: auto;
+        margin: 15mm;
+    }
+    
+    .table-bordered {
+        border: 1px solid #dee2e6 !important;
+    }
+    
+    .table-bordered th, .table-bordered td {
+        border: 1px solid #dee2e6 !important;
+    }
+    
+    .bg-light, .card.bg-light {
+        background-color: #f8f9fa !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .table-dark {
+        background-color: #212529 !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+    
+    .table-dark th {
+        color: white !important;
+        background-color: #212529 !important;
+    }
+    
+    .badge {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+    }
+}
+</style>
+{% endblock %}

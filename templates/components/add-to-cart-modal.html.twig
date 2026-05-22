@@ -1,155 +1,404 @@
-{# Modal for product options when adding to cart #}
-<div class="modal fade" id="addToCartModal" tabindex="-1" aria-labelledby="addToCartModalLabel" aria-hidden="true">
+{# templates/components/add-to-cart-modal.html.twig #}
+
+<style>
+    :root {
+        --pink: #e91e8c;
+        --pink-dark: #c0166f;
+        --pink-light: #fce4f3;
+        --pink-soft: #fdf5fb;
+    }
+
+    #addToCartModal .modal-content {
+        border: none;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 24px 64px rgba(0,0,0,0.12), 0 8px 24px rgba(233,30,140,0.1);
+    }
+
+    /* HEADER */
+    #addToCartModal .modal-header {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        padding: 1.25rem 1.5rem;
+        border: none;
+    }
+    #addToCartModal .modal-title {
+        color: #fff;
+        font-weight: 800;
+        font-size: 1rem;
+        display: flex; align-items: center; gap: 8px;
+    }
+    #addToCartModal .modal-title::before {
+        content: '\F217';
+        font-family: 'Bootstrap-icons';
+        font-size: 1.1rem;
+    }
+    #addToCartModal .btn-close {
+        filter: brightness(0) invert(1);
+        opacity: 0.8;
+    }
+
+    /* IMAGE PANEL */
+    .modal-img-wrap {
+        height: 280px;
+        background: #f8f8f8;
+        border-radius: 14px;
+        overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+        border: 1px solid #f0f0f0;
+        position: relative;
+    }
+    .modal-img-wrap img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform 0.35s ease;
+    }
+    .modal-img-wrap:hover img { transform: scale(1.04); }
+
+    .modal-product-name {
+        font-size: 1rem; font-weight: 800;
+        color: #111; margin: 0.85rem 0 4px;
+        line-height: 1.3;
+    }
+    .modal-product-price {
+        font-size: 1.25rem; font-weight: 900;
+        color: var(--pink); letter-spacing: -0.02em;
+    }
+
+    /* SECTION LABELS */
+    .modal-section-label {
+        font-size: 0.72rem; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.09em;
+        color: #9ca3af; margin-bottom: 10px;
+        display: flex; align-items: center; gap: 6px;
+    }
+    .modal-section-label i { color: var(--pink); font-size: 0.85rem; }
+
+    /* SIZE OPTIONS */
+    .size-options { display: flex; flex-wrap: wrap; gap: 8px; }
+    .size-option {
+        border: 1.5px solid #e5e7eb;
+        border-radius: 8px;
+        padding: 0.45rem 0.9rem;
+        cursor: pointer;
+        transition: all 0.18s;
+        background: #fff;
+        font-weight: 700;
+        font-size: 0.82rem;
+        color: #374151;
+        min-width: 44px;
+        text-align: center;
+    }
+    .size-option:hover {
+        border-color: var(--pink);
+        color: var(--pink);
+        background: var(--pink-soft);
+    }
+    .size-option.active {
+        border-color: var(--pink);
+        background: var(--pink);
+        color: #fff;
+        box-shadow: 0 2px 8px rgba(233,30,140,0.3);
+    }
+
+    /* COLOR OPTIONS */
+    .color-options { display: flex; flex-wrap: wrap; gap: 10px; }
+    .color-option {
+        cursor: pointer;
+        width: 36px; height: 36px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        transition: all 0.2s;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+        position: relative;
+    }
+    .color-option:hover { transform: scale(1.15); box-shadow: 0 4px 12px rgba(0,0,0,0.18); }
+    .color-option.active {
+        box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--pink);
+        transform: scale(1.1);
+    }
+    .color-label {
+        font-size: 0.65rem; text-align: center;
+        margin-top: 4px; color: #9ca3af; font-weight: 500;
+    }
+
+    /* QUANTITY */
+    .qty-wrap {
+        display: flex; align-items: center;
+        background: #f9fafb;
+        border: 1.5px solid #e5e7eb;
+        border-radius: 10px;
+        overflow: hidden;
+        width: fit-content;
+    }
+    .qty-btn {
+        width: 38px; height: 38px;
+        background: transparent; border: none;
+        font-size: 1.1rem; font-weight: 700;
+        color: #374151; cursor: pointer;
+        transition: all 0.15s;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .qty-btn:hover { background: var(--pink-soft); color: var(--pink); }
+    #quantity {
+        width: 52px !important; border: none !important;
+        background: transparent !important;
+        text-align: center !important;
+        font-size: 1rem !important; font-weight: 800 !important;
+        color: #111 !important;
+        -webkit-text-fill-color: #111 !important;
+        padding: 0 !important;
+    }
+    .stock-info {
+        font-size: 0.75rem; color: #059669;
+        font-weight: 600; margin-top: 6px;
+        display: flex; align-items: center; gap: 4px;
+    }
+
+    /* TOTAL BOX */
+    .total-box {
+        background: var(--pink-soft);
+        border: 1px solid var(--pink-light);
+        border-radius: 12px;
+        padding: 0.85rem 1.1rem;
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .total-box .t-label { font-size: 0.78rem; font-weight: 600; color: #9ca3af; }
+    .total-box .t-val {
+        font-size: 1.3rem; font-weight: 900;
+        color: var(--pink); letter-spacing: -0.02em;
+    }
+
+    /* FOOTER */
+    #addToCartModal .modal-footer {
+        border-top: 1px solid #f3f4f6;
+        padding: 1rem 1.5rem;
+        background: #fff;
+        gap: 8px;
+    }
+    .btn-modal-cancel {
+        background: #fff; border: 1.5px solid #e5e7eb;
+        color: #6b7280; border-radius: 10px;
+        font-size: 0.875rem; font-weight: 600;
+        padding: 0.6rem 1.25rem; transition: all 0.15s;
+        cursor: pointer;
+    }
+    .btn-modal-cancel:hover { border-color: #999; color: #111; }
+    .btn-modal-confirm {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: #fff; border: none; border-radius: 10px;
+        font-size: 0.875rem; font-weight: 700;
+        padding: 0.6rem 1.5rem; transition: all 0.18s;
+        cursor: pointer; flex: 1;
+        box-shadow: 0 4px 14px rgba(233,30,140,0.3);
+        display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+    .btn-modal-confirm:hover {
+        opacity: 0.92; transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(233,30,140,0.4);
+    }
+
+    /* DIVIDER */
+    .modal-divider {
+        height: 1px; background: #f3f4f6; margin: 1rem 0;
+    }
+</style>
+
+<div class="modal fade" id="addToCartModal" tabindex="-1"
+     aria-labelledby="addToCartModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0 rounded-3">
-            <div class="modal-header border-0 pb-0">
-                <h5 class="modal-title fw-bold" id="addToCartModalLabel">Add to Cart</h5>
+        <div class="modal-content">
+
+            <!-- HEADER -->
+            <div class="modal-header">
+                <h5 class="modal-title" id="addToCartModalLabel">Add to Cart</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            
-            <div class="modal-body pt-3">
+
+            <!-- BODY -->
+            <div class="modal-body p-4">
                 <div class="row g-4">
-                    <!-- Product Preview -->
+
+                    <!-- LEFT: IMAGE + NAME + PRICE -->
                     <div class="col-md-5">
-                        <div class="product-preview-container">
-                            <div class="product-image-modal rounded-2" style="background: #f8f9fa; height: 280px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-                                <img id="modalProductImage" src="" alt="Product" class="img-fluid" style="max-height: 100%; max-width: 100%; object-fit: contain;">
-                            </div>
-                            <h6 id="modalProductName" class="mt-3 mb-2 fw-bold"></h6>
-                            <h5 id="modalProductPrice" class="text-primary fw-bold mb-3"></h5>
+                        <div class="modal-img-wrap">
+                            <img id="modalProductImage" src="" alt="Product">
                         </div>
+                        <div class="modal-product-name" id="modalProductName"></div>
+                        <div class="modal-product-price" id="modalProductPrice"></div>
                     </div>
 
-                    <!-- Product Options -->
+                    <!-- RIGHT: OPTIONS -->
                     <div class="col-md-7">
                         <form id="addToCartForm">
                             <input type="hidden" id="modalProductId" name="product_id">
 
-                            <!-- Size Options -->
+                            <!-- SIZE -->
                             <div class="mb-4">
-                                <label class="form-label fw-bold mb-2">
-                                    <i class="bi bi-rulers me-2"></i>Select Size
-                                </label>
-                                <div class="size-options" id="sizeOptions">
-                                    <!-- Sizes will be populated dynamically -->
+                                <div class="modal-section-label">
+                                    <i class="bi bi-rulers"></i> Select Size
                                 </div>
+                                <div class="size-options" id="sizeOptions"></div>
                             </div>
 
-                            <!-- Color Options -->
+                            <div class="modal-divider"></div>
+
+                            <!-- COLOR -->
                             <div class="mb-4">
-                                <label class="form-label fw-bold mb-2">
-                                    <i class="bi bi-palette me-2"></i>Select Color
-                                </label>
-                                <div class="color-options" id="colorOptions">
-                                    <!-- Colors will be populated dynamically -->
+                                <div class="modal-section-label">
+                                    <i class="bi bi-palette"></i> Select Color
                                 </div>
+                                <div class="color-options" id="colorOptions"></div>
                             </div>
 
-                            <!-- Quantity -->
+                            <div class="modal-divider"></div>
+
+                            <!-- QUANTITY -->
                             <div class="mb-4">
-                                <label class="form-label fw-bold mb-2">
-                                    <i class="bi bi-box-seam me-2"></i>Quantity
-                                </label>
-                                <div class="input-group" style="width: 150px;">
-                                    <button class="btn btn-outline-secondary" type="button" id="quantityMinus">−</button>
-                                    <input type="number" class="form-control text-center fw-bold" id="quantity" value="1" min="1" style="border-left: none; border-right: none;">
-                                    <button class="btn btn-outline-secondary" type="button" id="quantityPlus">+</button>
+                                <div class="modal-section-label">
+                                    <i class="bi bi-box-seam"></i> Quantity
                                 </div>
-                                <small class="text-muted d-block mt-2" id="stockStatus"></small>
+                                <div class="qty-wrap">
+                                    <button class="qty-btn" type="button" id="quantityMinus">−</button>
+                                    <input type="number" id="quantity" value="0" min="0">
+                                    <button class="qty-btn" type="button" id="quantityPlus">+</button>
+                                </div>
+                                <div class="stock-info" id="stockStatus"></div>
                             </div>
 
-                            <!-- Total Price -->
-                            <div class="alert alert-light mb-4 p-3 rounded-2">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span class="text-muted">Total Price:</span>
-                                    <h5 class="mb-0 text-primary fw-bold" id="totalPrice">₱0.00</h5>
-                                </div>
+                            <!-- TOTAL -->
+                            <div class="total-box">
+                                <span class="t-label">Total Price</span>
+                                <span class="t-val" id="totalPrice">₱0.00</span>
                             </div>
+
                         </form>
                     </div>
                 </div>
             </div>
 
-            <div class="modal-footer border-0 pt-0">
-                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
-                <button type="button" class="btn btn-primary btn-lg" id="confirmAddToCartBtn">
-                    <i class="bi bi-bag-check me-2"></i>Add to Cart
+            <!-- FOOTER -->
+            <div class="modal-footer">
+                <button type="button" class="btn-modal-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-modal-confirm" id="confirmAddToCartBtn">
+                    <i class="bi bi-bag-check"></i> Add to Cart
                 </button>
             </div>
+
         </div>
     </div>
 </div>
 
-<style>
-.size-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-}
+<script>
+document.getElementById('addToCartModal').addEventListener('show.bs.modal', function(event) {
+    const button = event.relatedTarget;
+    if (!button) return;
+    const productId    = button.getAttribute('data-product-id');
+    const productName  = button.getAttribute('data-product-name');
+    const productPrice = parseFloat(button.getAttribute('data-product-price') || 0);
+    const productImage = button.getAttribute('data-product-image') || '';
+    const stock        = parseInt(button.getAttribute('data-product-stock') || 0);
 
-.size-option {
-    border: 2px solid #e9ecef;
-    border-radius: 0.5rem;
-    padding: 0.75rem 1.25rem;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    background: white;
-    font-weight: 500;
-    font-size: 0.95rem;
-}
+    document.getElementById('modalProductId').value          = productId;
+    document.getElementById('modalProductImage').src         = productImage;
+    document.getElementById('modalProductName').textContent  = productName;
+    document.getElementById('modalProductPrice').textContent = `₱${productPrice.toFixed(2)}`;
+    document.getElementById('stockStatus').innerHTML         = `<i class="bi bi-check-circle"></i>${stock} in stock`;
+    document.getElementById('quantity').value                = 0;
+    document.getElementById('totalPrice').textContent        = `₱0.00`;
 
-.size-option:hover {
-    border-color: #667eea;
-    background-color: #f0f3ff;
-}
+    // Sizes
+    const sizeOptions = document.getElementById('sizeOptions');
+    sizeOptions.innerHTML = '';
+    ['XS', 'S', 'M', 'L', 'XL', 'XXL'].forEach(size => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'size-option';
+        btn.textContent = size;
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('#addToCartModal .size-option').forEach(el => el.classList.remove('active'));
+            this.classList.add('active');
+        });
+        sizeOptions.appendChild(btn);
+    });
 
-.size-option.active {
-    border-color: #667eea;
-    background-color: #667eea;
-    color: white;
-}
+    // Colors
+    const colorOptions = document.getElementById('colorOptions');
+    colorOptions.innerHTML = '';
+    [
+        { name: 'Black',  hex: '#000000' },
+        { name: 'White',  hex: '#FFFFFF' },
+        { name: 'Red',    hex: '#DC3545' },
+        { name: 'Blue',   hex: '#0D6EFD' },
+        { name: 'Green',  hex: '#198754' },
+        { name: 'Yellow', hex: '#FFC107' }
+    ].forEach(color => {
+        const wrapper = document.createElement('div');
+        wrapper.style.textAlign = 'center';
+        const circle = document.createElement('div');
+        circle.className = 'color-option';
+        circle.style.backgroundColor = color.hex;
+        circle.style.border = color.hex === '#FFFFFF' ? '2px solid #ddd' : '2px solid transparent';
+        circle.dataset.color = color.name;
+        circle.addEventListener('click', function() {
+            document.querySelectorAll('#addToCartModal .color-option').forEach(el => el.classList.remove('active'));
+            this.classList.add('active');
+        });
+        const nameLabel = document.createElement('div');
+        nameLabel.className = 'color-label';
+        nameLabel.textContent = color.name;
+        wrapper.appendChild(circle);
+        wrapper.appendChild(nameLabel);
+        colorOptions.appendChild(wrapper);
+    });
 
-.size-option:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-    background-color: #f8f9fa;
-}
+    window._currentCartProduct = { id: productId, name: productName, price: productPrice, stock: stock };
 
-.color-options {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
+    document.getElementById('quantityMinus').onclick = function() {
+        const q = document.getElementById('quantity');
+        const tp = document.getElementById('totalPrice');
+        if (q && parseInt(q.value) > 0) {
+            q.value = parseInt(q.value) - 1;
+            if (tp) tp.textContent = `₱${(productPrice * parseInt(q.value)).toFixed(2)}`;
+        }
+    };
+    document.getElementById('quantityPlus').onclick = function() {
+        const q = document.getElementById('quantity');
+        const tp = document.getElementById('totalPrice');
+        if (q && parseInt(q.value) < stock) {
+            q.value = parseInt(q.value) + 1;
+            if (tp) tp.textContent = `₱${(productPrice * parseInt(q.value)).toFixed(2)}`;
+        }
+    };
+    document.getElementById('quantity').oninput = function() {
+        document.getElementById('totalPrice').textContent = `₱${(productPrice * parseInt(this.value || 1)).toFixed(2)}`;
+    };
+});
 
-.color-option {
-    position: relative;
-    cursor: pointer;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    border: 3px solid transparent;
-    transition: all 0.3s ease;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-}
+document.getElementById('confirmAddToCartBtn').addEventListener('click', function() {
+    const product = window._currentCartProduct;
+    if (!product) return;
+    //const size  = document.querySelector('.size-option.active')?.textContent;
+    //const color = document.querySelector('.color-option.active')?.dataset.color;
+    const size  = document.querySelector('#addToCartModal .size-option.active')?.textContent;
+    const color = document.querySelector('#addToCartModal .color-option.active')?.dataset.color;
 
-.color-option:hover {
-    transform: scale(1.1);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
+    const qty   = parseInt(document.getElementById('quantity').value || 0);
+    if (!size)  { alert('Please select a size');  return; }
+    if (!color) { alert('Please select a color'); return; }
+    if (qty <= 0) { alert('Please select a quantity'); return; } // ← add ni
+    fetch(`/cart/add/${product.id}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: `quantity=${qty}&size=${size}&color=${color}`
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('addToCartModal')).hide();
+            const badge = document.getElementById('cartBadge');
+            if (badge && data.count) { badge.textContent = data.count; badge.style.display = 'block'; }
+        } else { alert(data.message || 'Error adding to cart'); }
+    })
+    .catch(() => alert('Error adding to cart'));
+});
+</script>
 
-.color-option.active {
-    border-color: #333;
-    box-shadow: 0 0 0 2px white, 0 0 0 4px #667eea;
-}
-
-.color-option input[type="radio"] {
-    display: none;
-}
-
-.color-label {
-    font-size: 0.75rem;
-    text-align: center;
-    margin-top: 0.5rem;
-    color: #6c757d;
-}
-</style>

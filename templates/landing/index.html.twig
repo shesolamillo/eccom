@@ -1,187 +1,305 @@
 {# templates/landing/index.html.twig #}
 {% extends 'base.html.twig' %}
-
 {% block title %}Welcome to SMSol Studio{% endblock %}
-
 {% block stylesheets %}
-    <link rel="stylesheet" href="{{ asset('css/home.css') }}">
+<link rel="stylesheet" href="{{ asset('css/home.css') }}">
 {% endblock %}
-
-
-
 {% block body %}
-<!-- Hero Section -->
-<section class="hero-section text-dark d-flex align-items-center position-relative"
-          style="background:url('{{ asset('uploads/images/style.png') }}') center/cover no-repeat; min-height:100vh;">
-    <div class="overlay position-absolute top-0 start-0 w-100 h-100 bg-light bg-opacity-50"></div>
-    <div class="container position-relative text-center animate__animated animate__fadeInDown">
-        <h1 class="display-3 fw-bold mb-4">SMSol Studio</h1>
-        <p class="lead mb-4">Discover curated clothing, accessories, and pet products — quality fashion, delivered.</p>
-        
-        
-        
-        {% if app.user %}
-            <a href="{{ path('app_dashboard') }}" class="btn btn-dark btn-lg px-5 animate__animated animate__pulse animate__infinite">
-                <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
-            </a>
-        {% else %}
-            <a href="{{ path('app_register') }}" class="btn btn-dark btn-lg px-5 me-3 animate__animated animate__fadeInUp">
-                <i class="bi bi-person-plus me-2"></i>Get Started
-            </a>
-            <a href="{{ path('app_services') }}" class="btn btn-outline-dark btn-lg px-5 animate__animated animate__fadeInUp animate__delay-1s">
-                <i class="bi bi-info-circle me-2"></i>Learn More
-            </a>
-        {% endif %}
+
+<!-- ===== HERO ===== -->
+<section class="hero-section d-flex align-items-center position-relative">
+  <div class="hero-overlay"></div>
+  <div class="hero-circle c1"></div>
+  <div class="hero-circle c2"></div>
+  <div class="hero-circle c3"></div>
+  <span class="sparkle sp1">✦</span>
+  <span class="sparkle sp2">✦</span>
+  <span class="sparkle sp3">✦</span>
+
+  <div class="container hero-content text-center">
+    <div class="hero-badge animate__animated animate__fadeInDown">
+      <i class="bi bi-stars me-1"></i> Premium Fashion &amp; Pet Store
     </div>
+    <h1 class="animate__animated animate__fadeInDown animate__delay-1s">
+      SMSol <span class="hero-highlight">Studio</span>
+    </h1>
+    <p class="hero-sub animate__animated animate__fadeIn animate__delay-2s">
+      Discover curated clothing, accessories, and pet products —<br>
+      <strong>quality fashion, delivered.</strong>
+    </p>
+    <div class="hero-divider animate__animated animate__zoomIn animate__delay-2s">
+      <span class="dl left-dl"></span>
+      <i class="bi bi-heart-fill"></i>
+      <span class="dl right-dl"></span>
+    </div>
+    <div class="animate__animated animate__fadeInUp animate__delay-3s">
+      {% if app.user %}
+        <a href="{{ path('app_dashboard') }}" class="btn btn-hero-main btn-lg px-5">
+          <i class="bi bi-speedometer2 me-2"></i>Go to Dashboard
+        </a>
+      {% else %}
+        <a href="{{ path('app_register') }}" class="btn btn-hero-main btn-lg px-5 me-3">
+          <i class="bi bi-person-plus me-2"></i>Get Started
+        </a>
+        <a href="{{ path('app_services') }}" class="btn btn-hero-outline btn-lg px-5">
+          <i class="bi bi-info-circle me-2"></i>Learn More
+        </a>
+      {% endif %}
+    </div>
+    <div class="hero-scroll animate__animated animate__fadeIn animate__delay-3s">
+      <span>Scroll</span>
+      <div class="scroll-dot"></div>
+    </div>
+  </div>
 </section>
 
-<!-- Services Section -->
-<!-- Services Section (with images + pink accent + curves + decorative lines) -->
+<!-- ===== SERVICES ===== -->
 <section class="services-section">
-    <div class="container">
-        <!-- Decorative lines above heading -->
-        <div class="heading-wrapper">
-    <span class="line left"></span>
-    <h2>Our Services</h2>
-    <span class="line right"></span>
-
-    
-</div>
-
-
-        <!-- Subtitle (same as Fashion & Pet Collection) -->
-        <div class="text-center mb-5 animate__animated animate__fadeIn">
-            <p class="text-muted">Premium clothing services tailored for you</p>
-        </div>
-
-        <div class="row g-4 services-grid">
-            <div class="col-md-4 animate__animated animate__zoomIn">
-                <div class="card service-card h-100">
-                    <img src="{{ asset('uploads/images/Folded-clothes.png') }}" class="card-img-top" alt="Premium Clothing">
-                    <div class="card-body text-center">
-                        <h4 class="card-title">Premium Clothing</h4>
-                        <p class="card-text">Curated collection of high-quality clothing and accessories.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 animate__animated animate__zoomIn animate__delay-1s">
-                <div class="card service-card h-100">
-                    <img src="{{ asset('uploads/images/Delivery-van.png') }}" class="card-img-top" alt="Fast Delivery">
-                    <div class="card-body text-center">
-                        <h4 class="card-title">Fast Delivery</h4>
-                        <p class="card-text">Quick and reliable delivery services to your doorstep.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-4 animate__animated animate__zoomIn animate__delay-2s">
-                <div class="card service-card h-100">
-                    <img src="{{ asset('uploads/images/seamstress.png') }}" class="card-img-top" alt="Quality Assurance">
-                    <div class="card-body text-center">
-                        <h4 class="card-title">Quality Assurance</h4>
-                        <p class="card-text">Every item is carefully inspected for quality and perfection.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+  <div class="container">
+    <div class="section-heading animate__animated animate__fadeIn">
+      <span class="sh-line left"></span>
+      <h2>Our Services</h2>
+      <span class="sh-line right"></span>
     </div>
+    <p class="section-sub animate__animated animate__fadeIn">Premium clothing services tailored for you</p>
+    <div class="row g-4">
+      <div class="col-md-4 animate__animated animate__zoomIn">
+        <div class="svc-card">
+          <div class="svc-img-wrap">
+            <img src="{{ asset('uploads/images/Folded-clothes.png') }}" alt="Premium Clothing">
+          </div>
+          <div class="svc-body">
+            <div class="svc-icon"><i class="bi bi-bag-heart-fill"></i></div>
+            <h4>Premium Clothing</h4>
+            <p>Curated collection of high-quality clothing and accessories.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 animate__animated animate__zoomIn animate__delay-1s">
+        <div class="svc-card">
+          <div class="svc-img-wrap">
+            <img src="{{ asset('uploads/images/Delivery-van.png') }}" alt="Fast Delivery">
+          </div>
+          <div class="svc-body">
+            <div class="svc-icon"><i class="bi bi-truck-front-fill"></i></div>
+            <h4>Fast Delivery</h4>
+            <p>Quick and reliable delivery services to your doorstep.</p>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-4 animate__animated animate__zoomIn animate__delay-2s">
+        <div class="svc-card">
+          <div class="svc-img-wrap">
+            <img src="{{ asset('uploads/images/seamstress.png') }}" alt="Quality Assurance">
+          </div>
+          <div class="svc-body">
+            <div class="svc-icon"><i class="bi bi-patch-check-fill"></i></div>
+            <h4>Quality Assurance</h4>
+            <p>Every item is carefully inspected for quality and perfection.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
-<!-- Fashion & Pet Collection -->
-<section class="py-5 bg-white">
-    <div class="container">
-        <div class="text-center mb-5 animate__animated animate__fadeIn">
-            <h2 class="fw-bold">Fashion & Pet Collection</h2>
-            <p class="text-muted">Style for you and care for your pets</p>
-        </div>
-        <div class="row g-4">
-            <div class="col-md-6 animate__animated animate__fadeInLeft">
-                <div class="card rounded-4 shadow h-100">
-                    <img src="{{ asset('uploads/images/fashion-rack.png') }}" class="card-img-top rounded-top-4" alt="Trendy Fashion">
-                    <div class="card-body text-center">
-                        <h4 class="card-title">Trendy Fashion</h4>
-                        <p class="card-text text-muted">Stylish apparel and accessories for every occasion.</p>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 animate__animated animate__fadeInRight">
-                <div class="card rounded-4 shadow h-100">
-                    <img src="{{ asset('uploads/images/pet-essentials.png') }}" class="card-img-top rounded-top-4" alt="Pet Essentials">
-                    <div class="card-body text-center">
-                        <h4 class="card-title">Pet Essentials</h4>
-                        <p class="card-text text-muted">Toys, beds, and care products for your furry friends.</p>
-                    </div>
-                </div>
-            </div>
-        </div>
+<!-- ===== FASHION & PET ===== -->
+<section class="collection-section">
+  <div class="container">
+    <div class="text-center mb-5 animate__animated animate__fadeIn">
+      <h2 class="sec-title">Fashion &amp; Pet Collection</h2>
+      <p class="section-sub">Style for you and care for your pets</p>
     </div>
+    <div class="row g-4">
+      <div class="col-md-6 animate__animated animate__fadeInLeft">
+        <div class="col-card">
+          <div class="col-img-wrap">
+            <img src="{{ asset('uploads/images/fashion-rack.png') }}" alt="Trendy Fashion">
+            <div class="col-badge">Fashion</div>
+          </div>
+          <div class="col-body">
+            <h4>Trendy Fashion</h4>
+            <p>Stylish apparel and accessories for every occasion.</p>
+            {% if not app.user %}
+            <a href="{{ path('app_register') }}" class="btn btn-pink-sm">Shop Now <i class="bi bi-arrow-right ms-1"></i></a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      <div class="col-md-6 animate__animated animate__fadeInRight">
+        <div class="col-card">
+          <div class="col-img-wrap">
+            <img src="{{ asset('uploads/images/pet-essentials.png') }}" alt="Pet Essentials">
+            <div class="col-badge pet">Pets</div>
+          </div>
+          <div class="col-body">
+            <h4>Pet Essentials</h4>
+            <p>Toys, beds, and care products for your furry friends.</p>
+            {% if not app.user %}
+            <a href="{{ path('app_register') }}" class="btn btn-pink-sm">Shop Now <i class="bi bi-arrow-right ms-1"></i></a>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </section>
 
-<!-- How It Works -->
-<section class="py-5 bg-light">
-    <div class="container text-center">
-        <h2 class="fw-bold mb-5 animate__animated animate__fadeIn">How It Works</h2>
-        <div class="row">
-            <div class="col-lg-3 col-md-6 mb-4 animate__animated animate__fadeInUp">
-                <img src="{{ asset('uploads/images/browse-clothes.png') }}" class="img-fluid rounded-circle mb-3" alt="Browse Collection">
-                <h5>Browse Collection</h5>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-4 animate__animated animate__fadeInUp animate__delay-1s">
-                <img src="{{ asset('uploads/images/order-phone.png') }}" class="img-fluid rounded-circle mb-3" alt="Place Order">
-                <h5>Place Order</h5>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-4 animate__animated animate__fadeInUp animate__delay-2s">
-                <img src="{{ asset('uploads/images/warehouse-packing.png') }}" class="img-fluid rounded-circle mb-3" alt="We Process">
-                <h5>We Process</h5>
-            </div>
-            <div class="col-lg-3 col-md-6 mb-4 animate__animated animate__fadeInUp animate__delay-3s">
-                <img src="{{ asset('uploads/images/customer-delivery.png') }}" class="img-fluid rounded-circle mb-3" alt="Receive Delivery">
-                <h5>Receive Delivery</h5>
-            </div>
+<!-- ===== HOW IT WORKS ===== -->
+<section class="how-section">
+  <div class="container text-center">
+    <h2 class="sec-title animate__animated animate__fadeIn">How It Works</h2>
+    <p class="section-sub animate__animated animate__fadeIn">Simple steps to get your order</p>
+    <div class="row mt-5">
+      <div class="col-lg-3 col-md-6 mb-4 animate__animated animate__fadeInUp">
+        <div class="step-item">
+          <div class="step-num">01</div>
+          <img src="{{ asset('uploads/images/browse-clothes.png') }}" class="step-img" alt="Browse">
+          <h5>Browse Collection</h5>
+          <p>Explore our wide range of fashion and pet products.</p>
         </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-4 animate__animated animate__fadeInUp animate__delay-1s">
+        <div class="step-item">
+          <div class="step-num">02</div>
+          <img src="{{ asset('uploads/images/order-phone.png') }}" class="step-img" alt="Order">
+          <h5>Place Order</h5>
+          <p>Add to cart and checkout with ease.</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-4 animate__animated animate__fadeInUp animate__delay-2s">
+        <div class="step-item">
+          <div class="step-num">03</div>
+          <img src="{{ asset('uploads/images/warehouse-packing.png') }}" class="step-img" alt="Process">
+          <h5>We Process</h5>
+          <p>We pack and prepare your order with care.</p>
+        </div>
+      </div>
+      <div class="col-lg-3 col-md-6 mb-4 animate__animated animate__fadeInUp animate__delay-3s">
+        <div class="step-item">
+          <div class="step-num">04</div>
+          <img src="{{ asset('uploads/images/customer-delivery.png') }}" class="step-img" alt="Deliver">
+          <h5>Receive Delivery</h5>
+          <p>Get your items delivered right to your door.</p>
+        </div>
+      </div>
     </div>
+  </div>
 </section>
 
-<!-- Stats Section -->
-<section class="py-5 bg-white">
-    <div class="container">
-        <div class="row text-center">
-            <div class="col-md-3 mb-4 animate__animated animate__bounceIn">
-                <h2 class="fw-bold">2,000+</h2>
-                <p class="text-muted">Happy Customers</p>
-            </div>
-            <div class="col-md-3 mb-4 animate__animated animate__bounceIn animate__delay-1s">
-                <h2 class="fw-bold">500+</h2>
-                <p class="text-muted">Fashion Items</p>
-            </div>
-            <div class="col-md-3 mb-4 animate__animated animate__bounceIn animate__delay-2s">
-                <h2 class="fw-bold">1,600+</h2>
-                <p class="text-muted">Orders Completed</p>
-            </div>
-            <div class="col-md-3 mb-4 animate__animated animate__bounceIn animate__delay-3s">
-                <h2 class="fw-bold">24/7</h2>
-                <p class="text-muted">Support Available</p>
-            </div>
+<!-- ===== STATS ===== -->
+<section class="stats-section">
+  <div class="container">
+    <div class="text-center mb-5 animate__animated animate__fadeIn">
+      <span class="stats-eyebrow">By The Numbers</span>
+      <h2 class="stats-title">Trusted by Thousands</h2>
+    </div>
+    <div class="row g-4">
+      <div class="col-6 col-md-3 animate__animated animate__fadeInUp">
+        <div class="stat-card">
+          <div class="stat-icon-ring"><i class="bi bi-people-fill"></i></div>
+          <div class="stat-number">0</div>
+          <div class="stat-desc">Happy Customers</div>
+          <div class="stat-line"></div>
         </div>
+      </div>
+      <div class="col-6 col-md-3 animate__animated animate__fadeInUp animate__delay-1s">
+        <div class="stat-card">
+          <div class="stat-icon-ring"><i class="bi bi-bag-heart-fill"></i></div>
+          <div class="stat-number">0</div>
+          <div class="stat-desc">Fashion Items</div>
+          <div class="stat-line"></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 animate__animated animate__fadeInUp animate__delay-2s">
+        <div class="stat-card">
+          <div class="stat-icon-ring"><i class="bi bi-box-seam-fill"></i></div>
+          <div class="stat-number">0</div>
+          <div class="stat-desc">Orders Completed</div>
+          <div class="stat-line"></div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3 animate__animated animate__fadeInUp animate__delay-3s">
+        <div class="stat-card">
+          <div class="stat-icon-ring"><i class="bi bi-headset"></i></div>
+          <div class="stat-number">0</div>
+          <div class="stat-desc">Support Available</div>
+          <div class="stat-line"></div>
+        </div>
+      </div>
     </div>
+  </div>
 </section>
-<!-- CTA Section -->
-<section class="py-5 text-center position-relative"
-         style="background:url('{{ asset('uploads/images/Fashion and pet prod.png') }}') center/contain no-repeat; height:350px;">
-    <div class="overlay position-absolute top-0 start-0 w-100 h-100 bg-dark bg-opacity-50"></div>
-    <div class="container position-relative text-white animate__animated animate__fadeInUp">
-        <h2 class="fw-bold mb-4">Ready to Shop Fashion & Pet Products?</h2>
-        <p class="lead mb-4">Join thousands of satisfied customers who trust SMSol Studio for premium fashion and pet care.</p>
-        {% if app.user %}
-            <a href="{{ path('app_products') }}" class="btn btn-light btn-lg px-5 animate__animated animate__pulse animate__infinite">
-                <i class="bi bi-bag me-2"></i>Browse Products
-            </a>
-        {% else %}
-            <a href="{{ path('app_register') }}" class="btn btn-primary btn-lg px-5 animate__animated animate__fadeInUp">
-                <i class="bi bi-rocket-takeoff me-2"></i>Start Shopping Now
-            </a>
-        {% endif %}
-    </div>
+
+
+<!-- ===== CTA ===== -->
+<section class="cta-section position-relative">
+  <div class="cta-overlay"></div>
+  <div class="cta-circle cc1"></div>
+  <div class="cta-circle cc2"></div>
+  <div class="container position-relative text-center text-white animate__animated animate__fadeInUp">
+    <div class="cta-badge"><i class="bi bi-fire me-1"></i> Limited Offers Available</div>
+    <h2 class="fw-bold mb-3">Ready to Shop Fashion &amp; Pet Products?</h2>
+    <p class="lead mb-4">Join thousands of satisfied customers who trust SMSol Studio.</p>
+    {% if app.user %}
+      <a href="{{ path('app_products') }}" class="btn btn-cta btn-lg px-5">
+        <i class="bi bi-bag me-2"></i>Browse Products
+      </a>
+    {% else %}
+      <a href="{{ path('app_register') }}" class="btn btn-cta btn-lg px-5">
+        <i class="bi bi-rocket-takeoff me-2"></i>Start Shopping Now
+      </a>
+    {% endif %}
+  </div>
 </section>
+
 
 
 {% endblock %}
+{% block javascripts %}
+<script>
+function animateCounter(el, target, suffix, duration) {
+  let start = 0;
+  const step = target / (duration / 16);
+  const timer = setInterval(() => {
+    start += step;
+    if (start >= target) {
+      el.textContent = target.toLocaleString() + suffix;
+      clearInterval(timer);
+    } else {
+      el.textContent = Math.floor(start).toLocaleString() + suffix;
+    }
+  }, 16);
+}
+
+function initCounters() {
+  const cards = document.querySelectorAll('.stat-card');
+  const data = [
+    { target: 2000, suffix: '+' },
+    { target: 500,  suffix: '+' },
+    { target: 1600, suffix: '+' },
+    { target: 24,   suffix: '/7' },
+  ];
+
+  cards.forEach((card, i) => {
+    const el = card.querySelector('.stat-number');
+    if (el && data[i]) animateCounter(el, data[i].target, data[i].suffix, 2000);
+  });
+}
+
+
+const statsSection = document.querySelector('.stats-section');
+let triggered = false;
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting && !triggered) {
+      triggered = true;
+      initCounters();
+    }
+  });
+}, { threshold: 0.3 });
+if (statsSection) observer.observe(statsSection);
+</script>
+{% endblock %}
+
+

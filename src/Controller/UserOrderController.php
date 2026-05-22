@@ -26,52 +26,67 @@ class UserOrderController extends AbstractController
         ]);
     }
 
-    #[Route('/order/create', name: 'app_user_order_create')]
-    public function new(
-        Request $request,
-        EntityManagerInterface $entityManager,
-        ProductRepository $productRepository
-    ): Response {
+    #[Route('/order/create', name: 'app_user_order_create', methods: ['GET', 'POST'])]
+public function new(
+    Request $request,
+    EntityManagerInterface $entityManager,
+    ProductRepository $productRepository
+): Response {
+    $user = $this->getUser();
+
+    if ($request->isMethod('POST') && $request->isXmlHttpRequest() === false && $request->headers->get('Content-Type') !== 'application/json') {
+        // Handle fetch/FormData POST
+        $deliveryType = $request->request->get('delivery_type');
+        $paymentMethod = $request->request->get('payment_method');
+        $isUrgent = (bool) $request->request->get('is_urgent', false);
+        $deliveryFee = (float) $request->request->get('delivery_fee', 0);
+        $items = $request->request->all('items');
+
+        if (empty($items)) {
+            return $this->json(['error' => 'No items in order'], 400);
+        }
+
         $order = new Order();
-        $order->setCustomer($this->getUser());
+        $order->setCustomer($user);
+        $order->setDeliveryType($deliveryType);
+        $order->setPaymentMethod($paymentMethod);
+        $order->setIsUrgent($isUrgent);
+        $order->setDeliveryFee($deliveryFee);
 
-        $productId = $request->query->get('product');
-        if ($productId) {
-            $preselectProduct = $productRepository->find((int) $productId);
-            if ($preselectProduct) {
-                $orderItem = new OrderItem();
-                $orderItem->setProduct($preselectProduct);
-                $orderItem->setQuantity(1);
-                $order->addOrderItem($orderItem);
-            }
+        if ($deliveryType === 'delivery') {
+            $recipient = $request->request->get('recipient_name');
+            $phone = $request->request->get('phone_number');
+            $street = $request->request->get('street_address');
+            $city = $request->request->get('city');
+            $postal = $request->request->get('postal_code');
+            $order->setDeliveryAddress(implode(', ', array_filter([$recipient, $phone, $street, $city, $postal])));
         }
 
-        if (!$order->getOrderItems()->count()) {
-            // Add empty item so collection form renders one row even without preselect.
-            $order->addOrderItem(new OrderItem());
+        foreach ($items as $itemData) {
+            $product = $productRepository->find((int) $itemData['product_id']);
+            if (!$product) continue;
+            $orderItem = new OrderItem();
+            $orderItem->setProduct($product);
+            $orderItem->setQuantity((int) $itemData['quantity']);
+            $orderItem->setUnitPrice($product->getPrice());
+            $orderItem->calculateTotal();
+            $order->addOrderItem($orderItem);
         }
 
-        $form = $this->createForm(OrderType::class, $order);
-        $form->handleRequest($request);
+        $order->calculateTotal();
+        $entityManager->persist($order);
+        $entityManager->flush();
 
-        if ($form->isSubmitted() && $form->isValid()) {
-            $order->calculateTotal();
-            $entityManager->persist($order);
-            $entityManager->flush();
-
-            $this->addFlash('success', 'Order created successfully!');
-
-            return $this->redirectToRoute('app_user_order_show', ['id' => $order->getId()]);
-        }
-
-        $products = $productRepository->findAllAvailable();
-
-        return $this->render('order/user/new.html.twig', [
-            'order' => $order,
-            'form' => $form->createView(),
-            'products' => $products,
-        ]);
+        return $this->json(['success' => true, 'orderId' => $order->getId()]);
     }
+
+    // GET - render the form
+    $products = $productRepository->findAllAvailable();
+
+    return $this->render('order/user/new.html.twig', [
+        'products' => $products,
+    ]);
+}
 
     #[Route('/order/{id}', name: 'app_user_order_show')]
     public function show(Order $order): Response
@@ -99,4 +114,6 @@ class UserOrderController extends AbstractController
 
         return $this->redirectToRoute('app_user_order_show', ['id' => $order->getId()]);
     }
+
+    
 }

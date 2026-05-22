@@ -2,7 +2,9 @@
 <div class="modal fade" id="adjustStockModal" tabindex="-1" aria-labelledby="adjustStockModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
-           <form action="#" method="post" onsubmit="return handleAddStock(event);">
+            <form action="{{ path('staff_stock_adjust') }}" method="post">
+
+
                 <div class="modal-header">
                     <h5 class="modal-title" id="adjustStockModalLabel">Adjust Stock Level</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>

@@ -6,6 +6,29 @@ use App\Repository\StockAdjustmentRepository;
 use Doctrine\DBAL\Types\Types;
 use Doctrine\ORM\Mapping as ORM;
 
+use ApiPlatform\Metadata\ApiResource;
+use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\GetCollection;
+use ApiPlatform\Metadata\Post;
+use ApiPlatform\Metadata\Put;
+use ApiPlatform\Metadata\Delete;
+
+use Symfony\Component\Serializer\Attribute\Groups;
+
+#[ApiResource(
+    operations: [
+        new Get(
+            normalizationContext: ['groups' => ['stock_adjustment:read']]
+        ),
+        new GetCollection(
+            normalizationContext: ['groups' => ['stock_adjustment:read']]
+        ),
+        new Post(),
+        new Put(),
+        new Delete()
+    ]
+)]
+
 #[ORM\Entity(repositoryClass: StockAdjustmentRepository::class)]
 class StockAdjustment
 {
@@ -19,25 +42,32 @@ class StockAdjustment
     private ?Stock $stock = null;
 
     #[ORM\Column]
+    #[Groups(['stock_adjustment:read'])]
     private ?int $previousQuantity = null;
 
     #[ORM\Column]
+    #[Groups(['stock_adjustment:read'])]
     private ?int $newQuantity = null;
 
     #[ORM\Column(length: 20)]
+    #[Groups(['stock_adjustment:read'])]
     private ?string $adjustmentType = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['stock_adjustment:read'])]
     private ?string $reason = null;
 
     #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['stock_adjustment:read'])]
     private ?string $notes = null;
 
     #[ORM\ManyToOne]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['stock_adjustment:read'])]
     private ?User $adjustedBy = null;
 
     #[ORM\Column]
+    #[Groups(['stock_adjustment:read'])]
     private ?\DateTimeImmutable $adjustedAt = null;
 
     public function getId(): ?int

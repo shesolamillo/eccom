@@ -269,6 +269,8 @@
         color: #333;
     }
 
+    
+
     @media (max-width: 768px) {
         .cart-container {
             padding: 15px;

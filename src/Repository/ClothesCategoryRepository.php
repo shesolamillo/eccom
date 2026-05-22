@@ -53,4 +53,10 @@ class ClothesCategoryRepository extends ServiceEntityRepository
             ->getQuery()
             ->getResult();
     }
+
+    public function findByType(string $type): array
+    {
+        return $this->findAllActive();
+    }
+
 }

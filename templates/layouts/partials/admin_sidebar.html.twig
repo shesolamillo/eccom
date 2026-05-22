@@ -1,6 +1,10 @@
 {# templates/layouts/partials/admin_sidebar.html.twig #}
+{% block stylesheets %}
+    <link rel="stylesheet" href="{{ asset('css/admin.css') }}">
+{% endblock %}
 <div class="admin-sidebar h-100">
-    <div class="sidebar-header">
+    <div class="sidebar-header" style="background-color: #1E1E1E;">
+
         <div class="d-flex align-items-center">
             {% if app.user.userProfile and app.user.userProfile.profilePicture %}
                 <img src="{{ asset('uploads/profiles/' ~ app.user.userProfile.profilePicture) }}" 
@@ -27,11 +31,18 @@
     <div class="sidebar-menu">
         <nav class="nav flex-column">
             {# Dashboard - Show to both Admin and Staff #}
-            <a href="{{ path('admin_dashboard') }}" 
-               class="nav-link {{ app.request.get('_route') == 'admin_dashboard' ? 'active' : '' }}">
+            {% if is_granted('ROLE_ADMIN') %}
+        <a href="{{ path('admin_dashboard') }}" 
+           class="nav-link {{ app.request.get('_route') == 'admin_dashboard' ? 'active' : '' }}">
+            <i class="bi bi-speedometer2"></i>Dashboard
+        </a>
+        {% elseif is_granted('ROLE_STAFF') %}
+            <a href="{{ path('staff_dashboard') }}" 
+            class="nav-link {{ app.request.get('_route') == 'staff_dashboard' ? 'active' : '' }}">
                 <i class="bi bi-speedometer2"></i>Dashboard
             </a>
-            
+        {% endif %}
+                
             {# Analytics - Hide from Staff #}
             {% if is_granted('ROLE_ADMIN') %}
                 {# <a href="{{ path('admin_analytics') }}" 
@@ -107,11 +118,27 @@
                     <i class="bi bi-list-check"></i>Activity Logs
                 </a>
             {% endif %}
+
+             {# ========== SETTINGS - ADMIN ONLY ========== #}
+            {% if is_granted('ROLE_ADMIN') %}
+                <a href="{{ path('admin_settings') }}" 
+                   class="nav-link {{ app.request.get('_route') == 'admin_settings' ? 'active' : '' }}">
+                    <i class="bi bi-gear-fill"></i>Settings
+                </a>
+            {% endif %}
+
+            
+            {# ========== SETTINGS - STAFF ONLY ========== #}
+            {% if is_granted('ROLE_STAFF') and not is_granted('ROLE_ADMIN') %}
+            <a href="{{ path('staff_settings') }}" class="nav-link {{ app.request.get('_route') starts with 'staff_settings' ? 'active' : '' }}">
+                <i class="bi bi-gear-fill"></i>Settings
+            </a>
+            {% endif %}
             
             <div class="mt-4 pt-3 border-top">
-                <h6 class="nav-link">
+                {# <h6 class="nav-link">
                     <i class="bi bi-house"></i>LOGOUT
-                </h6>
+                </h6> #}
                 
                 <a href="{{ path('app_logout') }}" class="nav-link text-danger">
                     <i class="bi bi-box-arrow-right"></i>Logout
@@ -120,3 +147,59 @@
         </nav>
     </div>
 </div>
+
+<style>
+/* Sidebar base */
+.admin-sidebar {
+    background-color: #1E1E1E  !important;; /* Dark gray background */
+    color: #ffffff;           /* White text */
+    min-width: 240px;
+    padding: 1rem;
+}
+
+/* Sidebar header */
+.admin-sidebar .sidebar-header h6 {
+    color: #ffffff;
+}
+.admin-sidebar .sidebar-header small {
+    color: #bbbbbb; /* Muted gray for role text */
+}
+
+/* Nav links */
+.admin-sidebar .nav-link {
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+/* Icons */
+.admin-sidebar .nav-link i {
+    margin-right: 8px;
+    font-size: 1.1rem;
+}
+
+/* Active item highlight */
+.admin-sidebar .nav-link.active {
+    background-color: rgba(233, 30, 99, 0.15); /* Pink background highlight */
+    border-left: 4px solid #E91E63;            /* Pink left border */
+    color: #E91E63;                            /* Pink text for active */
+}
+
+/* Hover effect */
+.admin-sidebar .nav-link:hover {
+    background-color: rgba(233, 30, 99, 0.1); /* Light pink glow */
+    color: #E91E63;
+}
+
+/* Logout section */
+.admin-sidebar .nav-link.text-danger {
+    color: #E91E63 !important; /* Pink logout text */
+}
+.admin-sidebar .nav-link.text-danger i {
+    color: #E91E63 !important; /* Pink logout icon */
+}
+
+</style>

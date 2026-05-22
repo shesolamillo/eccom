@@ -30,8 +30,8 @@
             <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
                 <h5 class="mb-0">Edit Product Information</h5>
                 <div class="d-flex gap-2">
-                    <span class="badge {{ product.isActive ? 'bg-success' : 'bg-danger' }}">
-                        {{ product.isActive ? 'Available' : 'Unavailable' }}
+                    <span class="badge {{ product.isIsAvailable ? 'bg-success' : 'bg-danger' }}">
+                        {{ product.isIsAvailable ? 'Available' : 'Unavailable' }}
                     </span>
                     {% if product.isFeatured|default(false) %}
                         <span class="badge bg-warning">Featured</span>
@@ -112,17 +112,17 @@
                     
                     <!-- New Image Upload -->
                     <div class="col-12">
-                        {{ form_label(form.image, 'New Product Image', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_label(form.photo, 'New Product Image', {'label_attr': {'class': 'form-label'}}) }}
                         <div class="input-group">
-                            {{ form_widget(form.image, {'attr': {
+                            {{ form_widget(form.photo, {'attr': {
                                 'class': 'form-control',
                                 'accept': 'image/jpeg,image/png,image/webp,image/gif'
                             }}) }}
-                            <label class="input-group-text" for="{{ form.image.vars.id }}">
+                            <label class="input-group-text" for="{{ form.photo.vars.id }}">
                                 <i class="bi bi-upload"></i>
                             </label>
                         </div>
-                        {{ form_errors(form.image) }}
+                        {{ form_errors(form.photo) }}
                         <div class="form-text">
                             <i class="bi bi-info-circle"></i> Leave blank to keep current image. Supported formats: JPG, PNG, WebP, GIF (Max 5MB)
                         </div>
@@ -218,11 +218,11 @@
                     
                     <div class="col-md-6">
                         <div class="form-check form-switch mt-4 pt-2">
-                            {{ form_widget(form.isActive, {'attr': {
+                            {{ form_widget(form.isAvailable, {'attr': {
                                 'class': 'form-check-input',
                                 'role': 'switch'
                             }}) }}
-                            {{ form_label(form.isActive, 'Available for Sale', {'label_attr': {'class': 'form-check-label'}}) }}
+                            {{ form_label(form.isAvailable, 'Available for Sale', {'label_attr': {'class': 'form-check-label'}}) }}
                         </div>
                     </div>
                     
@@ -323,7 +323,7 @@
                     <tr>
                         <th class="text-muted">Status:</th>
                         <td>
-                            {% if product.isActive %}
+                            {% if product.isAvailable %}
                                 <span class="badge bg-success">Available</span>
                             {% else %}
                                 <span class="badge bg-danger">Unavailable</span>
@@ -397,14 +397,14 @@
                         <div class="timeline-content">
                             <h6 class="mb-0">Last Updated</h6>
                             <small class="text-muted">{{ product.updatedAt|date('F j, Y h:i A') }}</small>
-                            {% if product.updatedBy %}
+                            {# {% if product.updatedBy %}
                                 <div class="small">By: {{ product.updatedBy.fullName|default('System') }}</div>
-                            {% endif %}
+                            {% endif %} #}
                         </div>
                     </div>
                     {% endif %}
                     
-                    {% if product.lastOrderDate %}
+                    {# {% if product.lastOrderDate %}
                     <div class="timeline-item">
                         <div class="timeline-marker bg-success"></div>
                         <div class="timeline-content">
@@ -412,7 +412,7 @@
                             <small class="text-muted">{{ product.lastOrderDate|date('F j, Y') }}</small>
                         </div>
                     </div>
-                    {% endif %}
+                    {% endif %} #}
                 </div>
                 
                 <hr class="my-3">
@@ -442,7 +442,7 @@
 {{ parent() }}
 <script>
 // New image preview
-document.getElementById('{{ form.image.vars.id }}').addEventListener('change', function(event) {
+document.getElementById('{{ form.photo.vars.id }}').addEventListener('change', function(event) {
     const file = event.target.files[0];
     const previewContainer = document.getElementById('imagePreviewContainer');
     const previewImage = document.getElementById('imagePreview');
@@ -469,7 +469,7 @@ document.getElementById('{{ form.image.vars.id }}').addEventListener('change', f
 });
 
 function removeNewImage() {
-    const fileInput = document.getElementById('{{ form.image.vars.id }}');
+    const fileInput = document.getElementById('{{ form.photo.vars.id }}');
     const previewContainer = document.getElementById('imagePreviewContainer');
     const previewImage = document.getElementById('imagePreview');
     
@@ -512,8 +512,8 @@ document.querySelector('form').addEventListener('submit', function(event) {
     const requiredFields = [
         '{{ form.name.vars.id }}',
         '{{ form.price.vars.id }}',
-        '{{ form.type.vars.id }}',
-        '{{ form.category.vars.id }}'
+        '{{ form.productType.vars.id }}',
+        '{{ form.clothesCategory.vars.id }}'
     ];
     
     let isValid = true;

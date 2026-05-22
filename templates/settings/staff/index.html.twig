@@ -1,0 +1,393 @@
+{# templates/staff/settings/index.html.twig #}
+{% extends 'layouts/admin.html.twig' %}
+{% block title %}Staff Settings - SMSol Studio{% endblock %}
+{% block page_title %}My Settings{% endblock %}
+
+{% block admin_content %}
+<style>
+:root {
+    --pink: #c2185b; --pink-dark: #880e4f;
+    --pink-light: #fce4ec; --pink-soft: #fdf5fb;
+    --border: #eaecf0; --surface: #ffffff;
+    --surface-2: #f8f9fb; --text-primary: #101828;
+    --text-secondary: #475467; --text-muted: #98a2b3;
+    --radius: 12px; --shadow: 0 1px 4px rgba(16,24,40,0.06);
+}
+.settings-wrap { max-width: 780px; margin: 0 auto; }
+.settings-tabs { display: flex; gap: 4px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 10px; padding: 4px; margin-bottom: 1.5rem; }
+.s-tab { flex: 1; padding: 0.55rem 1rem; border: none; background: transparent; border-radius: 8px; font-size: 0.82rem; font-weight: 600; color: var(--text-muted); cursor: pointer; transition: all 0.15s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+.s-tab:hover { color: var(--pink); }
+.s-tab.active { background: var(--surface); color: var(--pink); box-shadow: 0 1px 4px rgba(0,0,0,0.08); }
+.s-panel { display: none; }
+.s-panel.active { display: block; }
+.s-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); margin-bottom: 1rem; overflow: hidden; }
+.s-card-head { padding: 0.85rem 1.25rem; border-bottom: 1px solid var(--border); background: var(--surface-2); display: flex; align-items: center; gap: 8px; font-size: 0.82rem; font-weight: 700; color: var(--text-primary); }
+.s-card-head::before { content: ''; width: 3px; height: 16px; background: var(--pink); border-radius: 3px; }
+.s-card-body { padding: 1.25rem; }
+.field-row { display: grid; grid-template-columns: 200px 1fr; gap: 1rem; align-items: start; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
+.field-row:last-child { border-bottom: none; padding-bottom: 0; }
+.field-row:first-child { padding-top: 0; }
+.field-name { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+.field-desc { font-size: 0.72rem; color: var(--text-muted); line-height: 1.4; }
+.f-input, .f-select { border: 1.5px solid var(--border); border-radius: 8px; font-size: 0.85rem; padding: 0.5rem 0.85rem; color: var(--text-primary); background: var(--surface); width: 100%; transition: border-color 0.15s, box-shadow 0.15s; }
+.f-input:focus, .f-select:focus { border-color: var(--pink); box-shadow: 0 0 0 3px rgba(194,24,91,0.1); outline: none; }
+.form-check-input:checked { background-color: var(--pink); border-color: var(--pink); }
+.form-check-input { width: 2.5rem; height: 1.3rem; cursor: pointer; }
+.b-on  { background:#ecfdf3;color:#027a48;border:1px solid #a7f3d0;font-size:0.65rem;font-weight:700;padding:0.2em 0.6em;border-radius:20px; }
+.b-off { background:var(--surface-2);color:var(--text-muted);border:1px solid var(--border);font-size:0.65rem;font-weight:700;padding:0.2em 0.6em;border-radius:20px; }
+.btn-save { background: var(--pink); color: #fff; border: none; border-radius: 8px; padding: 0.6rem 1.5rem; font-size: 0.85rem; font-weight: 700; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 2px 8px rgba(194,24,91,0.25); }
+.btn-save:hover { background: var(--pink-dark); }
+.btn-cancel { background: var(--surface); border: 1.5px solid var(--border); color: var(--text-secondary); border-radius: 8px; padding: 0.6rem 1.25rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+.btn-cancel:hover { border-color: var(--pink); color: var(--pink); }
+.avatar-wrap { display: flex; align-items: center; gap: 1rem; }
+.avatar-circle { width: 64px; height: 64px; border-radius: 50%; background: var(--pink-light); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; color: var(--pink); font-weight: 700; flex-shrink: 0; overflow: hidden; }
+.avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+.btn-upload { background: var(--surface); border: 1.5px solid var(--border); color: var(--text-secondary); border-radius: 8px; padding: 0.45rem 1rem; font-size: 0.8rem; font-weight: 600; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 5px; }
+.btn-upload:hover { border-color: var(--pink); color: var(--pink); }
+.pwd-strength { height: 4px; border-radius: 2px; margin-top: 6px; transition: all 0.3s; background: var(--border); }
+.notif-row { display: flex; align-items: center; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid #f3f4f6; }
+.notif-row:last-child { border-bottom: none; }
+.notif-info .notif-title { font-size: 0.82rem; font-weight: 600; color: var(--text-primary); }
+.notif-info .notif-desc { font-size: 0.72rem; color: var(--text-muted); }
+@media(max-width:640px) { .field-row { grid-template-columns: 1fr; } }
+</style>
+
+<div class="settings-wrap">
+
+    <div class="settings-tabs">
+        <button class="s-tab active" onclick="switchTab('profile', this)">
+            <i class="bi bi-person"></i> Profile
+        </button>
+        <button class="s-tab" onclick="switchTab('security', this)">
+            <i class="bi bi-shield-lock"></i> Security
+        </button>
+        <button class="s-tab" onclick="switchTab('notifications', this)">
+            <i class="bi bi-bell"></i> Notifications
+        </button>
+        <button class="s-tab" onclick="switchTab('preferences', this)">
+            <i class="bi bi-sliders"></i> Preferences
+        </button>
+    </div>
+
+    {# --- PROFILE --- #}
+    <div class="s-panel active" id="tab-profile">
+        <form action="{{ path('staff_settings_profile') }}" method="post" enctype="multipart/form-data">
+            <input type="hidden" name="_token" value="{{ csrf_token('staff_profile') }}">
+
+            <div class="s-card">
+                <div class="s-card-head"><i class="bi bi-person-circle"></i> Profile Photo</div>
+                <div class="s-card-body">
+                    <div class="avatar-wrap">
+                        <div class="avatar-circle" id="avatarPreview">
+                            {% if app.user.photo is defined and app.user.photo %}
+                                <img src="{{ asset('uploads/avatars/' ~ app.user.photo) }}" alt="Avatar">
+                            {% else %}
+                                {{ app.user.firstName|first|upper }}{{ app.user.lastName|first|upper }}
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="btn-upload" for="photoInput">
+                                <i class="bi bi-upload"></i> Upload Photo
+                            </label>
+                            <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
+                            <div style="font-size:0.72rem;color:var(--text-muted);margin-top:4px;">JPG, PNG up to 2MB</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-head"><i class="bi bi-info-circle"></i> Personal Information</div>
+                <div class="s-card-body">
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">First Name</div>
+                        </div>
+                        <input type="text" name="firstName" class="f-input"
+                               value="{{ app.user.firstName }}" required>
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">Last Name</div>
+                        </div>
+                        <input type="text" name="lastName" class="f-input"
+                               value="{{ app.user.lastName }}" required>
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">Email Address</div>
+                            <div class="field-desc">Used for login and notifications</div>
+                        </div>
+                        <input type="email" name="email" class="f-input"
+                               value="{{ app.user.email }}" required>
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">Phone Number</div>
+                        </div>
+                        <input type="text" name="phone" class="f-input"
+                               value="{{ app.user.phone|default('') }}">
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="reset" class="btn-cancel">
+                    <i class="bi bi-x"></i> Cancel
+                </button>
+                <button type="submit" class="btn-save">
+                    <i class="bi bi-check-lg"></i> Save Profile
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {# --- SECURITY --- #}
+    <div class="s-panel" id="tab-security">
+        <form action="{{ path('staff_settings_password') }}" method="post">
+            <input type="hidden" name="_token" value="{{ csrf_token('staff_password') }}">
+
+            <div class="s-card">
+                <div class="s-card-head"><i class="bi bi-key"></i> Change Password</div>
+                <div class="s-card-body">
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">Current Password</div>
+                        </div>
+                        <input type="password" name="current_password" class="f-input"
+                               placeholder="Enter current password" required>
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">New Password</div>
+                            <div class="field-desc">Minimum 8 characters</div>
+                        </div>
+                        <div>
+                            <input type="password" name="new_password" id="newPwd" class="f-input"
+                                   placeholder="Enter new password" required onkeyup="checkStrength(this.value)">
+                            <div class="pwd-strength" id="pwdStrength"></div>
+                            <div id="pwdStrengthLabel" style="font-size:0.72rem;color:var(--text-muted);margin-top:3px;"></div>
+                        </div>
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">Confirm Password</div>
+                        </div>
+                        <input type="password" name="confirm_password" id="confirmPwd" class="f-input"
+                               placeholder="Repeat new password" required>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-head"><i class="bi bi-shield-check"></i> Active Sessions</div>
+                <div class="s-card-body">
+                    <div style="display:flex;align-items:center;justify-content:space-between;">
+                        <div>
+                            <div class="field-name">Current Session</div>
+                            <div class="field-desc">{{ app.request.clientIp }} &mdash; {{ 'now'|date('M d, Y H:i') }}</div>
+                        </div>
+                        <span class="b-on">Active</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="reset" class="btn-cancel">
+                    <i class="bi bi-x"></i> Cancel
+                </button>
+                <button type="submit" class="btn-save">
+                    <i class="bi bi-shield-lock"></i> Update Password
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {# --- NOTIFICATIONS --- #}
+    <div class="s-panel" id="tab-notifications">
+        <form action="{{ path('staff_settings_notifications') }}" method="post">
+            <input type="hidden" name="_token" value="{{ csrf_token('staff_notifications') }}">
+
+            <div class="s-card">
+                <div class="s-card-head"><i class="bi bi-envelope-bell"></i> Email Notifications</div>
+                <div class="s-card-body">
+                    <div class="notif-row">
+                        <div class="notif-info">
+                            <div class="notif-title">Low Stock Alerts</div>
+                            <div class="notif-desc">Get notified when a product hits minimum threshold</div>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="notif_low_stock"
+                                   {{ app.user.notifLowStock|default(true) ? 'checked' : '' }}>
+                        </div>
+                    </div>
+                    <div class="notif-row">
+                        <div class="notif-info">
+                            <div class="notif-title">New Orders</div>
+                            <div class="notif-desc">Receive an email when a new order is placed</div>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="notif_new_order"
+                                   {{ app.user.notifNewOrder|default(true) ? 'checked' : '' }}>
+                        </div>
+                    </div>
+                    <div class="notif-row">
+                        <div class="notif-info">
+                            <div class="notif-title">Order Status Changes</div>
+                            <div class="notif-desc">Updates when an order is processed or shipped</div>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="notif_order_status"
+                                   {{ app.user.notifOrderStatus|default(false) ? 'checked' : '' }}>
+                        </div>
+                    </div>
+                    <div class="notif-row">
+                        <div class="notif-info">
+                            <div class="notif-title">Daily Summary Report</div>
+                            <div class="notif-desc">Receive a daily digest of sales and inventory</div>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="notif_daily_summary"
+                                   {{ app.user.notifDailySummary|default(false) ? 'checked' : '' }}>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="s-card">
+                <div class="s-card-head"><i class="bi bi-bell"></i> In-App Notifications</div>
+                <div class="s-card-body">
+                    <div class="notif-row">
+                        <div class="notif-info">
+                            <div class="notif-title">Stock Alerts</div>
+                            <div class="notif-desc">Show badge on stock menu when items are low</div>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="inapp_stock_alert"
+                                   {{ app.user.inappStockAlert|default(true) ? 'checked' : '' }}>
+                        </div>
+                    </div>
+                    <div class="notif-row">
+                        <div class="notif-info">
+                            <div class="notif-title">Order Notifications</div>
+                            <div class="notif-desc">Show popup when new orders arrive</div>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="inapp_order_notif"
+                                   {{ app.user.inappOrderNotif|default(true) ? 'checked' : '' }}>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="submit" class="btn-save">
+                    <i class="bi bi-check-lg"></i> Save Notifications
+                </button>
+            </div>
+        </form>
+    </div>
+
+    {# --- PREFERENCES --- #}
+    <div class="s-panel" id="tab-preferences">
+        <form action="{{ path('staff_settings_preferences') }}" method="post">
+            <input type="hidden" name="_token" value="{{ csrf_token('staff_preferences') }}">
+
+            <div class="s-card">
+                <div class="s-card-head"><i class="bi bi-layout-text-sidebar"></i> Display Preferences</div>
+                <div class="s-card-body">
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">Items Per Page</div>
+                            <div class="field-desc">Default rows shown in tables</div>
+                        </div>
+                        <select name="items_per_page" class="f-select">
+                            {% for val in [10, 25, 50, 100] %}
+                                <option value="{{ val }}" {{ app.user.itemsPerPage|default(25) == val ? 'selected' : '' }}>
+                                    {{ val }} items
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">Default Date Range</div>
+                            <div class="field-desc">Default filter for reports and tables</div>
+                        </div>
+                        <select name="default_date_range" class="f-select">
+                            <option value="today"   {{ app.user.defaultDateRange|default('week') == 'today'   ? 'selected' : '' }}>Today</option>
+                            <option value="week"    {{ app.user.defaultDateRange|default('week') == 'week'    ? 'selected' : '' }}>This Week</option>
+                            <option value="month"   {{ app.user.defaultDateRange|default('week') == 'month'   ? 'selected' : '' }}>This Month</option>
+                            <option value="quarter" {{ app.user.defaultDateRange|default('week') == 'quarter' ? 'selected' : '' }}>This Quarter</option>
+                        </select>
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">Language</div>
+                        </div>
+                        <select name="language" class="f-select">
+                            <option value="en" {{ app.user.language|default('en') == 'en' ? 'selected' : '' }}>English</option>
+                            <option value="fil" {{ app.user.language|default('en') == 'fil' ? 'selected' : '' }}>Filipino</option>
+                        </select>
+                    </div>
+                    <div class="field-row">
+                        <div>
+                            <div class="field-name">Compact Mode</div>
+                            <div class="field-desc">Reduce spacing in tables and lists</div>
+                        </div>
+                        <div class="form-check form-switch mb-0">
+                            <input class="form-check-input" type="checkbox" name="compact_mode"
+                                   {{ app.user.compactMode|default(false) ? 'checked' : '' }}>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="d-flex justify-content-end gap-2 mt-3">
+                <button type="submit" class="btn-save">
+                    <i class="bi bi-check-lg"></i> Save Preferences
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block javascripts %}
+{{ parent() }}
+<script>
+function switchTab(name, el) {
+    document.querySelectorAll('.s-panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.s-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + name).classList.add('active');
+    el.classList.add('active');
+}
+
+function previewAvatar(input) {
+    if (!input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+        const wrap = document.getElementById('avatarPreview');
+        wrap.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+    };
+    reader.readAsDataURL(input.files[0]);
+}
+
+function checkStrength(val) {
+    const bar = document.getElementById('pwdStrength');
+    const label = document.getElementById('pwdStrengthLabel');
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    const colors = ['#ef4444','#f97316','#eab308','#22c55e'];
+    const labels = ['Weak','Fair','Good','Strong'];
+    bar.style.width = (score * 25) + '%';
+    bar.style.background = colors[score - 1] || '#eaecf0';
+    label.textContent = score > 0 ? labels[score - 1] : '';
+    label.style.color = colors[score - 1] || 'var(--text-muted)';
+}
+</script>
+{% endblock %}

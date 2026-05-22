@@ -144,7 +144,7 @@
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0 data-table" id="ordersTable">
+            <table class="table table-hover mb-0" id="ordersTable">
                 <thead class="bg-light">
                     <tr>
                         <th>Order #</th>
@@ -546,10 +546,16 @@ function printOrder() {
 
 // Initialize DataTable
 document.addEventListener('DOMContentLoaded', function() {
+    if ($.fn.DataTable.isDataTable('#ordersTable')) {
+        $('#ordersTable').DataTable().destroy();
+    }
     $('#ordersTable').DataTable({
         pageLength: 25,
         lengthMenu: [10, 25, 50, 100],
-        order: [[2, 'desc']], // Sort by date
+        order: [[2, 'desc']],
+        columnDefs: [
+            { orderable: false, targets: [7] }
+        ],
         language: {
             search: "_INPUT_",
             searchPlaceholder: "Search orders...",
@@ -560,6 +566,8 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+
 </script>
 
 <style>

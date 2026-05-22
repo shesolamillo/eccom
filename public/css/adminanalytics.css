@@ -1,0 +1,67 @@
+.dashboard {
+    padding: 20px;
+    font-family: Arial, sans-serif;
+    background: #f4f6f9;
+}
+
+.header-card {
+    background: linear-gradient(135deg, #4e73df, #224abe);
+    color: white;
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.filter-box {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.btn {
+    background: #4e73df;
+    color: white;
+    padding: 8px 12px;
+    margin: 5px;
+    border-radius: 6px;
+    text-decoration: none;
+}
+
+.btn:hover {
+    background: #2e59d9;
+}
+
+/* CARDS */
+.cards {
+    display: flex;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.card {
+    flex: 1;
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+/* GRAPHS GRID */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+}
+
+.chart-box {
+    background: white;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+}
+
+canvas {
+    width: 100% !important;
+    height: 250px !important;
+}

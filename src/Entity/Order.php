@@ -7,6 +7,8 @@ use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints as Assert;
+use ApiPlatform\Metadata\ApiFilter;
+use ApiPlatform\Doctrine\Orm\Filter\SearchFilter;
 
 
 use ApiPlatform\Metadata\ApiResource;
@@ -53,69 +55,90 @@ class Order
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['order:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Groups(['order:read'])] 
     private ?string $orderNumber = null;
 
     #[ORM\ManyToOne(inversedBy: 'orders')]
     #[ORM\JoinColumn(nullable: false)]
+    #[Groups(['order:read'])]
     private ?User $customer = null;
 
     #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Groups(['order:read'])]
     private bool $isUrgent = false;
 
     #[ORM\OneToMany(mappedBy: 'orderRef', targetEntity: OrderItem::class, cascade: ['persist', 'remove'], orphanRemoval: true)]
     #[Assert\Valid]
     #[Assert\Count(min: 1)]
+    #[Groups(['order:read'])]
     private Collection $orderItems;
 
     #[ORM\Column(length: 20)]
+    #[Groups(['order:read'])]
     private ?string $status = self::STATUS_PENDING;
 
     #[ORM\Column(length: 20)]
+    #[Groups(['order:read'])]
     private ?string $deliveryType = self::DELIVERY_PICKUP;
 
     #[ORM\Column(length: 20)]
+    #[Groups(['order:read'])]
     private ?string $paymentMethod = self::PAYMENT_CASH;
 
     #[ORM\Column]
+    #[Groups(['order:read'])]
     private ?bool $isPaid = false;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $paidAt = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['order:read'])]
     private ?string $deliveryAddress = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['order:read'])]
     private ?float $deliveryFee = 0.0;
 
     #[ORM\Column]
+    #[Groups(['order:read'])]
     private ?float $totalAmount = 0.0;
 
     #[ORM\Column(length: 500, nullable: true)]
+    #[Groups(['order:read'])]
     private ?string $notes = null;
 
     #[ORM\OneToOne(mappedBy: 'orderRef', cascade: ['persist', 'remove'])]
+    #[Groups(['order:read'])]
     private ?Receipt $receipt = null;
 
     #[ORM\ManyToOne]
+    #[Groups(['order:read'])]
     private ?User $processedBy = null;
 
     #[ORM\Column]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $completedAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $pickupDate = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['order:read'])]
     private ?\DateTimeImmutable $deliveryDate = null;
 
     public function __construct()

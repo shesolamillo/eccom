@@ -36,25 +36,50 @@ function initializeCharts() {
     // Find all chart canvases and initialize them
     const chartCanvases = document.querySelectorAll('canvas');
     chartCanvases.forEach(canvas => {
-        if (!canvas.chart) {
-            const ctx = canvas.getContext('2d');
-            const chartType = canvas.dataset.chartType || 'line';
-            const chartData = JSON.parse(canvas.dataset.chartData || '{}');
-            
-            new Chart(ctx, {
-                type: chartType,
-                data: chartData,
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
+
+        if (Chart.getChart(canvas)) return;
+
+        const chartType = canvas.dataset.chartType;
+        const chartData = canvas.dataset.chartData;
+
+        if (!chartType || !chartData) return;
+
+        const ctx = canvas.getContext('2d');
+
+
+        new Chart(ctx, {
+            type: chartType,
+            data: JSON.parse(chartData),
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { position: 'bottom' }
                 }
-            });
-        }
+            }
+        });
+
+        // if (!canvas.chart) {
+        //     const ctx = canvas.getContext('2d');
+        //     const chartType = canvas.dataset.chartType || 'line';
+        //     const chartData = JSON.parse(canvas.dataset.chartData || '{}');
+            
+        //     new Chart(ctx, {
+        //         type: chartType,
+        //         data: chartData,
+        //         options: {
+        //             responsive: true,
+        //             maintainAspectRatio: false,
+        //             plugins: {
+        //                 legend: {
+        //                     position: 'bottom'
+        //                 }
+        //             }
+        //         }
+        //     });
+        // }
+
+
     });
 }
 

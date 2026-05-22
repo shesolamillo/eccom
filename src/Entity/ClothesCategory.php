@@ -38,15 +38,18 @@ class ClothesCategory
     #[ORM\Id]
     #[ORM\GeneratedValue]
     #[ORM\Column]
+    #[Groups(['clothes_category:read'])]
     private ?int $id = null;
 
     #[ORM\Column(length: 100)]
     #[Assert\NotBlank]
     #[Assert\Length(max: 100)]
+    #[Groups(['clothes_category:read'])]
     private ?string $name = null;
 
     #[ORM\Column(length: 255, nullable: true)]
     #[Assert\Length(max: 255)]
+    #[Groups(['clothes_category:read'])]
     private ?string $description = null;
 
     #[ORM\OneToMany(mappedBy: 'clothesCategory', targetEntity: Product::class)]
@@ -58,8 +61,17 @@ class ClothesCategory
     #[ORM\Column]
     private ?\DateTimeImmutable $createdAt = null;
 
+    #[ORM\OneToMany(mappedBy: 'category', targetEntity: ProductType::class)]
+    private Collection $productTypes;
+
+
+
+
+    
+
     public function __construct()
     {
+        $this->productTypes = new ArrayCollection();
         $this->products = new ArrayCollection();
         $this->createdAt = new \DateTimeImmutable();
     }
@@ -144,4 +156,9 @@ class ClothesCategory
     {
         return $this->name ?? '';
     }
+    public function getProductTypes(): Collection
+    {
+        return $this->productTypes;
+    }
+
 }

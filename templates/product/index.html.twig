@@ -1,269 +1,537 @@
 {# templates/product/index.html.twig #}
 {% extends 'base.html.twig' %}
-
 {% block title %}Products - SMSol Studio{% endblock %}
 
 {% block stylesheets %}
-    {{ parent() }}
-    <style>
-        .product-card {
-            transition: all 0.3s ease;
-            border: 1px solid #e9ecef;
-            border-radius: 12px;
-            overflow: hidden;
-            height: 100%;
-        }
-        
-        .product-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        }
-        
-        .product-image-container {
-            height: 220px;
-            background: #f8f9fa;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            overflow: hidden;
-        }
-        
-        .product-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.3s ease;
-        }
-        
-        .product-card:hover .product-image {
-            transform: scale(1.05);
-        }
-        
-        .product-price {
-            color: #667eea;
-            font-weight: 700;
-            font-size: 1.25rem;
-        }
-        
-        .stock-badge {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-        }
-        
-        .product-title {
-            font-size: 1.1rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-        
-        .product-description {
-            font-size: 0.875rem;
-            color: #6c757d;
-            line-height: 1.5;
-        }
-    </style>
+{{ parent() }}
+<style>
+    :root {
+        --pink: #e91e8c;
+        --pink-dark: #c0166f;
+        --pink-light: #fce4f3;
+        --pink-soft: #fdf5fb;
+        --border: #f0f0f0;
+        --text-primary: #0f0f0f;
+        --text-secondary: #4b5563;
+        --text-muted: #9ca3af;
+        --radius: 16px;
+        --shadow: 0 2px 12px rgba(0,0,0,0.06);
+        --shadow-pink: 0 8px 32px rgba(233,30,140,0.15);
+    }
+
+    /* ── HERO HEADER ── */
+    .shop-hero {
+        background: linear-gradient(135deg, #fff 50%, var(--pink-soft) 100%);
+        border: 1px solid var(--pink-light);
+        border-radius: var(--radius);
+        padding: 2rem 2.5rem;
+        margin-bottom: 1.75rem;
+        display: flex; align-items: center; justify-content: space-between;
+        box-shadow: var(--shadow-pink);
+        position: relative; overflow: hidden;
+    }
+    .shop-hero::before {
+        content: '';
+        position: absolute; right: -40px; top: -40px;
+        width: 200px; height: 200px; border-radius: 50%;
+        background: radial-gradient(circle, rgba(233,30,140,0.07) 0%, transparent 70%);
+    }
+    .shop-hero-title {
+        font-size: 1.75rem; font-weight: 900;
+        color: var(--text-primary); letter-spacing: -0.03em; margin: 0;
+    }
+    .shop-hero-title span { color: var(--pink); }
+    .shop-hero-sub { font-size: 0.875rem; color: var(--text-muted); margin-top: 4px; }
+    .btn-add-product {
+        background: var(--pink); color: #fff; border: none;
+        border-radius: 10px; font-size: 0.875rem; font-weight: 600;
+        padding: 0.6rem 1.25rem; transition: all 0.18s;
+        box-shadow: 0 4px 14px rgba(233,30,140,0.3);
+        text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-add-product:hover {
+        background: var(--pink-dark); color: #fff;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 20px rgba(233,30,140,0.4);
+    }
+
+    /* ── FILTER CARD ── */
+    .filter-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow);
+    }
+    .filter-card .form-label {
+        font-size: 0.72rem; font-weight: 700;
+        text-transform: uppercase; letter-spacing: 0.07em;
+        color: var(--text-muted); margin-bottom: 5px;
+    }
+    .filter-card .form-select {
+        border: 1.5px solid var(--border);
+        border-radius: 10px; font-size: 0.875rem;
+        padding: 0.55rem 0.9rem;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .filter-card .form-select:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(233,30,140,0.1);
+        outline: none;
+    }
+    .btn-filter {
+        background: var(--pink); color: #fff; border: none;
+        border-radius: 10px; font-size: 0.875rem; font-weight: 600;
+        padding: 0.55rem 1.1rem; transition: all 0.15s;
+        display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-filter:hover { background: var(--pink-dark); color: #fff; }
+    .btn-clear {
+        background: #fff; border: 1.5px solid var(--border);
+        color: var(--text-secondary); border-radius: 10px;
+        font-size: 0.875rem; font-weight: 500;
+        padding: 0.55rem 1.1rem; transition: all 0.15s;
+        text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
+    }
+    .btn-clear:hover { border-color: #999; color: var(--text-primary); }
+
+    /* ── AUDIENCE TABS ── */
+    .audience-tabs {
+        display: flex; gap: 0.5rem;
+        background: #f5f5f5;
+        border-radius: 12px; padding: 4px;
+        margin-bottom: 1rem; width: fit-content;
+    }
+    .aud-btn {
+        border: none; border-radius: 9px;
+        font-size: 0.85rem; font-weight: 600;
+        padding: 0.5rem 1.25rem;
+        transition: all 0.18s; cursor: pointer;
+        display: inline-flex; align-items: center; gap: 6px;
+        background: transparent; color: var(--text-muted);
+    }
+    .aud-btn.active-human {
+        background: var(--pink); color: #fff;
+        box-shadow: 0 2px 10px rgba(233,30,140,0.3);
+    }
+    .aud-btn.active-pet {
+        background: #10b981; color: #fff;
+        box-shadow: 0 2px 10px rgba(16,185,129,0.3);
+    }
+    .aud-btn.active-all {
+        background: #fff; color: var(--text-primary);
+        box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    }
+    .aud-btn:hover:not(.active-human):not(.active-pet):not(.active-all) {
+        background: #ebebeb; color: var(--text-primary);
+    }
+
+    /* SUB-CATEGORY PILLS */
+    .sub-cats { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.25rem; }
+    .sub-pill {
+        font-size: 0.78rem; font-weight: 600;
+        padding: 0.35em 1em; border-radius: 20px;
+        text-decoration: none; transition: all 0.15s;
+        border: 1.5px solid;
+    }
+    .sub-pill.human-pill {
+        border-color: var(--pink-light); color: var(--pink); background: var(--pink-soft);
+    }
+    .sub-pill.human-pill:hover,
+    .sub-pill.human-pill.active {
+        background: var(--pink); color: #fff; border-color: var(--pink);
+        box-shadow: 0 2px 8px rgba(233,30,140,0.25);
+    }
+    .sub-pill.pet-pill {
+        border-color: #a7f3d0; color: #059669; background: #ecfdf5;
+    }
+    .sub-pill.pet-pill:hover,
+    .sub-pill.pet-pill.active {
+        background: #10b981; color: #fff; border-color: #10b981;
+        box-shadow: 0 2px 8px rgba(16,185,129,0.25);
+    }
+
+    /* ── PRODUCT CARD ── */
+    .product-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        overflow: hidden; height: 100%;
+        transition: transform 0.22s, box-shadow 0.22s, border-color 0.22s;
+        box-shadow: var(--shadow);
+    }
+    .product-card:hover {
+        transform: translateY(-5px);
+        box-shadow: var(--shadow-pink);
+        border-color: var(--pink-light);
+    }
+
+    /* IMAGE */
+    .product-img-wrap {
+        height: 240px; overflow: hidden;
+        background: #f8f8f8;
+        position: relative;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .product-img {
+        width: 100%; height: 100%; object-fit: cover;
+        transition: transform 0.35s ease;
+    }
+    .product-card:hover .product-img { transform: scale(1.06); }
+    .img-placeholder {
+        text-align: center; color: var(--text-muted);
+    }
+    .img-placeholder i { font-size: 2.5rem; display: block; margin-bottom: 6px; }
+    .img-placeholder span { font-size: 0.78rem; }
+
+    /* STOCK OVERLAY BADGE */
+    .stock-overlay {
+        position: absolute; top: 10px; left: 10px;
+        font-size: 0.68rem; font-weight: 800;
+        padding: 0.3em 0.75em; border-radius: 20px;
+        letter-spacing: 0.04em; text-transform: uppercase;
+        backdrop-filter: blur(4px);
+    }
+    .so-out  { background: rgba(220,38,38,0.9); color: #fff; }
+    .so-low  { background: rgba(245,158,11,0.9); color: #fff; }
+
+    /* WISHLIST BTN */
+    .wishlist-btn {
+        position: absolute; top: 10px; right: 10px;
+        width: 32px; height: 32px; border-radius: 50%;
+        background: rgba(255,255,255,0.9); border: none;
+        display: flex; align-items: center; justify-content: center;
+        color: var(--text-muted); font-size: 0.9rem;
+        cursor: pointer; transition: all 0.15s;
+        backdrop-filter: blur(4px);
+    }
+    .wishlist-btn:hover { background: var(--pink-soft); color: var(--pink); }
+
+    /* CARD BODY */
+    .product-card-body { padding: 1.1rem; display: flex; flex-direction: column; }
+    .product-cats { display: flex; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; }
+    .p-cat-tag {
+        font-size: 0.65rem; font-weight: 700;
+        padding: 0.18em 0.6em; border-radius: 4px;
+        text-transform: uppercase; letter-spacing: 0.04em;
+    }
+    .pct-type { background: var(--pink-light); color: var(--pink); }
+    .pct-cat  { background: #f0f0f0; color: #555; }
+
+    .product-name {
+        font-size: 0.95rem; font-weight: 700;
+        color: var(--text-primary); margin-bottom: 4px;
+        line-height: 1.3;
+        display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+    }
+    .product-desc {
+        font-size: 0.78rem; color: var(--text-muted);
+        line-height: 1.5; margin-bottom: 10px; flex-grow: 1;
+        display: -webkit-box; -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical; overflow: hidden;
+    }
+
+    /* PRICE ROW */
+    .price-row {
+        display: flex; align-items: center; justify-content: space-between;
+        margin-bottom: 10px;
+    }
+    .price-val {
+        font-size: 1.15rem; font-weight: 900;
+        color: var(--pink); letter-spacing: -0.02em;
+    }
+    .in-stock-badge {
+        font-size: 0.65rem; font-weight: 700;
+        background: #ecfdf3; color: #027a48;
+        border: 1px solid #a7f3d0;
+        padding: 0.2em 0.6em; border-radius: 20px;
+        letter-spacing: 0.04em; text-transform: uppercase;
+    }
+
+    /* ACTION BUTTONS */
+    .btn-view {
+        background: #fff; border: 1.5px solid var(--border);
+        color: var(--text-secondary); border-radius: 10px;
+        font-size: 0.8rem; font-weight: 600;
+        padding: 0.5rem; transition: all 0.15s;
+        text-decoration: none; text-align: center;
+        display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .btn-view:hover {
+        border-color: var(--pink); color: var(--pink);
+        background: var(--pink-soft);
+    }
+    .btn-cart {
+        background: var(--pink); color: #fff; border: none;
+        border-radius: 10px; font-size: 0.8rem; font-weight: 700;
+        padding: 0.5rem; transition: all 0.18s; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; gap: 5px;
+        box-shadow: 0 2px 8px rgba(233,30,140,0.25);
+    }
+    .btn-cart:hover {
+        background: var(--pink-dark);
+        box-shadow: 0 4px 14px rgba(233,30,140,0.4);
+        transform: translateY(-1px);
+    }
+    .btn-disabled {
+        background: #f5f5f5; color: var(--text-muted);
+        border: 1.5px solid var(--border); border-radius: 10px;
+        font-size: 0.8rem; font-weight: 600;
+        padding: 0.5rem; cursor: not-allowed;
+        display: flex; align-items: center; justify-content: center; gap: 5px;
+    }
+    .btn-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin-top: auto; }
+    .btn-actions.single { grid-template-columns: 1fr; }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+        text-align: center; padding: 5rem 1rem;
+        background: #fff; border: 1px solid var(--border);
+        border-radius: var(--radius); box-shadow: var(--shadow);
+    }
+    .empty-icon {
+        width: 90px; height: 90px; border-radius: 24px;
+        background: var(--pink-soft); border: 1px solid var(--pink-light);
+        color: var(--pink); font-size: 2.5rem;
+        display: flex; align-items: center; justify-content: center;
+        margin: 0 auto 1.5rem;
+        box-shadow: 0 4px 20px rgba(233,30,140,0.15);
+    }
+    .empty-state h4 { font-weight: 800; color: var(--text-primary); margin-bottom: 6px; }
+    .empty-state p  { color: var(--text-muted); font-size: 0.875rem; }
+
+    /* ── PAGINATION ── */
+    .pagination .page-link {
+        border: 1.5px solid var(--border);
+        color: var(--text-secondary);
+        border-radius: 8px !important;
+        margin: 0 2px; font-size: 0.85rem; font-weight: 600;
+        padding: 0.45rem 0.85rem;
+        transition: all 0.15s;
+    }
+    .pagination .page-link:hover { border-color: var(--pink); color: var(--pink); background: var(--pink-soft); }
+    .pagination .page-item.active .page-link {
+        background: var(--pink); border-color: var(--pink); color: #fff;
+        box-shadow: 0 2px 8px rgba(233,30,140,0.3);
+    }
+    .pagination .page-item.disabled .page-link { opacity: 0.4; }
+</style>
 {% endblock %}
 
 {% block body %}
 <div class="container py-4">
-    <!-- Page Header -->
-    <div class="row mb-4">
-        <div class="col">
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <h1 class="fw-bold mb-2">Our Products</h1>
-                    <p class="text-muted mb-0">Browse our curated collection of fashion items</p>
-                </div>
-                {% if is_granted('ROLE_STAFF') %}
-                <a href="{{ path('staff_product_new') }}" class="btn btn-primary">
-                    <i class="bi bi-plus-circle me-2"></i>Add Product
-                </a>
-                {% endif %}
+
+    <!-- HERO HEADER -->
+    <div class="shop-hero">
+        <div>
+            <h1 class="shop-hero-title">Our <span>Collection</span></h1>
+            <p class="shop-hero-sub">Browse our curated selection of fashion items</p>
+        </div>
+        {% if is_granted('ROLE_STAFF') %}
+            <a href="{{ path('staff_product_new') }}" class="btn-add-product">
+                <i class="bi bi-plus-circle"></i> Add Product
+            </a>
+        {% endif %}
+    </div>
+
+    <!-- FILTERS -->
+    <div class="filter-card">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label">Category</label>
+                <select name="category" class="form-select">
+                    <option value="">All Categories</option>
+                    {% for category in categories %}
+                        <option value="{{ category.id }}" {{ selectedCategory == category.id ? 'selected' : '' }}>
+                            {{ category.name }}
+                        </option>
+                    {% endfor %}
+                </select>
             </div>
-        </div>
+            <div class="col-md-4">
+                <label class="form-label">Product Type</label>
+                <select name="type" class="form-select">
+                    <option value="">All Types</option>
+                    {% for type in types %}
+                        <option value="{{ type.id }}" {{ selectedType == type.id ? 'selected' : '' }}>
+                            {{ type.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex gap-2">
+                <button type="submit" class="btn-filter">
+                    <i class="bi bi-funnel"></i> Filter
+                </button>
+                <a href="{{ path('app_products') }}" class="btn-clear">
+                    <i class="bi bi-x-circle"></i> Clear
+                </a>
+            </div>
+        </form>
     </div>
-    
-    <!-- Filters -->
-    <div class="card mb-4 border-0 shadow-sm">
-        <div class="card-body">
-            <form method="get" class="row g-3">
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Category</label>
-                    <select name="category" class="form-select">
-                        <option value="">All Categories</option>
-                        {% for category in categories %}
-                            <option value="{{ category.id }}" {{ selectedCategory == category.id ? 'selected' : '' }}>
-                                {{ category.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-4">
-                    <label class="form-label fw-semibold">Product Type</label>
-                    <select name="type" class="form-select">
-                        <option value="">All Types</option>
-                        {% for type in types %}
-                            <option value="{{ type.id }}" {{ selectedType == type.id ? 'selected' : '' }}>
-                                {{ type.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                </div>
-                
-                <div class="col-md-4 d-flex align-items-end">
-                    <button type="submit" class="btn btn-primary me-2">
-                        <i class="bi bi-funnel me-2"></i>Filter
-                    </button>
-                    <a href="{{ path('app_products') }}" class="btn btn-outline-secondary">
-                        <i class="bi bi-x-circle me-2"></i>Clear
-                    </a>
-                </div>
-            </form>
-        </div>
+
+    <!-- AUDIENCE TABS -->
+    <div class="audience-tabs">
+        <button class="aud-btn {{ app.request.query.get('audience') == 'human' ? 'active-human' : '' }}"
+                onclick="showCategories('human')">
+            <i class="bi bi-people"></i> For Everyone
+        </button>
+        <button class="aud-btn {{ app.request.query.get('audience') == 'pet' ? 'active-pet' : '' }}"
+                onclick="showCategories('pet')">
+            <i class="bi bi-heart"></i> For Pets
+        </button>
+        <a href="{{ path('app_products') }}"
+           class="aud-btn {{ not app.request.query.get('audience') ? 'active-all' : '' }}">
+            <i class="bi bi-grid"></i> All
+        </a>
     </div>
-    
-    <!-- Products Grid -->
+
+    <!-- SUB-CATEGORIES -->
+    <div id="humanCategories" class="sub-cats"
+         style="display: {{ app.request.query.get('audience') == 'human' ? 'flex' : 'none' }} !important;">
+        {% for category in humanCategories %}
+            <a href="{{ path('app_products', {'category': category.id, 'audience': 'human'}) }}"
+               class="sub-pill human-pill {{ selectedCategory == category.id ? 'active' : '' }}">
+                <i class="bi bi-tag me-1"></i>{{ category.name }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <div id="petCategories" class="sub-cats"
+         style="display: {{ app.request.query.get('audience') == 'pet' ? 'flex' : 'none' }} !important;">
+        {% for category in petCategories %}
+            <a href="{{ path('app_products', {'category': category.id, 'audience': 'pet'}) }}"
+               class="sub-pill pet-pill {{ selectedCategory == category.id ? 'active' : '' }}">
+                <i class="bi bi-heart me-1"></i>{{ category.name }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <!-- PRODUCTS GRID -->
     <div class="row g-4">
         {% for product in products %}
         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6">
-            <div class="card product-card h-100">
-                <!-- Product Image -->
-                <div class="product-image-container position-relative">
+            <div class="product-card">
+
+                <!-- IMAGE -->
+                <div class="product-img-wrap">
                     {% if product.photo %}
-                        <img src="{{ asset('uploads/products/' ~ product.photo) }}" 
-                             alt="{{ product.name }}" 
-                             class="product-image">
+                        <img src="{{ asset('uploads/products/' ~ product.photo) }}"
+                             alt="{{ product.name }}" class="product-img">
                     {% else %}
-                        <div class="text-center text-muted">
-                            <i class="bi bi-image display-4"></i>
-                            <p class="mt-2">No Image</p>
+                        <div class="img-placeholder">
+                            <i class="bi bi-image"></i>
+                            <span>No Image</span>
                         </div>
                     {% endif %}
-                    
-                    <!-- Stock Badge -->
+
                     {% if product.stock %}
                         {% if product.stock.quantity <= 0 %}
-                            <span class="position-absolute top-0 start-0 m-2 badge bg-danger stock-badge">
-                                Out of Stock
-                            </span>
+                            <span class="stock-overlay so-out">Out of Stock</span>
                         {% elseif product.stock.quantity < 10 %}
-                            <span class="position-absolute top-0 start-0 m-2 badge bg-warning stock-badge">
-                                Low Stock
-                            </span>
+                            <span class="stock-overlay so-low">Low Stock</span>
                         {% endif %}
                     {% endif %}
+
+                    <button class="wishlist-btn" title="Save">
+                        <i class="bi bi-heart"></i>
+                    </button>
                 </div>
-                
-                <!-- Card Body -->
-                <div class="card-body d-flex flex-column">
-                    <!-- Product Title -->
-                    <h5 class="product-title">{{ product.name }}</h5>
-                    
-                    <!-- Product Description -->
-                    <p class="product-description mb-3 flex-grow-1">
-                        {{ product.description|slice(0, 80) }}{% if product.description|length > 80 %}...{% endif %}
-                    </p>
-                    
-                    <!-- Price and Stock -->
-                    <div class="d-flex justify-content-between align-items-center mb-3">
-                        <div class="product-price">₱{{ product.price|number_format(2) }}</div>
-                        {% if product.stock and product.stock.quantity > 0 %}
-                            <span class="badge bg-success stock-badge">
-                                {{ product.stock.quantity }} in stock
-                            </span>
-                        {% endif %}
-                    </div>
-                    
-                    <!-- Category Badges -->
-                    <div class="mb-3">
+
+                <!-- BODY -->
+                <div class="product-card-body">
+                    <div class="product-cats">
                         {% if product.productType %}
-                            <span class="badge bg-info me-1">{{ product.productType.name }}</span>
+                            <span class="p-cat-tag pct-type">{{ product.productType.name }}</span>
                         {% endif %}
                         {% if product.clothesCategory %}
-                            <span class="badge bg-secondary">{{ product.clothesCategory.name }}</span>
+                            <span class="p-cat-tag pct-cat">{{ product.clothesCategory.name }}</span>
                         {% endif %}
                     </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="d-grid gap-2 mt-auto">
-                        <a href="{{ path('app_product_show', {'id': product.id}) }}" 
-                           class="btn btn-outline-primary btn-sm">
-                            <i class="bi bi-eye me-1"></i>View Details
+
+                    <div class="product-name">{{ product.name }}</div>
+                    <div class="product-desc">
+                        {{ product.description|slice(0, 80) }}{% if product.description|length > 80 %}...{% endif %}
+                    </div>
+
+                    <div class="price-row">
+                        <span class="price-val">₱{{ product.price|number_format(2) }}</span>
+                        {% if product.stock and product.stock.quantity > 0 %}
+                            <span class="in-stock-badge">{{ product.stock.quantity }} left</span>
+                        {% endif %}
+                    </div>
+
+                    <div class="btn-actions {{ not (is_granted('ROLE_USER') and product.isIsAvailable and product.stock and product.stock.quantity > 0) ? 'single' : '' }}">
+                        <a href="{{ path('app_product_show', {'id': product.id}) }}" class="btn-view">
+                            <i class="bi bi-eye"></i> View
                         </a>
-                        
-                        {% if is_granted('ROLE_USER') and product.isAvailable and product.stock and product.stock.quantity > 0 %}
-                            {% set productImage = product.photo ? asset('uploads/products/' ~ product.photo) : '' %}
-                            <button type="button" 
-                                    class="btn btn-success btn-sm"
-                                    data-add-to-cart="{{ product.id }}"
+                        {% if is_granted('ROLE_USER') and product.isIsAvailable and product.stock and product.stock.quantity > 0 %}
+                            <button type="button" class="btn-cart"
+                                    data-bs-toggle="modal" data-bs-target="#addToCartModal"
+                                    data-product-id="{{ product.id }}"
                                     data-product-name="{{ product.name }}"
                                     data-product-price="{{ product.price }}"
-                                    data-product-image="{{ productImage }}"
-                                    data-stock="{{ product.stock.quantity }}">
-                                <i class="bi bi-bag-check me-1"></i>Add to Cart
+                                    data-product-image="{% if product.photo %}{{ asset('uploads/products/' ~ product.photo) }}{% else %}{{ asset('images/no-image.png') }}{% endif %}"
+                                    data-product-stock="{{ product.stock.quantity }}">
+                                <i class="bi bi-bag-plus"></i> Add
                             </button>
-                        {% elseif not product.isAvailable %}
-                            <button class="btn btn-secondary btn-sm" disabled>
-                                <i class="bi bi-slash-circle me-1"></i>Unavailable
-                            </button>
+                        {% elseif not product.isIsAvailable %}
+                            <div class="btn-disabled">
+                                <i class="bi bi-slash-circle"></i> Unavailable
+                            </div>
                         {% else %}
-                            <button class="btn btn-secondary btn-sm" disabled>
-                                <i class="bi bi-x-circle me-1"></i>Out of Stock
-                            </button>
+                            <div class="btn-disabled">
+                                <i class="bi bi-x-circle"></i> Out of Stock
+                            </div>
                         {% endif %}
-
                     </div>
                 </div>
+
             </div>
         </div>
         {% else %}
-        <!-- Empty State -->
         <div class="col-12">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body text-center py-5">
-                    <i class="bi bi-bag-x display-1 text-muted mb-3"></i>
-                    <h4 class="text-muted mb-2">No products found</h4>
-                    <p class="text-muted mb-4">Try adjusting your filters or check back later</p>
-                    {% if is_granted('ROLE_STAFF') %}
-                        <a href="{{ path('staff_product_new') }}" class="btn btn-primary">
-                            <i class="bi bi-plus-circle me-2"></i>Add Your First Product
-                        </a>
-                    {% endif %}
-                </div>
+            <div class="empty-state">
+                <div class="empty-icon"><i class="bi bi-bag-x"></i></div>
+                <h4>No products found</h4>
+                <p>Try adjusting your filters or check back later.</p>
+                {% if is_granted('ROLE_STAFF') %}
+                    <a href="{{ path('staff_product_new') }}" class="btn-add-product mt-3">
+                        <i class="bi bi-plus-circle"></i> Add First Product
+                    </a>
+                {% endif %}
             </div>
         </div>
         {% endfor %}
     </div>
-    
-    <!-- Pagination -->
+
+    <!-- PAGINATION -->
     {% if products|length > 0 %}
-    <nav aria-label="Page navigation" class="mt-5">
+    <nav class="mt-5">
         <ul class="pagination justify-content-center">
-            <li class="page-item disabled">
-                <a class="page-link" href="#" tabindex="-1">Previous</a>
-            </li>
+            <li class="page-item disabled"><a class="page-link" href="#">Previous</a></li>
             <li class="page-item active"><a class="page-link" href="#">1</a></li>
             <li class="page-item"><a class="page-link" href="#">2</a></li>
             <li class="page-item"><a class="page-link" href="#">3</a></li>
-            <li class="page-item">
-                <a class="page-link" href="#">Next</a>
-            </li>
+            <li class="page-item"><a class="page-link" href="#">Next</a></li>
         </ul>
     </nav>
     {% endif %}
+
 </div>
 
-<!-- Quick Cart Preview -->
-<div style="position: fixed; top: 20px; right: 20px; z-index: 1040;">
+<!-- QUICK CART -->
+<div style="position:fixed;top:20px;right:20px;z-index:1040;">
     {% include 'components/quick-cart-preview.html.twig' %}
 </div>
 
-<!-- Add to Cart Modal -->
 {% include 'components/add-to-cart-modal.html.twig' %}
-
-<!-- Cart Animations Script -->
 <script src="{{ asset('js/cart-animations.js') }}"></script>
-
+<script>
+function showCategories(type) {
+    window.location.href = '{{ path('app_products') }}?audience=' + type;
+}
+</script>
 {% endblock %}

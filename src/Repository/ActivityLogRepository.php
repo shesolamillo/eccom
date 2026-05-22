@@ -78,22 +78,41 @@ class ActivityLogRepository extends ServiceEntityRepository
     {
         $startDate = (new \DateTime())->modify("-$days days");
 
-        return $this->createQueryBuilder('al')
-            ->select(
-                "DATE(al.createdAt) as activityDate",
-                "COUNT(al.id) as activityCount",
-                "SUM(CASE WHEN al.action = :create THEN 1 ELSE 0 END) as createCount",
-                "SUM(CASE WHEN al.action = :update THEN 1 ELSE 0 END) as updateCount",
-                "SUM(CASE WHEN al.action = :delete THEN 1 ELSE 0 END) as deleteCount"
-            )
+        $logs = $this->createQueryBuilder('al')
             ->andWhere('al.createdAt >= :startDate')
             ->setParameter('startDate', $startDate)
-            ->setParameter('create', ActivityLog::ACTION_CREATE)
-            ->setParameter('update', ActivityLog::ACTION_UPDATE)
-            ->setParameter('delete', ActivityLog::ACTION_DELETE)
-            ->groupBy('activityDate')
-            ->orderBy('activityDate', 'ASC')
+            ->orderBy('al.createdAt', 'ASC')
             ->getQuery()
             ->getResult();
+
+        $result = [];
+        foreach ($logs as $log) {
+            $day = $log->getCreatedAt()->format('Y-m-d');
+
+            if (!isset($result[$day])) {
+                $result[$day] = [
+                    'activityDate' => $day,
+                    'activityCount' => 0,
+                    'createCount' => 0,
+                    'updateCount' => 0,
+                    'deleteCount' => 0,
+                ];
+            }
+
+            $result[$day]['activityCount']++;
+            switch ($log->getAction()) {
+                case ActivityLog::ACTION_CREATE:
+                    $result[$day]['createCount']++;
+                    break;
+                case ActivityLog::ACTION_UPDATE:
+                    $result[$day]['updateCount']++;
+                    break;
+                case ActivityLog::ACTION_DELETE:
+                    $result[$day]['deleteCount']++;
+                    break;
+            }
+        }
+
+        return array_values($result);
     }
 }

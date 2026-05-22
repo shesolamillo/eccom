@@ -12,45 +12,325 @@
 {% block page_description %}Manage product inventory levels{% endblock %}
 
 {% block page_actions %}
-<button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#importStockModal">
+<button class="btn btn-pink-primary" data-bs-toggle="modal" data-bs-target="#importStockModal">
     <i class="bi bi-upload me-2"></i>Import Stock
 </button>
 {% endblock %}
 
 {% block admin_content %}
+<style>
+    :root {
+        --pink-primary:   #c2185b;
+        --pink-secondary: #e91e8c;
+        --pink-light:     #f8bbd0;
+        --pink-pale:      #fce4ec;
+        --pink-dark:      #880e4f;
+        --pink-muted:     #ad1457;
+        --surface:        #ffffff;
+        --surface-alt:    #fafafa;
+        --border:         #f0f0f0;
+        --text-main:      #2d2d2d;
+        --text-muted:     #757575;
+    }
+
+    /* ── Buttons ── */
+    .btn-pink-primary {
+        background-color: var(--pink-primary);
+        border-color: var(--pink-primary);
+        color: #fff;
+        font-weight: 500;
+        letter-spacing: .3px;
+        border-radius: 8px;
+    }
+    .btn-pink-primary:hover {
+        background-color: var(--pink-dark);
+        border-color: var(--pink-dark);
+        color: #fff;
+    }
+    .btn-pink-outline {
+        color: var(--pink-primary);
+        border-color: var(--pink-light);
+        background: transparent;
+        font-weight: 500;
+        border-radius: 8px;
+    }
+    .btn-pink-outline:hover {
+        background-color: var(--pink-pale);
+        border-color: var(--pink-primary);
+        color: var(--pink-dark);
+    }
+
+    /* ── Cards ── */
+    .card {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 1px 6px rgba(0,0,0,.06);
+    }
+    .card.admin-chart {
+        border: 1px solid var(--border);
+        box-shadow: 0 1px 6px rgba(0,0,0,.06);
+    }
+
+    /* ── Filter card ── */
+    .filter-card {
+        border-top: 3px solid var(--pink-primary) !important;
+    }
+    .filter-card .form-label {
+        font-size: .8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        color: var(--text-muted);
+    }
+    .form-control:focus,
+    .form-select:focus {
+        border-color: var(--pink-light);
+        box-shadow: 0 0 0 3px rgba(194,24,91,.1);
+    }
+
+    /* ── Stat cards ── */
+    .stats-card {
+        border-radius: 12px;
+        border: 1px solid var(--border) !important;
+        box-shadow: 0 1px 6px rgba(0,0,0,.06);
+        transition: transform .18s, box-shadow .18s;
+    }
+    .stats-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(194,24,91,.12);
+    }
+    .stats-card .label {
+        font-size: .72rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        color: var(--text-muted);
+    }
+    .stats-card .value {
+        font-size: 1.75rem;
+        font-weight: 700;
+        line-height: 1.1;
+    }
+    .stats-card.s-total   { border-left: 4px solid var(--pink-primary) !important; }
+    .stats-card.s-value   { border-left: 4px solid var(--pink-secondary) !important; }
+    .stats-card.s-low     { border-left: 4px solid #f06292 !important; }
+    .stats-card.s-out     { border-left: 4px solid var(--pink-dark) !important; }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.25rem;
+        flex-shrink: 0;
+    }
+    .stat-icon.i-total   { background: var(--pink-pale); color: var(--pink-primary); }
+    .stat-icon.i-value   { background: #fce4ec; color: var(--pink-secondary); }
+    .stat-icon.i-low     { background: #fce4ec; color: #e91e63; }
+    .stat-icon.i-out     { background: #fce4ec; color: var(--pink-dark); }
+
+    /* ── Table card header ── */
+    .table-card-header {
+        background: var(--surface);
+        border-bottom: 2px solid var(--pink-pale);
+        border-radius: 12px 12px 0 0;
+        padding: 16px 20px;
+    }
+    .table-card-header h5 {
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0;
+    }
+    .section-accent {
+        display: inline-block;
+        width: 4px;
+        height: 18px;
+        background: var(--pink-primary);
+        border-radius: 2px;
+        margin-right: 10px;
+        vertical-align: middle;
+    }
+
+    /* ── Table ── */
+    #inventoryTable thead tr {
+        background-color: var(--pink-pale);
+    }
+    #inventoryTable thead th {
+        color: var(--pink-dark);
+        font-size: .75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        border-bottom: 2px solid var(--pink-light);
+        padding: 12px 16px;
+        white-space: nowrap;
+    }
+    #inventoryTable tbody td {
+        padding: 12px 16px;
+        vertical-align: middle;
+        border-color: var(--border);
+        color: var(--text-main);
+    }
+    #inventoryTable tbody tr:hover {
+        background-color: #fff5f8;
+    }
+
+    /* ── Product thumbnail ── */
+    .product-thumb {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        object-fit: cover;
+        border: 1px solid var(--pink-light);
+    }
+    .product-thumb-placeholder {
+        width: 40px;
+        height: 40px;
+        border-radius: 8px;
+        background: var(--pink-pale);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--pink-light);
+        font-size: 1rem;
+        flex-shrink: 0;
+    }
+
+    /* ── Badges ── */
+    .badge-in-stock  { background-color: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+    .badge-low-stock { background-color: #fff8e1; color: #f57f17; border: 1px solid #ffe082; }
+    .badge-out       { background-color: #fce4ec; color: var(--pink-dark); border: 1px solid var(--pink-light); }
+    .stock-badge {
+        font-size: .72rem;
+        font-weight: 600;
+        padding: 4px 10px;
+        border-radius: 20px;
+        letter-spacing: .3px;
+    }
+
+    /* ── Action buttons ── */
+    .btn-act-add {
+        color: #2e7d32;
+        border-color: #a5d6a7;
+        background: #f1f8f1;
+        font-size: .75rem;
+        font-weight: 600;
+    }
+    .btn-act-add:hover {
+        background: #2e7d32;
+        border-color: #2e7d32;
+        color: #fff;
+    }
+    .btn-act-adjust {
+        color: #e65100;
+        border-color: #ffcc80;
+        background: #fff8f0;
+        font-size: .75rem;
+        font-weight: 600;
+    }
+    .btn-act-adjust:hover {
+        background: #e65100;
+        border-color: #e65100;
+        color: #fff;
+    }
+    .btn-act-history {
+        color: var(--pink-primary);
+        border-color: var(--pink-light);
+        background: var(--pink-pale);
+        font-size: .75rem;
+        font-weight: 600;
+    }
+    .btn-act-history:hover {
+        background: var(--pink-primary);
+        border-color: var(--pink-primary);
+        color: #fff;
+    }
+
+    /* ── No-stock section ── */
+    .no-stock-header {
+        background: var(--surface);
+        border-bottom: 2px solid var(--pink-pale);
+        border-radius: 12px 12px 0 0;
+        padding: 16px 20px;
+    }
+    .no-stock-header h5 {
+        font-weight: 700;
+        color: var(--text-main);
+        margin: 0;
+    }
+    .btn-add-stock {
+        background-color: var(--pink-primary);
+        border-color: var(--pink-primary);
+        color: #fff;
+        font-size: .78rem;
+        font-weight: 600;
+        border-radius: 6px;
+    }
+    .btn-add-stock:hover {
+        background-color: var(--pink-dark);
+        border-color: var(--pink-dark);
+        color: #fff;
+    }
+
+    /* ── DataTables overrides ── */
+    .dataTables_wrapper .dataTables_filter input {
+        border-radius: 8px;
+        border: 1px solid var(--border);
+        padding: 6px 12px;
+    }
+    .dataTables_wrapper .dataTables_filter input:focus {
+        border-color: var(--pink-light);
+        box-shadow: 0 0 0 3px rgba(194,24,91,.1);
+        outline: none;
+    }
+    .dataTables_paginate .paginate_button.current,
+    .dataTables_paginate .paginate_button.current:hover {
+        background: var(--pink-primary) !important;
+        border-color: var(--pink-primary) !important;
+        color: #fff !important;
+        border-radius: 6px;
+    }
+    .dataTables_paginate .paginate_button:hover {
+        background: var(--pink-pale) !important;
+        border-color: var(--pink-light) !important;
+        color: var(--pink-dark) !important;
+        border-radius: 6px;
+    }
+</style>
+
 <!-- Stock Filters -->
-<div class="card admin-chart mb-4">
+<div class="card filter-card mb-4">
     <div class="card-body">
         <form method="get" class="row g-3">
             <div class="col-md-4">
                 <label class="form-label">Product</label>
-                <input type="text" class="form-control" name="search" placeholder="Search products..." 
+                <input type="text" class="form-control" name="search"
+                       placeholder="Search products..."
                        value="{{ app.request.get('search') }}">
             </div>
-            
             <div class="col-md-3">
                 <label class="form-label">Stock Status</label>
                 <select name="status" class="form-select">
                     <option value="">All Status</option>
-                    <option value="in_stock" {{ app.request.get('status') == 'in_stock' ? 'selected' : '' }}>In Stock</option>
-                    <option value="low_stock" {{ app.request.get('status') == 'low_stock' ? 'selected' : '' }}>Low Stock</option>
+                    <option value="in_stock"     {{ app.request.get('status') == 'in_stock'     ? 'selected' : '' }}>In Stock</option>
+                    <option value="low_stock"    {{ app.request.get('status') == 'low_stock'    ? 'selected' : '' }}>Low Stock</option>
                     <option value="out_of_stock" {{ app.request.get('status') == 'out_of_stock' ? 'selected' : '' }}>Out of Stock</option>
                 </select>
             </div>
-            
             <div class="col-md-3">
                 <label class="form-label">Sort By</label>
                 <select name="sort" class="form-select">
-                    <option value="quantity_asc" {{ app.request.get('sort') == 'quantity_asc' ? 'selected' : '' }}>Quantity (Low to High)</option>
+                    <option value="quantity_asc"  {{ app.request.get('sort') == 'quantity_asc'  ? 'selected' : '' }}>Quantity (Low to High)</option>
                     <option value="quantity_desc" {{ app.request.get('sort') == 'quantity_desc' ? 'selected' : '' }}>Quantity (High to Low)</option>
-                    <option value="name_asc" {{ app.request.get('sort') == 'name_asc' ? 'selected' : '' }}>Product Name A-Z</option>
-                    <option value="name_desc" {{ app.request.get('sort') == 'name_desc' ? 'selected' : '' }}>Product Name Z-A</option>
-                    <option value="updated_desc" {{ app.request.get('sort') == 'updated_desc' ? 'selected' : '' }}>Recently Updated</option>
+                    <option value="name_asc"      {{ app.request.get('sort') == 'name_asc'      ? 'selected' : '' }}>Product Name A-Z</option>
+                    <option value="name_desc"     {{ app.request.get('sort') == 'name_desc'     ? 'selected' : '' }}>Product Name Z-A</option>
+                    <option value="updated_desc"  {{ app.request.get('sort') == 'updated_desc'  ? 'selected' : '' }}>Recently Updated</option>
                 </select>
             </div>
-            
             <div class="col-md-2 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary w-100">
+                <button type="submit" class="btn btn-pink-primary w-100">
                     <i class="bi bi-search me-2"></i>Filter
                 </button>
             </div>
@@ -59,67 +339,48 @@
 </div>
 
 <!-- Stock Statistics -->
-<div class="row mb-4">
+<div class="row mb-4 g-3">
     <div class="col-md-3">
-        <div class="card stats-card border-left-primary h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Total Items</h6>
-                        <h3 class="fw-bold">{{ totalItems|default(0) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-primary">
-                        <i class="bi bi-box-seam text-white"></i>
-                    </div>
+        <div class="card stats-card s-total h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="label mb-1">Total Items</p>
+                    <p class="value mb-0" style="color:var(--pink-primary);">{{ totalItems|default(0) }}</p>
                 </div>
+                <div class="stat-icon i-total"><i class="bi bi-box-seam"></i></div>
             </div>
         </div>
     </div>
-    
     <div class="col-md-3">
-        <div class="card stats-card border-left-success h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Total Stock Value</h6>
-                        <h3 class="fw-bold">₱{{ totalValue|default(0)|number_format(2) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-success">
-                        <i class="bi bi-currency-dollar text-white"></i>
-                    </div>
+        <div class="card stats-card s-value h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="label mb-1">Total Stock Value</p>
+                    <p class="value mb-0" style="color:var(--pink-secondary);">₱{{ totalValue|default(0)|number_format(2) }}</p>
                 </div>
+                <div class="stat-icon i-value"><i class="bi bi-currency-dollar"></i></div>
             </div>
         </div>
     </div>
-    
     <div class="col-md-3">
-        <div class="card stats-card border-left-warning h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Low Stock Items</h6>
-                        <h3 class="fw-bold">{{ lowStockItems|default(0) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-warning">
-                        <i class="bi bi-exclamation-triangle text-white"></i>
-                    </div>
+        <div class="card stats-card s-low h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="label mb-1">Low Stock Items</p>
+                    <p class="value mb-0" style="color:#e91e63;">{{ lowStockItems|default(0) }}</p>
                 </div>
+                <div class="stat-icon i-low"><i class="bi bi-exclamation-triangle"></i></div>
             </div>
         </div>
     </div>
-    
     <div class="col-md-3">
-        <div class="card stats-card border-left-danger h-100">
-            <div class="card-body">
-                <div class="d-flex justify-content-between">
-                    <div>
-                        <h6 class="text-uppercase text-muted mb-1">Out of Stock</h6>
-                        <h3 class="fw-bold">{{ outOfStockItems|default(0) }}</h3>
-                    </div>
-                    <div class="stats-icon bg-danger">
-                        <i class="bi bi-x-circle text-white"></i>
-                    </div>
+        <div class="card stats-card s-out h-100">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div>
+                    <p class="label mb-1">Out of Stock</p>
+                    <p class="value mb-0" style="color:var(--pink-dark);">{{ outOfStockItems|default(0) }}</p>
                 </div>
+                <div class="stat-icon i-out"><i class="bi bi-x-circle"></i></div>
             </div>
         </div>
     </div>
@@ -127,21 +388,56 @@
 
 <!-- Stock Table -->
 <div class="card admin-chart">
-    <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-        <h5 class="mb-0">Inventory</h5>
-        <div class="d-flex gap-2">
-            <button class="btn btn-sm btn-outline-secondary" onclick="exportStock()">
+    <div class="table-card-header d-flex justify-content-between align-items-center">
+        <h5>
+            <span class="section-accent"></span>Inventory
+        </h5>
+        {# <div class="d-flex gap-2">
+            <button class="btn btn-sm btn-pink-outline" onclick="exportStock()">
                 <i class="bi bi-download me-1"></i>Export
             </button>
-            <button class="btn btn-sm btn-outline-secondary" onclick="printStockReport()">
+            <button class="btn btn-sm btn-pink-outline" onclick="printStockReport()">
                 <i class="bi bi-printer me-1"></i>Print Report
             </button>
-        </div>
+        </div> #}
+
+        {# Replace the export buttons in the table-card-header #}
+<div class="d-flex gap-2">
+    <div class="dropdown">
+        <button class="btn btn-sm btn-pink-outline dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="bi bi-download me-1"></i>Export
+        </button>
+        <ul class="dropdown-menu dropdown-menu-end shadow-sm">
+            <li>
+                <a class="dropdown-item" href="#" onclick="exportCSV(); return false;">
+                    <i class="bi bi-filetype-csv me-2 text-success"></i>Export as CSV
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="#" onclick="exportExcel(); return false;">
+                    <i class="bi bi-file-earmark-excel me-2 text-success"></i>Export as Excel
+                </a>
+            </li>
+            <li>
+                <a class="dropdown-item" href="#" onclick="exportPDF(); return false;">
+                    <i class="bi bi-file-earmark-pdf me-2 text-danger"></i>Export as PDF
+                </a>
+            </li>
+        </ul>
+    </div>
+    <button class="btn btn-sm btn-pink-outline" onclick="printStockReport()">
+        <i class="bi bi-printer me-1"></i>Print Report
+    </button>
+</div>
+
+
+
+
     </div>
     <div class="card-body p-0">
         <div class="table-responsive">
-            <table class="table table-hover mb-0">
-                <thead class="bg-light">
+            <table class="table table-hover mb-0" id="inventoryTable">
+                <thead>
                     <tr>
                         <th>Product</th>
                         <th>SKU</th>
@@ -158,70 +454,60 @@
                     {% for stock in stocks %}
                     <tr>
                         <td>
-                            <div class="d-flex align-items-center">
+                            <div class="d-flex align-items-center gap-2">
                                 {% if stock.product.photo %}
-                                    <img src="{{ asset('uploads/products/' ~ stock.product.photo) }}" 
-                                         alt="{{ stock.product.name }}" class="rounded me-2" width="40" height="40">
+                                    <img src="{{ asset('uploads/products/' ~ stock.product.photo) }}"
+                                         alt="{{ stock.product.name }}"
+                                         class="product-thumb">
                                 {% else %}
-                                    <div class="rounded bg-light d-flex align-items-center justify-content-center me-2" 
-                                         style="width: 40px; height: 40px;">
-                                        <i class="bi bi-image text-muted"></i>
+                                    <div class="product-thumb-placeholder">
+                                        <i class="bi bi-image"></i>
                                     </div>
                                 {% endif %}
                                 <div>
-                                    <strong>{{ stock.product.name }}</strong>
-                                    <div class="text-muted small">{{ stock.product.productType.name|default('N/A') }}</div>
+                                    <div class="fw-600" style="font-weight:600;color:var(--text-main);">{{ stock.product.name }}</div>
+                                    <div class="text-muted" style="font-size:.78rem;">{{ stock.product.productType.name|default('N/A') }}</div>
                                 </div>
                             </div>
                         </td>
-                        <td>{{ stock.product.sku|default('N/A') }}</td>
-                        <td class="fw-bold">{{ stock.quantity }}</td>
-                        <td>{{ stock.minimumLevel|default(10) }}</td>
-                        <td>{{ stock.reorderPoint|default(5) }}</td>
-                        <td class="fw-bold">₱{{ (stock.quantity * stock.product.price)|number_format(2) }}</td>
+                        <td><span style="font-size:.82rem;color:var(--text-muted);font-family:monospace;">{{ stock.product.sku|default('N/A') }}</span></td>
+                        <td><span style="font-weight:700;color:var(--pink-primary);">{{ stock.quantity }}</span></td>
+                        <td>{{ stock.minimumThreshold }}</td>
+                        <td>{{ stock.minimumThreshold }}</td>
+                        <td><span style="font-weight:600;">₱{{ (stock.quantity * stock.product.price)|number_format(2) }}</span></td>
                         <td>
                             {% if stock.quantity <= 0 %}
-                                <span class="badge bg-danger">Out of Stock</span>
-                            {% elseif stock.quantity <= stock.reorderPoint|default(5) %}
-                                <span class="badge bg-warning">Low Stock</span>
-                            {% elseif stock.quantity <= stock.minimumLevel|default(10) %}
-                                <span class="badge bg-info">Reorder Soon</span>
+                                <span class="stock-badge badge-out">Out of Stock</span>
+                            {% elseif stock.isIsLowStock %}
+                                <span class="stock-badge badge-low-stock">Low Stock</span>
                             {% else %}
-                                <span class="badge bg-success">In Stock</span>
+                                <span class="stock-badge badge-in-stock">In Stock</span>
                             {% endif %}
                         </td>
                         <td>
-                            <small>{{ stock.updatedAt|date('M d, Y') }}</small>
+                            <small style="color:var(--text-muted);">
+                                {{ stock.updatedAt ? stock.updatedAt|date('M d, Y') : stock.createdAt|date('M d, Y') }}
+                            </small>
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm" role="group">
-                                <button type="button" class="btn btn-outline-success" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#addStockModal"
+                                <button type="button" class="btn btn-act-add"
+                                        data-bs-toggle="modal" data-bs-target="#addStockModal"
                                         data-product-id="{{ stock.product.id }}"
                                         data-product-name="{{ stock.product.name }}">
                                     <i class="bi bi-plus-lg"></i> Add
                                 </button>
-                                <button type="button" class="btn btn-outline-warning" 
-                                        data-bs-toggle="modal" 
-                                        data-bs-target="#adjustStockModal"
+                                <button type="button" class="btn btn-act-adjust"
+                                        data-bs-toggle="modal" data-bs-target="#adjustStockModal"
                                         data-stock-id="{{ stock.id }}"
                                         data-current-quantity="{{ stock.quantity }}">
                                     <i class="bi bi-pencil"></i> Adjust
                                 </button>
-                                <button type="button" class="btn btn-outline-info" 
+                                <button type="button" class="btn btn-act-history"
                                         onclick="viewStockHistory({{ stock.id }})">
                                     <i class="bi bi-clock-history"></i> History
                                 </button>
                             </div>
-                        </td>
-                    </tr>
-                    {% else %}
-                    <tr>
-                        <td colspan="9" class="text-center text-muted py-4">
-                            <i class="bi bi-clipboard-data fs-1"></i>
-                            <p class="mt-2">No stock records found</p>
-                            <p class="small">Products with stock will appear here</p>
                         </td>
                     </tr>
                     {% endfor %}
@@ -231,19 +517,169 @@
     </div>
 </div>
 
+{% if productsWithoutStock|length > 0 %}
+<div class="card admin-chart mt-4">
+    <div class="no-stock-header d-flex align-items-center">
+        <h5><span class="section-accent"></span>Products Without Stock Record</h5>
+    </div>
+    <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr style="background:var(--pink-pale);">
+                    <th style="color:var(--pink-dark);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:12px 16px;">Product</th>
+                    <th style="color:var(--pink-dark);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:12px 16px;">Price</th>
+                    <th style="color:var(--pink-dark);font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:12px 16px;">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for product in productsWithoutStock %}
+                <tr>
+                    <td style="padding:12px 16px;vertical-align:middle;font-weight:600;">{{ product.name }}</td>
+                    <td style="padding:12px 16px;vertical-align:middle;">₱{{ product.price|number_format(2) }}</td>
+                    <td style="padding:12px 16px;vertical-align:middle;">
+                        <button type="button" class="btn btn-sm btn-add-stock"
+                                data-bs-toggle="modal"
+                                data-bs-target="#addStockModal"
+                                data-product-id="{{ product.id }}"
+                                data-product-name="{{ product.name }}">
+                            <i class="bi bi-plus-circle me-1"></i>Add Stock
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
 <!-- Modals -->
 {% include 'stock/staff/modals/_add_stock.html.twig' %}
 {% include 'stock/staff/modals/_adjust_stock.html.twig' %}
 {% include 'stock/staff/modals/_import_stock.html.twig' %}
-
 {% endblock %}
 
 {% block javascripts %}
+
+{# SheetJS for Excel #}
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+{# jsPDF + autoTable for PDF #}
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
+
 <script>
-function exportStock() {
+{# function exportStock() {
     alert('Exporting stock data...');
     // Implement export functionality
+} #}
+
+
+function getTableData() {
+    const rows = [];
+    document.querySelectorAll('#inventoryTable tbody tr').forEach(tr => {
+        const cells = tr.querySelectorAll('td');
+        if (cells.length === 0) return;
+        rows.push({
+            product:      cells[0].querySelector('strong, div[style]')?.innerText?.trim() || cells[0].innerText.trim(),
+            sku:          cells[1].innerText.trim(),
+            stock:        cells[2].innerText.trim(),
+            minStock:     cells[3].innerText.trim(),
+            reorderPoint: cells[4].innerText.trim(),
+            stockValue:   cells[5].innerText.trim(),
+            status:       cells[6].innerText.trim(),
+            lastUpdated:  cells[7].innerText.trim(),
+        });
+    });
+    return rows;
 }
+
+const HEADERS = ['Product', 'SKU', 'Current Stock', 'Min. Stock Level', 'Reorder Point', 'Stock Value', 'Status', 'Last Updated'];
+
+function exportCSV() {
+    const data = getTableData();
+    const csvRows = [HEADERS.join(',')];
+    data.forEach(r => {
+        csvRows.push([
+            `"${r.product}"`, `"${r.sku}"`, r.stock, r.minStock,
+            r.reorderPoint, `"${r.stockValue}"`, `"${r.status}"`, `"${r.lastUpdated}"`
+        ].join(','));
+    });
+    const blob = new Blob([csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `stock_inventory_${new Date().toISOString().slice(0,10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function exportExcel() {
+    const data = getTableData();
+    const wsData = [HEADERS, ...data.map(r => [
+        r.product, r.sku, r.stock, r.minStock,
+        r.reorderPoint, r.stockValue, r.status, r.lastUpdated
+    ])];
+    const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+    // Column widths
+    ws['!cols'] = [
+        {wch:30},{wch:15},{wch:14},{wch:16},
+        {wch:14},{wch:14},{wch:14},{wch:14}
+    ];
+
+    // Header row style
+    HEADERS.forEach((_, i) => {
+        const cell = ws[XLSX.utils.encode_cell({r:0, c:i})];
+        if (cell) {
+            cell.s = {
+                font: { bold: true, color: { rgb: 'FFFFFF' } },
+                fill: { fgColor: { rgb: 'C2185B' } },
+                alignment: { horizontal: 'center' }
+            };
+        }
+    });
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Stock Inventory');
+    XLSX.writeFile(wb, `stock_inventory_${new Date().toISOString().slice(0,10)}.xlsx`);
+}
+
+function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF({ orientation: 'landscape' });
+
+    doc.setFontSize(16);
+    doc.setTextColor(194, 24, 91);
+    doc.text('Stock Inventory Report', 14, 16);
+
+    doc.setFontSize(9);
+    doc.setTextColor(120, 120, 120);
+    doc.text(`Generated: ${new Date().toLocaleDateString('en-PH', { year:'numeric', month:'long', day:'numeric' })}`, 14, 23);
+
+    const data = getTableData();
+    doc.autoTable({
+        startY: 28,
+        head: [HEADERS],
+        body: data.map(r => [
+            r.product, r.sku, r.stock, r.minStock,
+            r.reorderPoint, r.stockValue, r.status, r.lastUpdated
+        ]),
+        headStyles: {
+            fillColor: [194, 24, 91],
+            textColor: 255,
+            fontStyle: 'bold',
+            fontSize: 8,
+        },
+        bodyStyles: { fontSize: 8, textColor: 45 },
+        alternateRowStyles: { fillColor: [252, 228, 236] },
+        styles: { cellPadding: 3 },
+        columnStyles: { 0: { cellWidth: 45 } }
+    });
+
+    doc.save(`stock_inventory_${new Date().toISOString().slice(0,10)}.pdf`);
+}
+
+
 
 function printStockReport() {
     window.print();
@@ -253,11 +689,11 @@ function viewStockHistory(stockId) {
     window.location.href = `/staff/stock/${stockId}/history`;
 }
 
-// Initialize DataTable
 $(document).ready(function() {
-    $('table').DataTable({
+    $('#inventoryTable').DataTable({
+        destroy: true,
         pageLength: 25,
-        order: [[2, 'asc']], // Sort by stock quantity
+        order: [[2, 'asc']],
         language: {
             search: "_INPUT_",
             searchPlaceholder: "Search inventory...",
@@ -267,17 +703,15 @@ $(document).ready(function() {
             infoFiltered: "(filtered from _MAX_ total items)"
         }
     });
-    
-    // Modal handlers
-    $('#addStockModal').on('show.bs.modal', function(event) {
-        var button = $(event.relatedTarget);
-        var productId = button.data('product-id');
-        var productName = button.data('product-name');
-        var modal = $(this);
-        modal.find('#addProductId').val(productId);
-        modal.find('.modal-title').text('Add Stock: ' + productName);
+
+    $(document).on('click', '[data-bs-target="#addStockModal"]', function() {
+        var productId = $(this).data('product-id');
+        var productName = $(this).data('product-name');
+        console.log('Button clicked, productId:', productId);
+        $('#addProductId').val(productId);
+        $('#addStockModal .modal-title').text('Add Stock: ' + productName);
     });
-    
+
     $('#adjustStockModal').on('show.bs.modal', function(event) {
         var button = $(event.relatedTarget);
         var stockId = button.data('stock-id');

@@ -116,6 +116,7 @@ class StaffOrderController extends AbstractController
             'customers' => $customers,
             'products' => $products,
             'categories' => $categories,
+            'currentUser' => $this->getUser(), 
         ]);
     }
 
@@ -247,7 +248,7 @@ class StaffOrderController extends AbstractController
     }
 }
 
-    #[Route('/{id}', name: 'staff_order_manage', methods: ['GET', 'POST'])]
+#[Route('/{id}', name: 'staff_order_manage', methods: ['GET', 'POST'], requirements: ['id' => '\d+'])]
     public function manage(Order $order, Request $request, EntityManagerInterface $entityManager): Response
     {
         if ($request->isMethod('POST')) {
@@ -289,7 +290,7 @@ class StaffOrderController extends AbstractController
 
         // Get available products for adding items
         $productRepository = $entityManager->getRepository(Product::class);
-        $availableProducts = $productRepository->findBy(['isActive' => true], ['name' => 'ASC']);
+        $availableProducts = $productRepository->findBy(['isAvailable' => true], ['name' => 'ASC']);
 
         return $this->render('order/staff/manage.html.twig', [
             'order' => $order,
@@ -384,7 +385,7 @@ class StaffOrderController extends AbstractController
         $orderItem = new OrderItem();
         $orderItem->setProduct($product);
         $orderItem->setQuantity($quantity);
-        $orderItem->setPrice($price);
+        $orderItem->setUnitPrice((float)$price ?: $product->getPrice());
         $orderItem->setOrderRef($order);
         
         $entityManager->persist($orderItem);
@@ -428,6 +429,29 @@ class StaffOrderController extends AbstractController
         
         return new JsonResponse(['success' => true]);
     }
+
+
+    #[Route('/item/{id}/price', name: 'staff_order_item_price', methods: ['POST'])]
+public function updateItemPrice(OrderItem $orderItem, Request $request, EntityManagerInterface $entityManager): JsonResponse
+{
+    $data = json_decode($request->getContent(), true);
+    $price = $data['price'] ?? null;
+
+    if ($price === null || $price < 0) {
+        return new JsonResponse(['success' => false, 'message' => 'Invalid price'], 400);
+    }
+
+    $orderItem->setUnitPrice((float)$price);
+
+    // Update order total
+    $order = $orderItem->getOrderRef();
+    $order->calculateTotal();
+
+    $entityManager->flush();
+
+    return new JsonResponse(['success' => true]);
+}
+
 
     #[Route('/item/{id}/remove', name: 'staff_order_item_remove', methods: ['DELETE'])]
     public function removeItem(OrderItem $orderItem, EntityManagerInterface $entityManager): JsonResponse
@@ -480,7 +504,7 @@ class StaffOrderController extends AbstractController
             $items[] = [
                 'productName' => $item->getProduct()->getName(),
                 'quantity' => $item->getQuantity(),
-                'price' => $item->getPrice(),
+                'price' => $item->getUnitPrice(),
                 'total' => $item->getTotalPrice()
             ];
         }
@@ -523,5 +547,19 @@ public function show(Order $order): Response
         'order' => $order,
     ]);
 }
+
+#[Route('/{id}/urgent', name: 'staff_order_urgent', methods: ['POST'])]
+public function updateUrgentStatus(Order $order, Request $request, EntityManagerInterface $entityManager): JsonResponse
+{
+    $data = json_decode($request->getContent(), true);
+    $isUrgent = $data['isUrgent'] ?? false;
+    
+    $order->setIsUrgent($isUrgent);
+    $entityManager->flush();
+    
+    return new JsonResponse(['success' => true]);
+}
+
+
 
 }

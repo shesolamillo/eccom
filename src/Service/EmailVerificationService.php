@@ -8,6 +8,7 @@ use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\Mime\Address;
 
+
 class EmailVerificationService
 {
     public function __construct(
@@ -29,7 +30,7 @@ class EmailVerificationService
     public function sendVerificationEmail(User $user, string $verificationUrl): void
     {
         $email = (new TemplatedEmail())
-            ->from(new Address('arielbensing22@gmail.com', 'Symfony Project Test')) // Change this to verified sender
+            ->from(new Address('sheilamaesolamillo@gmail.com', 'eccom')) // Change this to verified sender
             ->to(new Address($user->getEmail()))
             ->subject('Please verify your email address')
             ->htmlTemplate('emails/verification.html.twig')

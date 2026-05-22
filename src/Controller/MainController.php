@@ -6,6 +6,8 @@ use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Mailer\MailerInterface;  // <-- ADD THIS
+use Symfony\Component\Mime\Email;
 
 
 
@@ -41,19 +43,33 @@ class MainController extends AbstractController
         return new Response('OK', 200);
     }
 
-    #[Route('/contact/submit', name: 'app_contact_submit', methods: ['POST'])]
-    public function submitContact(Request $request): Response
-    {
-        // Handle form submission here
-        $firstName = $request->request->get('firstName');
-        $email = $request->request->get('email');
-        $message = $request->request->get('message');
+    // #[Route('/contact/submit', name: 'app_contact_submit', methods: ['POST'])]
+    // public function submitContact(Request $request): Response
+    // {
+    //     // Handle form submission here
+    //     $firstName = $request->request->get('firstName');
+    //     $email = $request->request->get('email');
+    //     $message = $request->request->get('message');
 
-        // You can add validation, send email, or save to database here
+    //     // You can add validation, send email, or save to database here
 
-        $this->addFlash('success', 'Thank you for contacting us!');
-        return $this->redirectToRoute('app_contact');
-    }
+    //     $this->addFlash('success', 'Thank you for contacting us!');
+    //     return $this->redirectToRoute('app_contact');
+    // }
+
+    #[Route('/sendmail', name: 'sendmail')]
+public function sendMail(MailerInterface $mailer): Response
+{
+    $email = (new Email())
+        ->from('sheilamaesolamillo@gmail.com')
+        ->to('sheilamaesolamillo@gmail.com')
+        ->subject('Test Email')
+        ->html('<h1>Hello!</h1><p>Email is working!</p>');
+    
+    $mailer->send($email);
+    
+    return new Response('Email sent! Check your inbox.');
+}
 
 
     

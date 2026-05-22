@@ -3,131 +3,306 @@
 
 {% block title %}Register - SMSol Studio{% endblock %}
 
+{% block stylesheets %}
+<style>
+  body {
+    background: url("{{ asset('uploads/images/loginBG.png') }}") center center / cover no-repeat fixed;
+    min-height: 100vh;
+    font-family: 'Segoe UI', sans-serif;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: rgba(60, 5, 20, 0.65);
+    z-index: 0;
+  }
+
+  .paw {
+    position: fixed;
+    animation: floatPaw linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes floatPaw {
+    0%   { transform: translateY(100vh) rotate(0deg);  opacity: 0; }
+    10%  { opacity: 0.18; }
+    90%  { opacity: 0.1; }
+    100% { transform: translateY(-10vh) rotate(25deg); opacity: 0; }
+  }
+
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes borderGlow {
+    0%, 100% { box-shadow: 0 0 20px #ff1a6e33, 0 20px 60px rgba(0,0,0,0.6); }
+    50%       { box-shadow: 0 0 45px #ff1a6e99, 0 20px 60px rgba(0,0,0,0.6); }
+  }
+
+  .login-card {
+    background: linear-gradient(145deg, #1c1c1c, #111111);
+    border: 1.5px solid #ff1a6e55;
+    border-radius: 20px;
+    position: relative;
+    z-index: 1;
+    animation: cardIn 0.6s ease forwards, borderGlow 3s ease-in-out 0.6s infinite;
+  }
+
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .brand-title       { color: #fff; font-size: 1.8rem; font-weight: 700; animation: fadeDown 0.5s ease 0.3s both; }
+  .brand-title .pink { color: #ff1a6e; }
+  .subtitle          { color: #888; font-size: 0.9rem; animation: fadeDown 0.5s ease 0.5s both; }
+
+  .input-group-text {
+    background: #2a2a2a;
+    border: 1px solid #333;
+    color: #ff1a6e;
+    border-radius: 10px 0 0 10px;
+  }
+
+  .form-control {
+    background: #2a2a2a;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 0;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .form-control:focus {
+    background: #2a2a2a;
+    border-color: #ff1a6e;
+    color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(255, 26, 110, 0.3);
+  }
+
+  .form-control::placeholder { color: #555; }
+
+  .form-label { color: #aaa; font-size: 0.85rem; }
+
+  .btn-toggle {
+    background: #2a2a2a;
+    border: 1px solid #333;
+    color: #888;
+    border-radius: 0 10px 10px 0;
+    transition: color 0.2s;
+  }
+
+  .btn-toggle:hover { color: #ff1a6e; }
+
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(255, 26, 110, 0.5); }
+    50%       { box-shadow: 0 4px 38px rgba(255, 26, 110, 0.9); }
+  }
+
+  .btn-register {
+    background: linear-gradient(135deg, #ff1a6e, #cc0055);
+    border: none;
+    border-radius: 50px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.75rem;
+    letter-spacing: 0.5px;
+    animation: pulse 2s ease-in-out infinite;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .btn-register:hover {
+    background: linear-gradient(135deg, #ff3d85, #e6006b);
+    transform: translateY(-2px);
+    color: #fff;
+  }
+
+  .btn-register:active { transform: translateY(0); }
+
+  .form-check-input:checked { background-color: #ff1a6e; border-color: #ff1a6e; }
+  .form-check-label         { color: #aaa; font-size: 0.875rem; }
+
+  .signin-link     { color: #aaa; font-size: 0.9rem; }
+  .signin-link a   { color: #ff1a6e; font-weight: 600; text-decoration: none; }
+  .signin-link a:hover { color: #ff5599; }
+
+  .invalid-feedback { color: #ff6699; font-size: 0.8rem; }
+
+  .field-1 { animation: fadeDown 0.4s ease 0.6s  both; }
+  .field-2 { animation: fadeDown 0.4s ease 0.72s both; }
+  .field-3 { animation: fadeDown 0.4s ease 0.84s both; }
+  .field-4 { animation: fadeDown 0.4s ease 0.96s both; }
+  .field-5 { animation: fadeDown 0.4s ease 1.08s both; }
+  .field-6 { animation: fadeDown 0.4s ease 1.2s  both; }
+  .field-7 { animation: fadeDown 0.4s ease 1.32s both; }
+  .field-8 { animation: fadeDown 0.4s ease 1.44s both; }
+</style>
+{% endblock %}
+
 {% block body %}
+
+<div id="paw-container"></div>
+
 <div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8 col-lg-7">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4 p-md-5">
-                    <!-- Header -->
-                    <div class="text-center mb-4">
-                        <i class="bi bi-shop display-4 text-primary mb-3"></i>
-                        <h3 class="fw-bold">Join SMSol Studio</h3>
-                        <p class="text-muted">Create your account to start shopping</p>
-                    </div>
-                    
-                    <!-- Registration Form -->
-                    {{ form_start(registrationForm, {'attr': {'class': 'needs-validation', 'novalidate': 'novalidate'}}) }}
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                {{ form_label(registrationForm.firstName, null, {'label_attr': {'class': 'form-label'}}) }}
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="bi bi-person"></i>
-                                    </span>
-                                    {{ form_widget(registrationForm.firstName, {'attr': {'class': 'form-control', 'placeholder': 'Enter first name'}}) }}
-                                </div>
-                                <div class="invalid-feedback">
-                                    {{ form_errors(registrationForm.firstName) }}
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-6 mb-3">
-                                {{ form_label(registrationForm.lastName, null, {'label_attr': {'class': 'form-label'}}) }}
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <i class="bi bi-person"></i>
-                                    </span>
-                                    {{ form_widget(registrationForm.lastName, {'attr': {'class': 'form-control', 'placeholder': 'Enter last name'}}) }}
-                                </div>
-                                <div class="invalid-feedback">
-                                    {{ form_errors(registrationForm.lastName) }}
-                                </div>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form_label(registrationForm.email, null, {'label_attr': {'class': 'form-label'}}) }}
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-envelope"></i>
-                                </span>
-                                {{ form_widget(registrationForm.email, {'attr': {'class': 'form-control', 'placeholder': 'Enter email address'}}) }}
-                            </div>
-                            <div class="invalid-feedback">
-                                {{ form_errors(registrationForm.email) }}
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form_label(registrationForm.phoneNumber, null, {'label_attr': {'class': 'form-label'}}) }}
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-telephone"></i>
-                                </span>
-                                {{ form_widget(registrationForm.phoneNumber, {'attr': {'class': 'form-control', 'placeholder': 'Enter phone number'}}) }}
-                            </div>
-                            <div class="invalid-feedback">
-                                {{ form_errors(registrationForm.phoneNumber) }}
-                            </div>
-                        </div>
-                        
-                        <div class="mb-3">
-                            {{ form_label(registrationForm.plainPassword.first, null, {'label_attr': {'class': 'form-label'}}) }}
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-lock"></i>
-                                </span>
-                                {{ form_widget(registrationForm.plainPassword.first, {'attr': {'class': 'form-control', 'placeholder': 'Enter password'}}) }}
-                                <button type="button" class="input-group-text" onclick="togglePasswordVisibility('{{ registrationForm.plainPassword.first.vars.id }}')">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                            <div class="invalid-feedback">
-                                {{ form_errors(registrationForm.plainPassword.first) }}
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            {{ form_label(registrationForm.plainPassword.second, null, {'label_attr': {'class': 'form-label'}}) }}
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-lock-fill"></i>
-                                </span>
-                                {{ form_widget(registrationForm.plainPassword.second, {'attr': {'class': 'form-control', 'placeholder': 'Confirm password'}}) }}
-                                <button type="button" class="input-group-text" onclick="togglePasswordVisibility('{{ registrationForm.plainPassword.second.vars.id }}')">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                            <div class="invalid-feedback">
-                                {{ form_errors(registrationForm.plainPassword.second) }}
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4 form-check">
-                            {{ form_widget(registrationForm.agreeTerms, {'attr': {'class': 'form-check-input'}}) }}
-                            {{ form_label(registrationForm.agreeTerms, null, {'label_attr': {'class': 'form-check-label'}}) }}
-                            <div class="invalid-feedback">
-                                {{ form_errors(registrationForm.agreeTerms) }}
-                            </div>
-                        </div>
-                        
-                        <div class="d-grid mb-4">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-person-plus me-2"></i>Create Account
-                            </button>
-                        </div>
-                        
-                        <div class="text-center">
-                            <p class="mb-0">
-                                Already have an account? 
-                                <a href="{{ path('app_login') }}" class="text-decoration-none">Sign in</a>
-                            </p>
-                        </div>
-                    {{ form_end(registrationForm) }}
-                </div>
-            </div>
+  <div class="row justify-content-center align-items-center" style="min-height: 90vh;">
+    <div class="col-md-7 col-lg-6">
+      <div class="login-card p-4 p-md-5">
+
+        <!-- Brand -->
+        <div class="text-center mb-4">
+          <div class="mb-2">
+            <img src="{{ asset('uploads/images/logo.png') }}" alt="Logo" style="width: 100px; height: auto;">
+          </div>
+          <div class="brand-title">Join SMS<span class="pink">ol</span> Studio</div>
+          <p class="subtitle mt-1">Create your account to start shopping</p>
         </div>
+
+        {{ form_start(registrationForm, {
+          'attr': {
+            'id': 'registerForm',
+            'class': 'needs-validation',
+            'novalidate': 'novalidate'
+          }
+        }) }}
+
+          <div class="row field-1">
+            <div class="col-md-6 mb-3">
+              {{ form_label(registrationForm.firstName, null, {'label_attr': {'class': 'form-label'}}) }}
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                {{ form_widget(registrationForm.firstName, {'attr': {'class': 'form-control', 'placeholder': 'First name'}}) }}
+              </div>
+              <div class="invalid-feedback d-block">{{ form_errors(registrationForm.firstName) }}</div>
+            </div>
+            <div class="col-md-6 mb-3">
+              {{ form_label(registrationForm.lastName, null, {'label_attr': {'class': 'form-label'}}) }}
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person-fill"></i></span>
+                {{ form_widget(registrationForm.lastName, {'attr': {'class': 'form-control', 'placeholder': 'Last name'}}) }}
+              </div>
+              <div class="invalid-feedback d-block">{{ form_errors(registrationForm.lastName) }}</div>
+            </div>
+          </div>
+
+          <div class="mb-3 field-2">
+            {{ form_label(registrationForm.email, null, {'label_attr': {'class': 'form-label'}}) }}
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+              {{ form_widget(registrationForm.email, {'attr': {'class': 'form-control', 'placeholder': 'Enter email address'}}) }}
+            </div>
+            <div class="invalid-feedback d-block">{{ form_errors(registrationForm.email) }}</div>
+          </div>
+
+          <div class="mb-3 field-3">
+            {{ form_label(registrationForm.phoneNumber, null, {'label_attr': {'class': 'form-label'}}) }}
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-telephone-fill"></i></span>
+              {{ form_widget(registrationForm.phoneNumber, {'attr': {'class': 'form-control', 'placeholder': 'Enter phone number'}}) }}
+            </div>
+            <div class="invalid-feedback d-block">{{ form_errors(registrationForm.phoneNumber) }}</div>
+          </div>
+
+          <div class="mb-3 field-4">
+            {{ form_label(registrationForm.plainPassword.first, null, {'label_attr': {'class': 'form-label'}}) }}
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+              {{ form_widget(registrationForm.plainPassword.first, {'attr': {'class': 'form-control', 'placeholder': 'Enter password'}}) }}
+              <button type="button" class="btn-toggle px-3"
+                      onclick="togglePassword('{{ registrationForm.plainPassword.first.vars.id }}', 'icon1')">
+                <i class="bi bi-eye" id="icon1"></i>
+              </button>
+            </div>
+            <div class="invalid-feedback d-block">{{ form_errors(registrationForm.plainPassword.first) }}</div>
+          </div>
+
+          <div class="mb-4 field-5">
+            {{ form_label(registrationForm.plainPassword.second, null, {'label_attr': {'class': 'form-label'}}) }}
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+              {{ form_widget(registrationForm.plainPassword.second, {'attr': {'class': 'form-control', 'placeholder': 'Confirm password'}}) }}
+              <button type="button" class="btn-toggle px-3"
+                      onclick="togglePassword('{{ registrationForm.plainPassword.second.vars.id }}', 'icon2')">
+                <i class="bi bi-eye" id="icon2"></i>
+              </button>
+            </div>
+            <div class="invalid-feedback d-block">{{ form_errors(registrationForm.plainPassword.second) }}</div>
+          </div>
+
+          <div class="mb-4 form-check field-6">
+            {{ form_widget(registrationForm.agreeTerms, {'attr': {'class': 'form-check-input'}}) }}
+            {{ form_label(registrationForm.agreeTerms, null, {'label_attr': {'class': 'form-check-label'}}) }}
+            <div class="invalid-feedback d-block">{{ form_errors(registrationForm.agreeTerms) }}</div>
+          </div>
+
+          <div class="d-grid mb-3 field-7">
+            <button type="submit" class="btn btn-register">
+              🐾 Create Account
+            </button>
+          </div>
+
+          <div class="text-center signin-link field-8">
+            Already have an account? <a href="{{ path('app_login') }}">Sign in</a>
+          </div>
+
+        {{ form_end(registrationForm) }}
+
+      </div>
     </div>
+  </div>
 </div>
+
+<script>
+  function togglePassword(fieldId, iconId) {
+    const input = document.getElementById(fieldId);
+    const icon  = document.getElementById(iconId);
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.replace('bi-eye', 'bi-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.replace('bi-eye-slash', 'bi-eye');
+    }
+  }
+
+  (function () {
+    const container = document.getElementById('paw-container');
+    for (let i = 0; i < 14; i++) {
+      const paw = document.createElement('span');
+      paw.classList.add('paw');
+      paw.textContent = '🐾';
+      paw.style.left              = Math.random() * 100 + 'vw';
+      paw.style.fontSize          = (0.7 + Math.random() * 1.3) + 'rem';
+      paw.style.animationDuration = (7 + Math.random() * 10) + 's';
+      paw.style.animationDelay    = (Math.random() * 12) + 's';
+      container.appendChild(paw);
+    }
+  })();
+</script>
+
+{% endblock %}
+
+{% block javascripts %}
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const form       = document.getElementById('registerForm');
+    const emailField = document.getElementById('{{ registrationForm.email.vars.id }}');
+
+    form.addEventListener('submit', function (event) {
+      const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailPattern.test(emailField.value)) {
+        event.preventDefault();
+        event.stopPropagation();
+        emailField.classList.add('is-invalid');
+        emailField.focus();
+      } else {
+        emailField.classList.remove('is-invalid');
+      }
+      form.classList.add('was-validated');
+    }, false);
+  });
+</script>
 {% endblock %}

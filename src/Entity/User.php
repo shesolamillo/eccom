@@ -40,57 +40,74 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
+    #[Groups(['user:read'])]
     #[ORM\Column]
     private ?int $id = null;
 
     #[ORM\Column(length: 180, unique: true)]
     #[Assert\NotBlank]
+    #[Groups(['user:read'])]
     #[Assert\Email]
     private ?string $email = null;
 
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private array $roles = [];
 
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private ?string $password = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['user:read'])]
     private ?string $firstName = null;
 
     #[ORM\Column(length: 100, nullable: true)]
+    #[Groups(['user:read'])]
     private ?string $lastName = null;
 
     #[ORM\Column(length: 20, nullable: true)]
+    #[Groups(['user:read'])]
     private ?string $phoneNumber = null;
 
     #[ORM\OneToOne(mappedBy: 'user', cascade: ['persist', 'remove'])]
+    #[Groups(['user:read'])]
     private ?UserProfile $userProfile = null;
 
     #[ORM\OneToMany(mappedBy: 'customer', targetEntity: Order::class)]
+    #[Groups(['user:read'])]
     private Collection $orders;
 
     #[ORM\OneToMany(mappedBy: 'createdBy', targetEntity: Product::class)]
+    #[Groups(['user:read'])]
     private Collection $products;
 
     #[ORM\OneToMany(mappedBy: 'printedBy', targetEntity: Receipt::class)]
+    #[Groups(['user:read'])]
     private Collection $receipts;
 
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private ?bool $isActive = true;
 
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['user:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['user:read'])]
     private ?\DateTimeImmutable $lastLoginAt = null;
 
     #[ORM\Column]
+    #[Groups(['user:read'])]
     private ?bool $isVerified = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['user:read'])]
     private ?string $verificationToken = null;
 
     public function __construct()

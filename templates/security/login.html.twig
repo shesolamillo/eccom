@@ -3,89 +3,287 @@
 
 {% block title %}Login - SMSol Studio{% endblock %}
 
+{% block stylesheets %}
+<style>
+  /* NEW */
+body {
+  background: url("{{ asset('uploads/images/loginBG.png') }}") center center / cover no-repeat fixed;
+  min-height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+/* dark pink overlay so the card stays readable */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(60, 5, 20, 0.65);
+  z-index: 0;
+}
+
+
+  /* ── Floating paws ── */
+  .paw {
+    position: fixed;
+    animation: floatPaw linear infinite;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  @keyframes floatPaw {
+    0%   { transform: translateY(100vh) rotate(0deg);  opacity: 0; }
+    10%  { opacity: 0.18; }
+    90%  { opacity: 0.1; }
+    100% { transform: translateY(-10vh) rotate(25deg); opacity: 0; }
+  }
+
+  /* ── Card ── */
+  @keyframes cardIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes borderGlow {
+    0%, 100% { box-shadow: 0 0 20px #ff1a6e33, 0 20px 60px rgba(0,0,0,0.6); }
+    50%       { box-shadow: 0 0 45px #ff1a6e99, 0 20px 60px rgba(0,0,0,0.6); }
+  }
+
+  .login-card {
+    background: linear-gradient(145deg, #1c1c1c, #111111);
+    border: 1.5px solid #ff1a6e55;
+    border-radius: 20px;
+    position: relative;
+    z-index: 1;
+    animation: cardIn 0.6s ease forwards, borderGlow 3s ease-in-out 0.6s infinite;
+  }
+
+  /* ── Brand ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .brand-title         { color: #fff; font-size: 1.8rem; font-weight: 700; animation: fadeDown 0.5s ease 0.3s both; }
+  .brand-title .pink   { color: #ff1a6e; }
+  .subtitle            { color: #888; font-size: 0.9rem; animation: fadeDown 0.5s ease 0.5s both; }
+
+  /* ── Inputs ── */
+  .input-group-text {
+    background: #2a2a2a;
+    border: 1px solid #333;
+    color: #ff1a6e;
+    border-radius: 10px 0 0 10px;
+  }
+
+  .form-control {
+    background: #2a2a2a;
+    border: 1px solid #333;
+    color: #fff;
+    border-radius: 0;
+    transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+
+  .form-control:focus {
+    background: #2a2a2a;
+    border-color: #ff1a6e;
+    color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(255, 26, 110, 0.3);
+  }
+
+  .form-control::placeholder { color: #555; }
+
+  .btn-toggle {
+    background: #2a2a2a;
+    border: 1px solid #333;
+    color: #888;
+    border-radius: 0 10px 10px 0;
+    transition: color 0.2s;
+  }
+
+  .btn-toggle:hover { color: #ff1a6e; }
+
+  /* ── Sign In button ── */
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 4px 20px rgba(255, 26, 110, 0.5); }
+    50%       { box-shadow: 0 4px 38px rgba(255, 26, 110, 0.9); }
+  }
+
+  .btn-signin {
+    background: linear-gradient(135deg, #ff1a6e, #cc0055);
+    border: none;
+    border-radius: 50px;
+    color: #fff;
+    font-size: 1.1rem;
+    font-weight: 600;
+    padding: 0.75rem;
+    letter-spacing: 0.5px;
+    animation: pulse 2s ease-in-out infinite;
+    transition: transform 0.2s, background 0.2s;
+  }
+
+  .btn-signin:hover {
+    background: linear-gradient(135deg, #ff3d85, #e6006b);
+    transform: translateY(-2px);
+    color: #fff;
+  }
+
+  .btn-signin:active { transform: translateY(0); }
+
+  /* ── Google button ── */
+  .btn-google {
+    background: transparent;
+    border: 1px solid #444;
+    color: #ccc;
+    border-radius: 50px;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  .btn-google:hover { border-color: #ff1a6e; color: #ff1a6e; }
+
+  /* ── Misc ── */
+  .form-check-input:checked  { background-color: #ff1a6e; border-color: #ff1a6e; }
+  .form-check-label          { color: #aaa; }
+  .forgot-link               { color: #ff1a6e; text-decoration: none; font-size: 0.875rem; }
+  .forgot-link:hover         { color: #ff5599; }
+  .signup-link               { color: #aaa; font-size: 0.9rem; }
+  .signup-link a             { color: #ff1a6e; font-weight: 600; text-decoration: none; }
+  .signup-link a:hover       { color: #ff5599; }
+
+  /* stagger form fields */
+  .field-1 { animation: fadeDown 0.4s ease 0.6s both; }
+  .field-2 { animation: fadeDown 0.4s ease 0.75s both; }
+  .field-3 { animation: fadeDown 0.4s ease 0.9s both; }
+  .field-4 { animation: fadeDown 0.4s ease 1.05s both; }
+  .field-5 { animation: fadeDown 0.4s ease 1.2s both; }
+</style>
+{% endblock %}
+
 {% block body %}
+
+<!-- Floating paw container -->
+<div id="paw-container"></div>
+
 <div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 col-lg-5">
-            <div class="card border-0 shadow-sm">
-                <div class="card-body p-4 p-md-5">
-                    <!-- Logo -->
-                    <div class="text-center mb-4">
-                        <i class="bi bi-shop display-4 text-primary mb-3"></i>
-                        <h3 class="fw-bold">SMSol Studio</h3>
-                        <p class="text-muted">Sign in to your account</p>
-                    </div>
-                    
-                    <!-- Flash Messages -->
-                    {% if error %}
-                        <div class="alert alert-danger alert-dismissible fade show" role="alert">
-                            {{ error.messageKey|trans(error.messageData, 'security') }}
-                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                        </div>
-                    {% endif %}
-                    
-                    <!-- Login Form -->
-                    <form method="post" action="{{ path('app_login') }}">
-                        {% if app.user %}
-                            <div class="mb-3">
-                                <div class="alert alert-info">
-                                    You are logged in as {{ app.user.userIdentifier }}, 
-                                    <a href="{{ path('app_logout') }}" class="alert-link">Logout</a>
-                                </div>
-                            </div>
-                        {% endif %}
-                        
-                        <div class="mb-3">
-                            <label for="inputEmail" class="form-label">Email Address</label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-envelope"></i>
-                                </span>
-                                <input type="email" value="{{ last_username }}" name="email" id="inputEmail" 
-                                       class="form-control" placeholder="Enter your email" required autofocus>
-                            </div>
-                        </div>
-                        
-                        <div class="mb-4">
-                            <label for="inputPassword" class="form-label">Password</label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="bi bi-lock"></i>
-                                </span>
-                                <input type="password" name="password" id="inputPassword" 
-                                       class="form-control" placeholder="Enter your password" required>
-                                <button type="button" class="input-group-text" onclick="togglePasswordVisibility('inputPassword')">
-                                    <i class="bi bi-eye"></i>
-                                </button>
-                            </div>
-                        </div>
-                        
-                        <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
-                        
-                        <div class="mb-3 form-check">
-                            <input type="checkbox" class="form-check-input" id="rememberMe" name="_remember_me">
-                            <label class="form-check-label" for="rememberMe">Remember me</label>
-                        </div>
-                        
-                        <div class="d-grid mb-4">
-                            <button type="submit" class="btn btn-primary btn-lg">
-                                <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
-                            </button>
-                        </div>
-                        
-                        <div class="text-center">
-                            <p class="mb-0">
-                                Don't have an account? 
-                                <a href="{{ path('app_register') }}" class="text-decoration-none">Sign up</a>
-                            </p>
-                            <p class="mt-2">
-                                <a href="#" class="text-decoration-none">Forgot your password?</a>
-                            </p>
-                        </div>
-                    </form>
-                </div>
-            </div>
+  <div class="row justify-content-center align-items-center" style="min-height: 90vh;">
+    <div class="col-md-5 col-lg-4">
+      <div class="login-card p-4 p-md-5">
+
+        <!-- Brand -->
+        <div class="text-center mb-4">
+          <div class="mb-2" style="font-size: 2.5rem;"><img src="{{ asset('uploads/images/logo.png') }}" alt="Logo" style="width: 100px; height: auto;"></div>
+          <div class="brand-title">SMS<span class="pink">ol</span> Studio</div>
+          <p class="subtitle mt-1">Sign in to your account</p>
         </div>
-    </div>
+
+        <!-- Flash error -->
+        {% if error %}
+        <div class="alert alert-dismissible fade show py-2 field-1"
+             role="alert"
+             style="background:#2a0010;border-color:#ff1a6e44;color:#ff6699;">
+          {{ error.messageKey|trans(error.messageData, 'security') }}
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
+        </div>
+        
+        {% endif %}
+        {% for message in app.flashes('success') %}
+<div class="alert alert-dismissible fade show py-2 field-1"
+     role="alert"
+     style="background:#0a2a0a; border-color:#1aff6e44; color:#66ff99;">
+  <i class="bi bi-check-circle-fill me-2"></i>{{ message }}
+  <button type="button" class="btn-close btn-close-white" data-bs-dismiss="alert"></button>
 </div>
+{% endfor %}
+
+        {% if app.user %}
+        <div class="alert py-2" style="background:#0a1a2a;border-color:#1a6eff44;color:#66aaff;">
+          Logged in as {{ app.user.userIdentifier }}.
+          <a href="{{ path('app_logout') }}" style="color:#ff1a6e;">Logout</a>
+        </div>
+        {% endif %}
+
+        <!-- Form -->
+        <form method="post" action="{{ path('app_login') }}">
+          <input type="hidden" name="_csrf_token" value="{{ csrf_token('authenticate') }}">
+
+          <div class="mb-3 field-1">
+            <label for="inputEmail" class="form-label text-secondary small">Email Address</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-envelope-fill"></i></span>
+              <input type="email" value="{{ last_username }}" name="email" id="inputEmail"
+                     class="form-control" placeholder="Enter your email" required autofocus>
+            </div>
+          </div>
+
+          <div class="mb-3 field-2">
+            <label for="inputPassword" class="form-label text-secondary small">Password</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock-fill"></i></span>
+              <input type="password" name="password" id="inputPassword"
+                     class="form-control" placeholder="Enter your password" required>
+              <button type="button" class="btn-toggle px-3" onclick="togglePassword()">
+                <i class="bi bi-eye" id="toggleIcon"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mb-4 field-3">
+            <div class="form-check mb-0">
+              <input type="checkbox" class="form-check-input" id="rememberMe" name="_remember_me">
+              <label class="form-check-label" for="rememberMe">Remember me</label>
+            </div>
+            <a href="#" class="forgot-link">Forgot password?</a>
+          </div>
+
+          <div class="d-grid mb-3 field-4">
+            <button type="submit" class="btn btn-signin">
+              🐾 Sign In
+            </button>
+          </div>
+
+          <div class="d-grid mb-4 field-4">
+            <a href="{{ path('connect_google_start') }}" class="btn btn-google">
+              <i class="fab fa-google me-2"></i>Sign in with Google
+            </a>
+          </div>
+
+          <div class="text-center signup-link field-5">
+            Don't have an account? <a href="{{ path('app_register') }}">Sign up</a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Toggle password visibility
+  function togglePassword() {
+    const input = document.getElementById('inputPassword');
+    const icon  = document.getElementById('toggleIcon');
+    if (input.type === 'password') {
+      input.type = 'text';
+      icon.classList.replace('bi-eye', 'bi-eye-slash');
+    } else {
+      input.type = 'password';
+      icon.classList.replace('bi-eye-slash', 'bi-eye');
+    }
+  }
+
+  // Floating paw prints
+  (function () {
+    const container = document.getElementById('paw-container');
+    for (let i = 0; i < 14; i++) {
+      const paw = document.createElement('span');
+      paw.classList.add('paw');
+      paw.textContent = '🐾';
+      paw.style.left              = Math.random() * 100 + 'vw';
+      paw.style.fontSize          = (0.7 + Math.random() * 1.3) + 'rem';
+      paw.style.animationDuration = (7 + Math.random() * 10) + 's';
+      paw.style.animationDelay    = (Math.random() * 12) + 's';
+      container.appendChild(paw);
+    }
+  })();
+</script>
+
 {% endblock %}

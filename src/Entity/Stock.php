@@ -44,21 +44,27 @@ class Stock
     private ?Product $product = null;
 
     #[ORM\Column]
+    #[Groups(['product:read', 'stock:read'])]
     private ?int $quantity = 0;
 
     #[ORM\Column]
+    #[Groups(['product:read', 'stock:read'])]
     private ?int $minimumThreshold = 10;
 
     #[ORM\Column]
+    #[Groups(['product:read', 'stock:read'])]
     private ?bool $isLowStock = false;
 
     #[ORM\Column]
+    #[Groups(['product:read', 'stock:read'])]
     private ?\DateTimeImmutable $lastRestockedAt = null;
 
     #[ORM\Column]
+    #[Groups(['product:read', 'stock:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['product:read', 'stock:read'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     /**

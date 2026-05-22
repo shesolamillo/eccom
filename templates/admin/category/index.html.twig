@@ -1,0 +1,170 @@
+{% extends 'layouts/admin.html.twig' %}
+{% block title %}Manage Categories & Product Types{% endblock %}
+{% block page_title %}Manage Categories & Product Types{% endblock %}
+{% block page_description %}Add and manage product categories and types{% endblock %}
+{% block page_actions %}
+<a href="{{ path('staff_product_new') }}" class="btn btn-secondary">
+    <i class="bi bi-arrow-left me-2"></i>Back
+</a>
+{% endblock %}
+
+{% block admin_content %}
+
+{# Flash messages #}
+{% for msg in app.flashes('success') %}
+    <div class="alert alert-success">{{ msg }}</div>
+{% endfor %}
+{% for msg in app.flashes('error') %}
+    <div class="alert alert-danger">{{ msg }}</div>
+{% endfor %}
+
+{# CATEGORIES #}
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Add New Category</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ path('admin_category_add') }}" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Category Name</label>
+                        <input type="text" name="name" class="form-control"
+                               placeholder="e.g. Human, Pet, Horse" required>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-plus-circle me-2"></i>Add Category
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">All Categories ({{ categories|length }})</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Product Types</th>
+                            <th>Products</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for category in categories %}
+                        <tr>
+                            <td><strong>{{ category.name }}</strong></td>
+                            <td>{{ category.productTypes|length }}</td>
+                            <td>{{ category.products|length }}</td>
+                            <td>
+                                <form action="{{ path('admin_category_delete', {'id': category.id}) }}"
+                                      method="post"
+                                      onsubmit="return confirm('Delete {{ category.name|e('js') }}?')">
+                                    <input type="hidden" name="_token"
+                                           value="{{ csrf_token('delete' ~ category.id) }}">
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                            {{ category.products|length > 0 ? 'disabled title="Has existing products"' : '' }}>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">No categories found</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{# PRODUCT TYPES #}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">Add New Product Type</h5>
+            </div>
+            <div class="card-body">
+                <form action="{{ path('admin_product_type_add') }}" method="post">
+                    <div class="mb-3">
+                        <label class="form-label">Product Type Name</label>
+                        <input type="text" name="name" class="form-control"
+                               placeholder="e.g. T-Shirt, Collar, Saddle" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Belongs to Category</label>
+                        <select name="category_id" class="form-select" required>
+                            <option value="">-- Select Category --</option>
+                            {% for category in categories %}
+                                <option value="{{ category.id }}">{{ category.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">
+                        <i class="bi bi-plus-circle me-2"></i>Add Product Type
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-8">
+        <div class="card admin-chart">
+            <div class="card-header bg-white border-0">
+                <h5 class="mb-0">All Product Types ({{ productTypes|length }})</h5>
+            </div>
+            <div class="card-body p-0">
+                <table class="table table-hover mb-0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Products</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    {% for pt in productTypes %}
+                        <tr>
+                            <td><strong>{{ pt.name }}</strong></td>
+                            <td>
+                                <span class="badge bg-primary">
+                                    {{ pt.category ? pt.category.name : 'Unassigned' }}
+                                </span>
+                            </td>
+                            <td>{{ pt.products|length }}</td>
+                            <td>
+                                <form action="{{ path('admin_product_type_delete', {'id': pt.id}) }}"
+                                      method="post"
+                                      onsubmit="return confirm('Delete {{ pt.name|e('js') }}?')">
+                                    <input type="hidden" name="_token"
+                                           value="{{ csrf_token('delete_pt' ~ pt.id) }}">
+                                    <button type="submit" class="btn btn-danger btn-sm"
+                                            {{ pt.products|length > 0 ? 'disabled title="Has existing products"' : '' }}>
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">No product types found</td>
+                        </tr>
+                    {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

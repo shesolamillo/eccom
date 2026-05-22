@@ -43,30 +43,37 @@ class CartController extends AbstractController
     /**
      * Add product to cart (supports AJAX)
      */
-    #[Route('/add/{id}', name: 'cart_add', methods: ['POST'])]
-    public function add(Product $product, Request $request): Response
-    {
-        // Validate stock
-        $result = $this->cartService->addItem($product, (int)$request->request->get('quantity', 1));
-
-        // If AJAX request, return JSON
-        if ($request->isXmlHttpRequest()) {
-            return new JsonResponse([
-                'success' => $result['success'],
-                'message' => $result['message'],
-                'count' => $this->cartService->getCartCount(),
-            ]);
-        }
-
-        // Redirect for regular form submission
-        if ($result['success']) {
-            $this->addFlash('success', $result['message']);
-        } else {
-            $this->addFlash('error', $result['message']);
-        }
-
-        return $this->redirectToRoute('cart_view');
+    #[Route('/add/{id}', name: 'cart_add', methods: ['GET', 'POST'])]
+public function add(Product $product, Request $request): Response
+{
+    // Get quantity from POST or GET
+    $quantity = (int)$request->request->get('quantity', 1);
+    if ($request->query->has('quantity')) {
+        $quantity = (int)$request->query->get('quantity', 1);
     }
+    
+    // Validate stock
+    $result = $this->cartService->addItem($product, $quantity);
+
+    // If AJAX request or JSON expected, return JSON
+    if ($request->isMethod('POST')) {
+        return new JsonResponse([
+            'success' => $result['success'],
+            'message' => $result['message'],
+            'count' => $this->cartService->getCartCount(),
+            'cart_data' => $this->cartService->getCart()
+        ]);
+    }
+
+    // Redirect for regular form submission
+    if ($result['success']) {
+        $this->addFlash('success', $result['message']);
+    } else {
+        $this->addFlash('error', $result['message']);
+    }
+
+    return $this->redirectToRoute('cart_view');
+}
 
     /**
      * View cart (User)
@@ -98,7 +105,7 @@ class CartController extends AbstractController
     {
         $this->cartService->removeItem($product->getId());
 
-        if ($request->isXmlHttpRequest()) {
+        if ($request->isMethod('POST')) {
             return new JsonResponse([
                 'success' => true,
                 'message' => 'Item removed',
@@ -152,7 +159,7 @@ class CartController extends AbstractController
     {
         $this->cartService->clearCart();
 
-        if ($request->isXmlHttpRequest()) {
+        if ($request->isMethod('POST')) {
             return new JsonResponse(['success' => true, 'message' => 'Cart cleared']);
         }
 
@@ -263,7 +270,7 @@ public function checkout(Request $request, EntityManagerInterface $em): Response
         $subtotal = $this->cartService->getCartTotal();
         $shipping = $this->cartService->calculateShippingFee($subtotal);
         $order->setDeliveryFee($deliveryType === Order::DELIVERY_DELIVERY ? $shipping : 0);
-        $order->setTotal($subtotal + ($deliveryType === Order::DELIVERY_DELIVERY ? $shipping : 0));
+        $order->setTotalAmount($subtotal + ($deliveryType === Order::DELIVERY_DELIVERY ? $shipping : 0));
 
         $em->persist($order);
         $em->flush();  // flush order and stock updates
@@ -379,4 +386,18 @@ public function checkout(Request $request, EntityManagerInterface $em): Response
             }, $items),
         ]);
     }
+
+    #[Route('/debug', name: 'cart_debug', methods: ['GET'])]
+public function debug(CartService $cartService, Request $request): Response
+{
+    $session = $request->getSession();
+    $cart = $session->get('cart', []);
+    
+    return $this->json([
+        'session_id' => $session->getId(),
+        'cart_session_data' => $cart,
+        'cart_items_count' => $cartService->getCartCount(),
+        'cart_total' => $cartService->getCartTotal(),
+    ]);
+}
 }

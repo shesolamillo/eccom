@@ -92,6 +92,17 @@
                             </div>
                         </div>
                     </div>
+
+
+                    <!-- Category -->
+                    {% if form.clothesCategory is defined %}
+                    <div class="col-md-6">
+                        {{ form_label(form.clothesCategory, 'Category *', {'label_attr': {'class': 'form-label'}}) }}
+                        {{ form_widget(form.clothesCategory, {'attr': {'class': 'form-select', 'required': 'required'}}) }}
+                        {{ form_errors(form.clothesCategory) }}
+                        <div class="form-text">Main product category</div>
+                    </div>
+                    {% endif %}
                     
                     <!-- Product Type -->
                     {% if form.productType is defined %}
@@ -103,15 +114,7 @@
                     </div>
                     {% endif %}
                     
-                    <!-- Category -->
-                    {% if form.clothesCategory is defined %}
-                    <div class="col-md-6">
-                        {{ form_label(form.clothesCategory, 'Category *', {'label_attr': {'class': 'form-label'}}) }}
-                        {{ form_widget(form.clothesCategory, {'attr': {'class': 'form-select', 'required': 'required'}}) }}
-                        {{ form_errors(form.clothesCategory) }}
-                        <div class="form-text">Main product category</div>
-                    </div>
-                    {% endif %}
+                   
                     
                     <!-- Subcategory (if available) -->
                     {% if form.subcategory is defined %}
@@ -298,6 +301,16 @@
                     <a href="{{ path('staff_product_new') }}" class="btn btn-outline-success text-start">
                         <i class="bi bi-plus-circle me-2"></i>Add Another Product
                     </a>
+
+                    {% if is_granted('ROLE_ADMIN') %}
+                    <a href="{{ path('admin_category_manage') }}" class="btn btn-outline-warning text-start">
+                        <i class="bi bi-tags me-2"></i>Manage Categories
+                    </a>
+                    {% endif %}
+
+                    
+
+
                 </div>
                 
                 <hr class="my-3">
@@ -322,6 +335,11 @@
                 {% endif %}
             </div>
         </div>
+
+        
+
+
+
     </div>
 </div>
 {% endblock %}
@@ -427,6 +445,47 @@ if (costPriceField) {
         }
     });
 }
+{# // Filter categories based on selected product type
+const productTypeSelect = document.getElementById('{{ form.productType.vars.id }}');
+const categorySelect = document.getElementById('{{ form.clothesCategory.vars.id }}');
+
+// Store all original options
+const allCategoryOptions = Array.from(categorySelect.options);
+
+function filterCategories() {
+    const selectedTypeText = productTypeSelect.options[productTypeSelect.selectedIndex]?.text?.toLowerCase() ?? '';
+    const isPet = selectedTypeText.includes('pet');
+    const targetType = isPet ? 'pet' : 'human';
+
+    // Clear and repopulate
+    categorySelect.innerHTML = '';
+    allCategoryOptions.forEach(opt => {
+        if (opt.value === '' || opt.dataset.type === targetType) {
+            categorySelect.appendChild(opt.cloneNode(true));
+        }
+    });
+}
+
+productTypeSelect?.addEventListener('change', filterCategories); #}
+
+const categorySelect    = document.getElementById('{{ form.clothesCategory.vars.id }}');
+const productTypeSelect = document.getElementById('{{ form.productType.vars.id }}');
+const allProductTypeOptions = Array.from(productTypeSelect.options);
+
+categorySelect.addEventListener('change', function () {
+    const categoryId = this.value;
+
+    productTypeSelect.innerHTML = '';
+    allProductTypeOptions.forEach(opt => {
+        if (opt.value === '' || opt.dataset.category === categoryId) {
+            productTypeSelect.appendChild(opt.cloneNode(true));
+        }
+    });
+
+    productTypeSelect.value = '';
+});
+
+
 </script>
 
 <style>

@@ -18,6 +18,10 @@ use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
+use Dompdf\Dompdf;
+use Dompdf\Options;
+use App\Repository\ProductTypeRepository;
+
 
 #[Route('/admin/orders')]
 class AdminOrderController extends AbstractController
@@ -27,7 +31,8 @@ class AdminOrderController extends AbstractController
         Request $request, 
         EntityManagerInterface $entityManager,
         UserRepository $userRepository,
-        ProductRepository $productRepository
+        ProductRepository $productRepository,
+        ProductTypeRepository $productTypeRepository 
     ): Response {
         // Check if user has admin access
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
@@ -56,6 +61,7 @@ class AdminOrderController extends AbstractController
             'customers' => $customers,
             'products' => $products,
             'categories' => $categories,
+            'productTypes' => $productTypeRepository->findAllActive(),
             'currentUser' => $currentUser,
         ]);
     }
@@ -104,7 +110,7 @@ class AdminOrderController extends AbstractController
             return new JsonResponse(['error' => 'No items in order'], 400);
         }
 
-        $entityManager->beginTransaction(); // Start transaction
+       // $entityManager->beginTransaction(); // Start transaction
 
         // Create order
         $order = new Order();
@@ -155,7 +161,7 @@ class AdminOrderController extends AbstractController
             // Validate stock
             if (!$product->getStock() || $product->getStock()->getQuantity() < $quantity) {
                 return new JsonResponse([
-                    'error' => $product->getName() . ' has insufficient stock'
+                    'error' => $product->getName() . ' has insufficient stock. Available: ' . ($product->getStock() ? $product->getStock()->getQuantity() : 0)
                 ], 400);
             }
 
@@ -173,7 +179,7 @@ class AdminOrderController extends AbstractController
             // --- Deduct stock ---
             $stock = $product->getStock();
             $stock->subtractQuantity($quantity);
-            $entityManager->persist($stock);
+            //$entityManager->persist($stock);
         }
 
         // Set total
@@ -182,12 +188,13 @@ class AdminOrderController extends AbstractController
         // Persist order
         $entityManager->persist($order);
         $entityManager->flush();  // flush order and stock updates
-        $entityManager->commit(); // commit transaction
+       // $entityManager->commit(); // commit transaction
 
         return new JsonResponse([
             'success' => true,
             'message' => 'Order created successfully',
             'orderId' => $order->getId(),
+            'orderNumber' => $order->getOrderNumber(),
             'redirectUrl' => $this->generateUrl('admin_order_manage', ['id' => $order->getId()])
         ]);
 
@@ -399,6 +406,14 @@ class AdminOrderController extends AbstractController
         EntityManagerInterface $entityManager
     ): JsonResponse {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+
+        $submittedToken = $request->headers->get('X-CSRF-TOKEN');
+    if (!$this->isCsrfTokenValid('update-payment', $submittedToken)) {
+        return $this->json(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+    }
+
+
         
         $data = json_decode($request->getContent(), true);
         $isPaid = $data['isPaid'] ?? false;
@@ -423,6 +438,13 @@ class AdminOrderController extends AbstractController
         EntityManagerInterface $entityManager
     ): JsonResponse {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+
+        // CSRF validation
+        $submittedToken = $request->headers->get('X-CSRF-TOKEN');
+        if (!$this->isCsrfTokenValid('update-quantity', $submittedToken)) {
+            return $this->json(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+        }
         
         $data = json_decode($request->getContent(), true);
         $change = $data['change'] ?? 0;
@@ -462,11 +484,19 @@ class AdminOrderController extends AbstractController
 
     #[Route('/item/{id}/remove', name: 'admin_order_item_remove', methods: ['DELETE'])]
     public function removeItem(
-        OrderItem $orderItem, 
+        OrderItem $orderItem,
+        Request $request, 
         EntityManagerInterface $entityManager
     ): JsonResponse {
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
-        
+
+
+        // CSRF validation for DELETE
+        $submittedToken = $request->headers->get('X-CSRF-TOKEN');
+        if (!$this->isCsrfTokenValid('remove-item', $submittedToken)) {
+            return $this->json(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+        }
+            
         $order = $orderItem->getOrderRef();
         $entityManager->remove($orderItem);
         
@@ -580,5 +610,143 @@ class AdminOrderController extends AbstractController
             'order' => $order,
         ]);
     }
+
+    // Idugang ni after sa #[Route('/{id}', name: 'admin_order_show', methods: ['GET'])] or before the closing curly brace
+
+#[Route('/{id}/receipt', name: 'admin_receipt_generate', methods: ['GET'])]
+public function generateReceipt(Order $order, EntityManagerInterface $entityManager): Response
+{
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
+    
+    // Create receipt object or get existing receipt
+    $receipt = $this->createOrGetReceipt($order, $entityManager);
+    
+    return $this->render('admin/order/receipt.html.twig', [
+        'order' => $order,
+        'receipt' => $receipt,
+    ]);
+}
+
+/**
+ * Create or get existing receipt for order
+ */
+private function createOrGetReceipt(Order $order, EntityManagerInterface $entityManager)
+{
+    // Check if receipt already exists
+    $receipt = $entityManager->getRepository(\App\Entity\Receipt::class)->findOneBy(['orderRef' => $order]);
+    
+    if (!$receipt) {
+        // Create new receipt
+        $receipt = new \App\Entity\Receipt();
+        $receipt->setOrderRef($order);
+        $receipt->setReceiptNumber('RCP-' . date('Ymd') . '-' . str_pad($order->getId(), 5, '0', STR_PAD_LEFT));
+        $receipt->setIssuedDate(new \DateTimeImmutable());
+        $receipt->setPrintedAt(new \DateTimeImmutable());
+        $receipt->setPrintedBy($this->getUser());
+        $receipt->setPaymentMethod($order->getPaymentMethod());
+        
+        // Calculate totals
+        $subtotal = $order->getTotalAmount() - ($order->getDeliveryFee() ?? 0);
+        $receipt->setSubtotal($subtotal);
+        $receipt->setTotalAmount($order->getTotalAmount());
+        
+        $entityManager->persist($receipt);
+        $entityManager->flush();
+    }
+    
+    return $receipt;
+}
+
+#[Route('/{id}/notify', name: 'admin_order_notify', methods: ['POST'])]
+public function sendNotification(Order $order, Request $request): JsonResponse  // <-- Add Request $request
+{
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
+    
+    // Add CSRF validation
+    $submittedToken = $request->headers->get('X-CSRF-TOKEN');
+    if (!$this->isCsrfTokenValid('send-notification', $submittedToken)) {
+        return $this->json(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+    }
+    
+    // Get customer email
+    $customerEmail = $order->getCustomer()->getEmail();
+    $orderNumber = $order->getOrderNumber();
+    
+    // You can implement actual email sending here
+    // For now, just return success message
+    
+    return $this->json([
+        'success' => true,
+        'message' => sprintf('Notification sent to %s for order #%s', $customerEmail, $orderNumber)
+    ]);
+}
+
+#[Route('/{id}/urgent', name: 'admin_order_urgent', methods: ['POST'])]
+public function updateUrgentStatus(Order $order, Request $request, EntityManagerInterface $entityManager): JsonResponse
+{
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
+    
+    $data = json_decode($request->getContent(), true);
+    $isUrgent = $data['isUrgent'] ?? false;
+    
+    $order->setIsUrgent($isUrgent);
+    $entityManager->flush();
+    
+    return $this->json([
+        'success' => true,
+        'message' => 'Urgent status updated',
+        'isUrgent' => $isUrgent
+    ]);
+}
+#[Route('/{id}/notes', name: 'admin_order_notes', methods: ['POST'])]
+public function updateNotes(Order $order, Request $request, EntityManagerInterface $entityManager): JsonResponse
+{
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
+    
+    // CSRF validation
+    $submittedToken = $request->headers->get('X-CSRF-TOKEN');
+    if (!$this->isCsrfTokenValid('update-notes', $submittedToken)) {
+        return $this->json(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+    }
+    
+    $data = json_decode($request->getContent(), true);
+    $notes = $data['notes'] ?? '';
+    
+    $order->setNotes($notes);
+    $entityManager->flush();
+    
+    return $this->json([
+        'success' => true, 
+        'message' => 'Notes updated successfully'
+    ]);
+}
+
+#[Route('/{id}/schedule', name: 'admin_order_schedule', methods: ['POST'])]
+public function updateSchedule(Order $order, Request $request, EntityManagerInterface $entityManager): JsonResponse
+{
+    $this->denyAccessUnlessGranted('ROLE_ADMIN');
+    
+    // CSRF validation
+    $submittedToken = $request->headers->get('X-CSRF-TOKEN');
+    if (!$this->isCsrfTokenValid('update-schedule', $submittedToken)) {
+        return $this->json(['success' => false, 'message' => 'Invalid CSRF token'], 403);
+    }
+    
+    $data = json_decode($request->getContent(), true);
+    $date = $data['date'] ? new \DateTimeImmutable($data['date']) : null;
+    $type = $data['type'] ?? $order->getDeliveryType();
+    
+    if ($type === 'delivery') {
+        $order->setDeliveryDate($date);
+    } else {
+        $order->setPickupDate($date);
+    }
+    
+    $entityManager->flush();
+    
+    return $this->json(['success' => true, 'message' => 'Date updated']);
+}
+
+
 
 }

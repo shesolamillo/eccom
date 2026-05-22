@@ -73,7 +73,7 @@
                                     <h6>Processing</h6>
                                     <p class="text-muted small">
                                         {% if order.status == 'processing' or order.status == 'completed' %}
-                                            {{ order.updatedAt|default('In progress')|date('M d, Y h:i A') }}
+                                            {{ order.updatedAt ? order.updatedAt|date('M d, Y h:i A') : 'In progress' }}
                                         {% else %}
                                             Pending
                                         {% endif %}
@@ -175,7 +175,7 @@
                                         <div class="text-muted small">SKU: {{ item.product.sku|default('N/A') }}</div>
                                     </div>
                                 </td>
-                                <td>₱{{ item.price|number_format(2) }}</td>
+                                <td>₱{{ item.unitPrice|number_format(2) }}</td>
                                 <td>
                                     <div class="input-group input-group-sm" style="width: 140px;">
                                         <button class="btn btn-outline-secondary" type="button" 
@@ -206,7 +206,7 @@
                                 <td>
                                     <div class="btn-group btn-group-sm" role="group">
                                         <button type="button" class="btn btn-outline-info" 
-                                                onclick="editItemPrice({{ item.id }}, {{ item.price }})"
+                                                onclick="editItemPrice({{ item.id }}, {{ item.unitPrice }})"
                                                 title="Edit Price">
                                             <i class="bi bi-pencil"></i>
                                         </button>
@@ -396,10 +396,12 @@
                         <i class="bi bi-bell me-2"></i>Send Update to Customer
                     </button>
                     
+                    {% if is_granted('ROLE_ADMIN') %}
                     <a href="{{ path('staff_order_new') }}?customer={{ order.customer.id }}" 
                        class="btn btn-outline-primary">
                         <i class="bi bi-plus-circle me-2"></i>New Order for Same Customer
                     </a>
+                    {% endif %}
                     
                     <button type="button" class="btn btn-outline-danger" onclick="deleteOrder()">
                         <i class="bi bi-trash me-2"></i>Delete Order
@@ -572,16 +574,17 @@
                     </tr>
                 </table>
                 
-                <div class="d-grid gap-2 mt-3">
-                    <a href="{{ path('admin_user_edit', {'id': order.customer.id}) }}" 
-                       class="btn btn-sm btn-outline-primary">
-                        <i class="bi bi-person me-1"></i>View Customer Profile
-                    </a>
-                    <a href="{{ path('staff_orders') }}?search={{ order.customer.email }}" 
-                       class="btn btn-sm btn-outline-secondary">
-                        <i class="bi bi-list me-1"></i>View All Orders
-                    </a>
-                </div>
+               <div class="d-grid gap-2 mt-3">
+    {% if is_granted('ROLE_ADMIN') %}
+    <a href="{{ path('admin_user_edit', {'id': order.customer.id}) }}" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-person me-1"></i>View Customer Profile
+    </a>
+    {% endif %}
+    <a href="{{ path('staff_orders') }}?search={{ order.customer.email }}" class="btn btn-sm btn-outline-secondary">
+        <i class="bi bi-list me-1"></i>View All Orders
+    </a>
+</div>
+
             </div>
         </div>
     </div>

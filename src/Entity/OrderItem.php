@@ -35,14 +35,17 @@ class OrderItem
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
+    #[Groups(['order_item:read'])]
     #[ORM\Column]
     private ?int $id = null;
 
     #[ORM\ManyToOne(inversedBy: 'orderItems')]
+    #[Groups(['order_item:read'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Order $orderRef = null;
 
     #[ORM\ManyToOne(inversedBy: 'orderItems')]
+    #[Groups(['order_item:read'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Product $product = null;
 
@@ -122,7 +125,7 @@ class OrderItem
         return $this;
     }
 
-    private function calculateTotal(): void
+    public function calculateTotal(): void
     {
         $this->totalPrice = $this->unitPrice * $this->quantity;
     }

@@ -341,3 +341,26 @@
             margin-bottom: 25px;
         }
     }
+
+    /* Make sure the check icon is hidden by default */
+.step-circle .step-check {
+    display: none;
+}
+
+/* Show check icon only on completed steps */
+.step-circle.completed .step-number {
+    display: none;
+}
+
+.step-circle.completed .step-check {
+    display: inline-block;
+}
+
+/* Active step shows number, not check */
+.step-circle.active .step-number {
+    display: inline-block;
+}
+
+.step-circle.active .step-check {
+    display: none;
+}

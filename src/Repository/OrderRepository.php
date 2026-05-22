@@ -101,40 +101,62 @@ class OrderRepository extends ServiceEntityRepository
     {
         $startDate = (new \DateTime())->modify("-$days days");
 
-        return $this->createQueryBuilder('o')
-            ->select(
-                "DATE_FORMAT(o.createdAt, '%Y-%m-%d') as orderDate",
-                "COUNT(o.id) as orderCount",
-                "SUM(o.totalAmount) as dailyRevenue"
-            )
+        $orders = $this->createQueryBuilder('o')
             ->andWhere('o.createdAt >= :startDate')
             ->andWhere('o.status = :completed')
             ->setParameter('startDate', $startDate)
             ->setParameter('completed', Order::STATUS_COMPLETED)
-            ->groupBy("DATE_FORMAT(o.createdAt, '%Y-%m-%d')")
-            ->orderBy('orderDate', 'ASC')
+            ->orderBy('o.createdAt', 'ASC')
             ->getQuery()
             ->getResult();
+
+        $result = [];
+        foreach ($orders as $order) {
+            $date = $order->getCreatedAt()->format('Y-m-d');
+            if (!isset($result[$date])) {
+                $result[$date] = [
+                    'orderDate' => $date,
+                    'orderCount' => 0,
+                    'dailyRevenue' => 0.0,
+                ];
+            }
+
+            $result[$date]['orderCount']++;
+            $result[$date]['dailyRevenue'] += (float) $order->getTotalAmount();
+        }
+
+        return array_values($result);
     }
 
     public function getMonthlyRevenue(int $months = 12): array
     {
         $startDate = (new \DateTime())->modify("-$months months");
 
-        return $this->createQueryBuilder('o')
-            ->select(
-                "DATE_FORMAT(o.createdAt, '%Y-%m') as orderMonth",
-                "COUNT(o.id) as orderCount",
-                "SUM(o.totalAmount) as monthlyRevenue"
-            )
+        $orders = $this->createQueryBuilder('o')
             ->andWhere('o.createdAt >= :startDate')
             ->andWhere('o.status = :completed')
             ->setParameter('startDate', $startDate)
             ->setParameter('completed', Order::STATUS_COMPLETED)
-            ->groupBy("DATE_FORMAT(o.createdAt, '%Y-%m')")
-            ->orderBy('orderMonth', 'ASC')
+            ->orderBy('o.createdAt', 'ASC')
             ->getQuery()
             ->getResult();
+
+        $result = [];
+        foreach ($orders as $order) {
+            $month = $order->getCreatedAt()->format('Y-m');
+            if (!isset($result[$month])) {
+                $result[$month] = [
+                    'orderMonth' => $month,
+                    'orderCount' => 0,
+                    'monthlyRevenue' => 0.0,
+                ];
+            }
+
+            $result[$month]['orderCount']++;
+            $result[$month]['monthlyRevenue'] += (float) $order->getTotalAmount();
+        }
+
+        return array_values($result);
     }
 
     public function getTodaysOrders(): array
@@ -172,4 +194,12 @@ class OrderRepository extends ServiceEntityRepository
 
         return $result ? (float) $result : 0.0;
     }
+
+    public function getTotalRevenue(): float
+{
+    return (float) $this->createQueryBuilder('o')
+        ->select('COALESCE(SUM(o.totalAmount), 0)')
+        ->getQuery()
+        ->getSingleScalarResult();
+}
 }

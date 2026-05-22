@@ -169,7 +169,7 @@ class AdminProductController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}/delete', name: 'admin_product_delete', methods: ['DELETE', 'POST'])]
+    #[Route('/{id}/delete', name: 'admin_product_delete', methods: [ 'DELETE', 'POST'])]
     public function delete(
         Product $product,
         EntityManagerInterface $entityManager,
@@ -198,17 +198,24 @@ class AdminProductController extends AbstractController
             }
             
             // Delete associated stock if exists
-            if ($product->getStock()) {
-                $entityManager->remove($product->getStock());
-            }
-            
-            // Delete image file if exists
-            if ($product->getPhoto()) {
-                $imagePath = $this->getParameter('products_directory') . '/' . $product->getPhoto();
-                if (file_exists($imagePath)) {
-                    unlink($imagePath);
-                }
-            }
+           $stock = $product->getStock();
+if ($stock !== null) {
+    foreach ($stock->getAdjustments() as $adjustment) {
+        $entityManager->remove($adjustment);
+    }
+    $entityManager->remove($stock);
+}
+
+// Delete image file if exists
+if ($product->getPhoto()) {
+    $imagePath = $this->getParameter('products_directory') . '/' . $product->getPhoto();
+    if (file_exists($imagePath)) {
+        unlink($imagePath);
+    }
+}
+
+$entityManager->remove($product);
+$entityManager->flush();
             
             $entityManager->remove($product);
             $entityManager->flush();

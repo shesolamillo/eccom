@@ -38,34 +38,45 @@ class Receipt
     private ?int $id = null;
 
     #[ORM\Column(length: 50, unique: true)]
+    #[Groups(['receipt:read'])]
     private ?string $receiptNumber = null;
 
     #[ORM\OneToOne(inversedBy: 'receipt', cascade: ['persist'])]
+    #[Groups(['receipt:read'])]
     #[ORM\JoinColumn(nullable: false)]
     private ?Order $orderRef = null;
 
     #[ORM\Column]
+    #[Groups(['receipt:read'])]
     private ?\DateTimeImmutable $issuedDate = null;
 
     #[ORM\Column(length: 20)]
+    #[Groups(['receipt:read'])]
     private ?string $paymentMethod = 'cash';
 
     #[ORM\Column]
+    #[Groups(['receipt:read'])]
     private ?float $subtotal = 0.0;
 
     #[ORM\Column]
+    #[Groups(['receipt:read'])]
     private ?float $totalAmount = 0.0;
 
     #[ORM\Column(nullable: true)]
+    #[Groups(['receipt:read'])]
     private ?\DateTimeImmutable $printedAt = null;
 
-    #[ORM\ManyToOne]
+    #[ORM\ManyToOne(inversedBy: 'receipts')]
+    #[ORM\JoinColumn(nullable: true)]
+    #[Groups(['receipt:read'])]
     private ?User $printedBy = null;
 
     #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['receipt:read'])]
     private ?string $filePath = null;
 
     #[ORM\Column]
+    #[Groups(['receipt:read'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     public function __construct()

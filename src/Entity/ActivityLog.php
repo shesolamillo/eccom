@@ -31,6 +31,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
 
 
 #[ORM\Entity(repositoryClass: ActivityLogRepository::class)]
+#[ORM\Table(name: 'activity_log')]
 class ActivityLog
 {
     const ACTION_CREATE = 'create';

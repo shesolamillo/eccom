@@ -89,21 +89,18 @@ class ProductRepository extends ServiceEntityRepository
     }
 
     public function findTopSelling(int $limit = 10): array
-    {
-        return $this->createQueryBuilder('p')
-            ->select('p.id', 'p.name', 'p.price', 'SUM(oi.quantity) as totalSold')
-            ->leftJoin('p.orderItems', 'oi')
-            ->leftJoin('oi.orderRef', 'o')
-            ->andWhere('o.status = :completed')
-            ->setParameter('completed', 'completed')
-            ->andWhere('p.isAvailable = :available')
-            ->setParameter('available', true)
-            ->groupBy('p.id')
-            ->orderBy('totalSold', 'DESC')
-            ->setMaxResults($limit)
-            ->getQuery()
-            ->getResult();
-    }
+{
+    return $this->createQueryBuilder('p')
+        ->leftJoin('p.orderItems', 'oi')
+        ->leftJoin('oi.orderRef', 'o')
+        ->andWhere('p.isAvailable = :available')
+        ->setParameter('available', true)
+        ->groupBy('p.id')
+        ->orderBy('SUM(oi.quantity)', 'DESC')
+        ->setMaxResults($limit)
+        ->getQuery()
+        ->getResult();
+}
     public function countLowStock(): int
     {
         return $this->createQueryBuilder('p')
@@ -159,6 +156,16 @@ class ProductRepository extends ServiceEntityRepository
         $qb->orderBy('p.name', 'ASC');
 
         return $qb->getQuery()->getResult();
+    }
+
+     public function getNextId(): int
+    {
+        $result = $this->createQueryBuilder('p')
+            ->select('MAX(p.id)')
+            ->getQuery()
+            ->getSingleScalarResult();
+        
+        return ($result ?? 0) + 1;
     }
 
 }

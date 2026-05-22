@@ -17,7 +17,12 @@ security:
         dev:
             pattern: ^/(_(profiler|wdt)|css|images|js)/
             security: false
-        
+
+        api:
+            pattern: ^/api
+            stateless: true
+            security: false
+                
         main:
             lazy: true
             provider: app_user_provider
@@ -31,15 +36,20 @@ security:
                 username_parameter: email
                 password_parameter: password
 
+            custom_authenticator:
+                - App\Security\GoogleAuthenticator
+
             
             # Simple logout
             logout:
                 path: app_logout
                 target: app_home
 
+       
+
     # Role hierarchy - Simple 3-tier system
     role_hierarchy:
-        ROLE_ADMIN: ROLE_STAFF
+        ROLE_ADMIN: [ROLE_STAFF, ROLE_USER]
         ROLE_STAFF: ROLE_USER
 
     # Access control - Simple rules
@@ -72,3 +82,18 @@ security:
         # Admin area
         - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/admin/, roles: ROLE_ADMIN }
+
+
+        - { path: ^/verify-email, roles: PUBLIC_ACCESS }
+
+        # Cart area
+        - { path: ^/cart/add, roles: ROLE_USER }
+        - { path: ^/cart, roles: ROLE_USER }
+        - { path: ^/cart/mini, roles: PUBLIC_ACCESS }
+        - { path: ^/cart/api, roles: PUBLIC_ACCESS }
+        - { path: ^/cart/clear, roles: ROLE_USER }
+
+        # Api
+        - { path: ^/api/login, roles: PUBLIC_ACCESS }
+        - { path: ^/api/register, roles: PUBLIC_ACCESS }
+        - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

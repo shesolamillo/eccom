@@ -33,27 +33,37 @@ class AdminDashboardController extends AbstractController
         ];                                                                                  
         $stockStats = $stockRepository->getStockSummary();
 
+        $recentOrders = $orderRepository->findRecentOrders(5);
+
         return $this->render('dashboard/admin/index.html.twig', [
             'orderStats' => $orderStats,
             'userStats' => $userStats,
             'productStats' => $productStats,
             'stockStats' => $stockStats,
+            'recentOrders' => $recentOrders,
         ]);
     }
 
     #[Route('/admin/analytics', name: 'admin_analytics')]
     public function analytics(
         OrderRepository $orderRepository,
-        ActivityLogRepository $activityLogRepository
+        ActivityLogRepository $activityLogRepository,
+        UserRepository $userRepository
     ): Response {
         $dailyRevenue = $orderRepository->getDailyRevenue(30);
         $monthlyRevenue = $orderRepository->getMonthlyRevenue(12);
         $activitySummary = $activityLogRepository->getActivitySummary(30);
 
         return $this->render('dashboard/admin/analytics.html.twig', [
-            'dailyRevenue' => $dailyRevenue,
+            'dailyRevenue' =>  $dailyRevenue,
             'monthlyRevenue' => $monthlyRevenue,
             'activitySummary' => $activitySummary,
+
+            'totalRevenue' => $orderRepository->getTotalRevenue(),
+            'totalOrders' => $orderRepository->count([]),
+            'totalUsers' => $userRepository->count([]),
         ]);
     }
+
+    
 }

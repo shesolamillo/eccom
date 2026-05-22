@@ -206,3 +206,140 @@ body {
         border-radius: 8px;
     }
 }
+
+/* Universal responsive support */
+img,
+video,
+iframe,
+.card-img-top,
+.story-img,
+.team-img,
+.step-img {
+    max-width: 100%;
+    height: auto;
+}
+
+iframe {
+    min-height: 260px;
+}
+
+.hero-section,
+.services-section,
+.stats-section,
+.cta-section,
+.contact-section,
+.glow-card,
+.section-shadow,
+.shadow-box {
+    width: 100%;
+}
+
+@media (max-width: 992px) {
+    .hero-section {
+        padding: 50px 1rem;
+    }
+
+    .hero-section h1 {
+        font-size: 2.8rem;
+    }
+
+    .hero-section .lead {
+        font-size: 1.1rem;
+    }
+
+    .stats-section h2,
+    .services-section h2 {
+        font-size: 2.2rem;
+    }
+
+    .card {
+        margin-bottom: 1.5rem;
+    }
+}
+
+@media (max-width: 768px) {
+    .navbar .navbar-brand img {
+        width: 32px;
+        height: auto;
+    }
+
+    .navbar .nav-link {
+        padding: 0.55rem 0.75rem;
+    }
+
+    .navbar .btn-outline-light {
+        width: 100%;
+        text-align: center;
+    }
+
+    .service-card .card-img-top {
+        height: auto !important;
+        min-height: 160px;
+    }
+
+    .stats-section .stat-item {
+        padding: 1rem;
+    }
+
+    .stats-section .stat-item:not(:last-child)::after {
+        display: none;
+    }
+
+    .table thead th,
+    .table tbody td {
+        padding: 0.75rem;
+    }
+
+    .team-img,
+    .story-img,
+    .step-img {
+        width: 120px;
+        height: 120px;
+    }
+
+    .section-shadow,
+    .shadow-box,
+    .cta-section,
+    .services-section,
+    .hero-section {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .hero-section {
+        padding: 35px 1rem;
+    }
+
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+
+    .hero-section .lead {
+        font-size: 1rem;
+    }
+
+    .btn,
+    .btn-lg {
+        width: 100%;
+        text-align: center;
+    }
+
+    .navbar .dropdown-menu {
+        width: 100%;
+    }
+
+    .footer .row > div {
+        margin-bottom: 1.5rem;
+    }
+
+    .admin-sidebar {
+        min-width: unset;
+        width: 100%;
+    }
+
+    .admin-sidebar .nav-link {
+        padding: 0.75rem 1rem;
+    }
+}

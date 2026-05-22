@@ -1,24 +1,345 @@
 {% extends 'layouts/admin.html.twig' %}
-
 {% block title %}Create New Order - Admin{% endblock %}
-
 {% block breadcrumb %}
 <li class="breadcrumb-item"><a href="{{ path('admin_orders') }}">Orders</a></li>
 <li class="breadcrumb-item active">New Order</li>
 {% endblock %}
-
 {% block page_title %}Create New Order{% endblock %}
 {% block page_description %}Create an order for yourself - step by step{% endblock %}
 
 {% block admin_content %}
+<style>
+    :root {
+        --pink: #e91e8c;
+        --pink-dark: #c0166f;
+        --pink-light: #fce4f3;
+        --pink-soft: #fdf5fb;
+        --border: #e5e7eb;
+        --text-primary: #111827;
+        --text-secondary: #4b5563;
+        --text-muted: #9ca3af;
+        --radius: 12px;
+        --shadow: 0 1px 4px rgba(0,0,0,0.06), 0 4px 12px rgba(0,0,0,0.04);
+        --shadow-pink: 0 4px 16px rgba(233,30,140,0.18);
+    }
 
-{% block stylesheets %}
-    <link rel="stylesheet" href="{{ asset('css/cartcheckout.css') }}">
-{% endblock %}
+    /* ── STEPPER ── */
+    .checkout-steps {
+        display: flex; align-items: center; justify-content: center;
+        padding: 1.4rem 2rem; margin-bottom: 1.75rem;
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+    }
+    .step-item { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+    .step-circle {
+        width: 42px; height: 42px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        border: 2px solid var(--border);
+        background: #f9fafb;
+        transition: all 0.25s;
+    }
+    .step-number { font-size: 0.85rem; font-weight: 700; color: var(--text-muted); }
+    .step-check  { display: none; font-size: 0.9rem; color: #fff; }
+    .step-label  { font-size: 0.72rem; font-weight: 600; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; }
 
-<!-- Progress Steps -->
+    .step-circle.active  { border-color: var(--pink); background: var(--pink-soft); box-shadow: 0 0 0 4px rgba(233,30,140,0.1); }
+    .step-circle.active .step-number { color: var(--pink); }
+    .step-item.active .step-label { color: var(--pink); }
+    .step-circle.completed { border-color: var(--pink); background: var(--pink); }
+    .step-circle.completed .step-number { display: none; }
+    .step-circle.completed .step-check  { display: block; }
+    .step-item.completed .step-label { color: var(--pink-dark); }
+
+    .step-connector {
+        flex: 1; height: 2px; background: var(--border);
+        margin: 0 12px; margin-bottom: 22px;
+        border-radius: 2px; transition: background 0.25s; min-width: 60px;
+    }
+    .step-connector.active, .step-connector.completed { background: var(--pink); }
+
+    /* ── STEP PANELS ── */
+    .checkout-step { display: none; }
+    .checkout-step.active { display: block; }
+
+    .step-panel {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        margin-bottom: 1.25rem;
+    }
+    .step-panel-header {
+        padding: 1.1rem 1.5rem;
+        border-bottom: 2px solid var(--pink-light);
+        display: flex; align-items: center; gap: 10px;
+        background: var(--pink-soft);
+    }
+    .step-panel-icon {
+        width: 36px; height: 36px; border-radius: 8px;
+        background: var(--pink-light);
+        border: 1px solid rgba(233,30,140,0.2);
+        color: var(--pink); font-size: 1rem;
+        display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    }
+    .step-panel-title { font-size: 0.95rem; font-weight: 700; color: var(--text-primary); margin: 0; }
+    .step-panel-body { padding: 1.5rem; }
+
+    /* ── INFO BANNER ── */
+    .info-banner {
+        background: var(--pink-soft);
+        border: 1px solid var(--pink-light);
+        border-left: 3px solid var(--pink);
+        border-radius: 8px;
+        padding: 0.75rem 1rem;
+        font-size: 0.85rem; color: var(--pink-dark);
+        display: flex; align-items: flex-start; gap: 8px;
+        margin-bottom: 1.25rem;
+    }
+
+    /* ── FORM FIELDS ── */
+    .field-label {
+        font-size: 0.78rem; font-weight: 600;
+        color: var(--text-secondary); margin-bottom: 5px; display: block;
+    }
+    .form-label { font-size: 0.78rem; font-weight: 600; color: var(--text-secondary); }
+    .form-control, .form-select {
+        background: #fff;
+        border: 1.5px solid var(--border);
+        border-radius: 8px;
+        color: var(--text-primary);
+        font-size: 0.875rem;
+        padding: 0.6rem 0.9rem;
+        transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .form-control:focus, .form-select:focus {
+        border-color: var(--pink);
+        box-shadow: 0 0 0 3px rgba(233,30,140,0.12);
+        outline: none;
+    }
+    .form-control::placeholder { color: var(--text-muted); }
+
+    /* ── PRODUCT CARDS ── */
+    .product-card {
+        background: #fff;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        height: 100%;
+        transition: border-color 0.18s, box-shadow 0.18s, transform 0.18s;
+    }
+    .product-card:hover {
+        border-color: var(--pink);
+        box-shadow: var(--shadow-pink);
+        transform: translateY(-2px);
+    }
+    .product-card-body { padding: 1rem; }
+    .product-img {
+        width: 64px; height: 64px; border-radius: 8px;
+        object-fit: cover; flex-shrink: 0;
+        border: 1px solid var(--border);
+    }
+    .product-img-placeholder {
+        width: 64px; height: 64px; border-radius: 8px;
+        background: var(--pink-soft); border: 1px solid var(--pink-light);
+        display: flex; align-items: center; justify-content: center;
+        color: var(--pink); font-size: 1.25rem; flex-shrink: 0;
+    }
+    .product-name  { font-size: 0.875rem; font-weight: 600; color: var(--text-primary); margin-bottom: 2px; }
+    .product-type  { font-size: 0.75rem; color: var(--text-muted); }
+    .product-price { font-size: 1rem; font-weight: 700; color: var(--pink); }
+    .stock-pill {
+        font-size: 0.68rem; font-weight: 700; padding: 0.2em 0.65em;
+        border-radius: 20px; background: var(--pink-soft);
+        color: var(--pink); border: 1px solid var(--pink-light);
+    }
+    .qty-row { display: flex; align-items: center; gap: 6px; margin-top: 0.75rem; }
+    .qty-row .form-control { width: 70px; text-align: center; }
+    .btn-add {
+        background: var(--pink); color: #fff; border: none;
+        border-radius: 8px; padding: 0.45rem 0.9rem;
+        font-size: 0.8rem; font-weight: 600;
+        transition: background 0.15s, box-shadow 0.15s; white-space: nowrap;
+        cursor: pointer;
+    }
+    .btn-add:hover { background: var(--pink-dark); box-shadow: var(--shadow-pink); }
+
+    /* ── ADDRESS INFO CARD ── */
+    .address-info-card {
+        background: var(--pink-soft);
+        border: 1px solid var(--pink-light);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        margin-bottom: 1.25rem;
+    }
+    .address-info-header {
+        font-size: 0.875rem; font-weight: 700; color: var(--pink-dark);
+        display: flex; align-items: center; gap: 8px; margin-bottom: 1rem;
+    }
+    .ai-label { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--text-muted); margin-bottom: 2px; }
+    .ai-value { font-size: 0.875rem; color: var(--text-primary); font-weight: 500; }
+    .ai-empty { font-size: 0.875rem; color: #dc2626; font-style: italic; }
+
+    .section-divider {
+        font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.08em; color: var(--text-muted);
+        display: flex; align-items: center; gap: 10px;
+        margin: 1.25rem 0 1rem;
+    }
+    .section-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── PAYMENT OPTIONS ── */
+    .payment-option {
+        background: #fff;
+        border: 1.5px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem 1.25rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+        transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+    .payment-option:has(input:checked) {
+        border-color: var(--pink);
+        background: var(--pink-soft);
+        box-shadow: 0 0 0 1px rgba(233,30,140,0.15);
+    }
+    .payment-option-label { font-size: 0.9rem; font-weight: 600; color: var(--text-primary); cursor: pointer; }
+    .payment-option-sub   { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; margin-left: 1.5rem; }
+    .payment-icon {
+        width: 34px; height: 34px; border-radius: 8px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 1rem; flex-shrink: 0;
+    }
+    .pi-cash  { background: #ecfdf3; color: #059669; }
+    .pi-card  { background: #eff6ff; color: #2563eb; }
+    .pi-gcash { background: #f0f9ff; color: #0284c7; }
+    .pi-bank  { background: #faf5ff; color: #7c3aed; }
+
+    .form-check-input:checked { background-color: var(--pink); border-color: var(--pink); }
+    .form-check-input:focus   { box-shadow: 0 0 0 3px rgba(233,30,140,0.15); }
+
+    .payment-details-box {
+        background: var(--pink-soft);
+        border: 1px solid var(--pink-light);
+        border-radius: 8px;
+        padding: 1rem; margin-top: 0.75rem;
+    }
+    .demo-notice {
+        background: #fffbeb; border: 1px solid #fde68a;
+        border-radius: 8px; padding: 0.6rem 0.85rem;
+        font-size: 0.78rem; color: #92400e;
+        display: flex; align-items: flex-start; gap: 6px; margin-bottom: 0.75rem;
+    }
+
+    /* ── NAV BUTTONS ── */
+    .step-nav {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 1rem 1.5rem;
+        border-top: 1px solid var(--border);
+        background: #fafafa;
+    }
+    .btn-back {
+        background: #fff; border: 1.5px solid var(--border);
+        color: var(--text-secondary); border-radius: 8px;
+        font-size: 0.875rem; font-weight: 600; padding: 0.55rem 1.1rem;
+        transition: all 0.15s; cursor: pointer;
+    }
+    .btn-back:hover { border-color: #111; color: #111; }
+    .btn-next {
+        background: var(--pink); color: #fff; border: none;
+        border-radius: 8px; font-size: 0.875rem; font-weight: 600;
+        padding: 0.55rem 1.25rem; transition: all 0.18s; cursor: pointer;
+        box-shadow: var(--shadow-pink);
+    }
+    .btn-next:hover { background: var(--pink-dark); transform: translateY(-1px); }
+    .btn-cancel {
+        background: transparent; border: none;
+        color: var(--text-muted); font-size: 0.875rem;
+        padding: 0.55rem 0.75rem; transition: color 0.15s;
+        cursor: pointer; text-decoration: none;
+    }
+    .btn-cancel:hover { color: #dc2626; }
+    .btn-create {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        color: #fff; border: none; border-radius: 8px;
+        font-size: 0.875rem; font-weight: 700;
+        padding: 0.6rem 1.4rem; transition: all 0.18s; cursor: pointer;
+        box-shadow: var(--shadow-pink);
+    }
+    .btn-create:hover { opacity: 0.9; transform: translateY(-1px); }
+    .btn-create:disabled {
+        background: #e5e7eb; color: var(--text-muted);
+        box-shadow: none; cursor: not-allowed; transform: none;
+    }
+
+    /* ── ORDER SUMMARY ── */
+    .summary-card {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+        overflow: hidden;
+        position: sticky; top: 20px;
+    }
+    .summary-header {
+        background: linear-gradient(135deg, var(--pink), var(--pink-dark));
+        padding: 1.35rem 1.5rem; text-align: center;
+    }
+    .summary-brand     { font-size: 1.4rem; font-weight: 800; color: #fff; letter-spacing: -0.02em; }
+    .summary-brand-sub { font-size: 0.72rem; color: rgba(255,255,255,0.8); margin-top: 2px; }
+    .summary-meta {
+        padding: 0.75rem 1.25rem;
+        background: var(--pink-soft);
+        border-bottom: 1px solid var(--pink-light);
+        font-size: 0.72rem; color: #111827;; text-align: center; line-height: 1.7;    font-weight: 500;
+
+    }
+    .summary-body { padding: 1.25rem; }
+    .s-row {
+        display: flex; justify-content: space-between; align-items: center;
+        padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6; font-size: 0.85rem;
+    }
+    .s-row:last-of-type { border-bottom: none; }
+    .s-label { color: #111827; font-weight: 500; }
+    .s-value { font-weight: 700; color: #111827; }
+    .s-items-header {
+        display: flex; justify-content: space-between;
+        font-size: 0.68rem; font-weight: 700; text-transform: uppercase;
+        letter-spacing: 0.07em;color: #111827;
+        padding: 0.5rem 0; border-bottom: 1px solid #f3f4f6;
+    }
+    .cart-item-row {
+        display: flex; justify-content: space-between; align-items: flex-start;
+        padding: 0.55rem 0; border-bottom: 1px solid #f3f4f6; font-size: 0.82rem;
+    }
+    .cart-item-name  { font-weight: 600; color: var(--text-primary); }
+    .cart-item-qty   {  color: #374151; font-size: 0.75rem; }
+    .cart-item-total { font-weight: 700; color: var(--pink); }
+    .summary-divider { height: 1px; background: #f3f4f6; margin: 0.75rem 0; }
+    .summary-total {
+        display: flex; justify-content: space-between; align-items: center;
+        padding-top: 0.75rem;
+    }
+    .t-label { font-size: 0.875rem; font-weight: 700; color: #111827; }
+    .t-value { font-size: 1.6rem; font-weight: 800; color: var(--pink); letter-spacing: -0.02em; }
+
+    /* ── MODALS ── */
+    .modal-content {
+        border: none; border-radius: var(--radius);
+        box-shadow: 0 20px 60px rgba(0,0,0,0.15); overflow: hidden;
+    }
+    .modal-body { padding: 2.5rem 2rem; }
+
+    @media (max-width: 991px) {
+        .summary-card { position: relative; top: 0; margin-top: 1.5rem; }
+    }
+</style>
+
 <input type="hidden" name="_csrf_token" value="{{ csrf_token('order_create') }}">
 <input type="hidden" name="customer_id" id="customerId" value="{{ app.user.id }}">
+
+<!-- STEPPER -->
 <div class="checkout-steps">
     <div class="step-item active" id="step1Item">
         <div class="step-circle active">
@@ -28,7 +349,6 @@
         <div class="step-label">Cart</div>
     </div>
     <div class="step-connector" id="connector1"></div>
-
     <div class="step-item" id="step2Item">
         <div class="step-circle">
             <span class="step-number">2</span>
@@ -37,7 +357,6 @@
         <div class="step-label">Address</div>
     </div>
     <div class="step-connector" id="connector2"></div>
-
     <div class="step-item" id="step3Item">
         <div class="step-circle">
             <span class="step-number">3</span>
@@ -47,28 +366,31 @@
     </div>
 </div>
 
-<div class="row">
-    <div class="col-lg-8">
-        <div class="checkout-main" style="position: relative;">
-            <!-- Step 1: Shopping Cart -->
-            <div class="checkout-step active" id="stepCart">
-                <h2 class="step-title"><i class="bi bi-cart3 me-2"></i>Shopping Cart</h2>
-                
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>Add products to the cart. You're creating an order for {{ app.user.firstName }} {{ app.user.lastName }}.
+<div class="row g-4">
+<div class="col-lg-8">
+
+    <!-- ══ STEP 1: CART ══ -->
+    <div class="checkout-step active" id="stepCart">
+        <div class="step-panel">
+            <div class="step-panel-header">
+                <div class="step-panel-icon"><i class="bi bi-cart3"></i></div>
+                <h5 class="step-panel-title">Shopping Cart</h5>
+            </div>
+            <div class="step-panel-body">
+                <input type="hidden" name="customer_id" id="customerId" value="{{ app.user.id }}">
+                <div class="info-banner">
+                    <i class="bi bi-info-circle flex-shrink-0"></i>
+                    Add products to the cart. Creating order for
+                    <strong>&nbsp;{{ app.user.firstName }} {{ app.user.lastName }}</strong>.
                 </div>
 
-                <!-- Hidden customer ID (current logged-in user) -->
-                <input type="hidden" name="customer_id" id="customerId" value="{{ app.user.id }}">
-
-                <!-- Search & Filter -->
                 <div class="row g-3 mb-4">
                     <div class="col-md-6">
-                        <label class="form-label">Search Products</label>
+                        <label class="field-label">Search Products</label>
                         <input type="text" id="productSearch" class="form-control" placeholder="Search product name...">
                     </div>
                     <div class="col-md-6">
-                        <label class="form-label">Filter by Category</label>
+                        <label class="field-label">Filter by Category</label>
                         <select id="categoryFilter" class="form-select">
                             <option value="">All Categories</option>
                             {% for category in categories %}
@@ -78,729 +400,818 @@
                     </div>
                 </div>
 
-                <!-- Product Grid -->
                 <div class="row g-3 mb-4" id="productGrid">
                     {% for product in products %}
+                    <div class="col-md-6" data-category-id="{{ product.clothesCategory ? product.clothesCategory.id : '' }}">
+                        <div class="product-card">
+                            <div class="product-card-body">
+                                <div class="d-flex gap-3 mb-3">
+                                    {% if product.photoUrl %}
+                                        <img src="{{ product.photoUrl }}" alt="{{ product.name }}" class="product-img">
+                                    {% else %}
+                                        <div class="product-img-placeholder"><i class="bi bi-image"></i></div>
+                                    {% endif %}
+                                    <div class="flex-grow-1">
+                                        <div class="product-name">{{ product.name }}</div>
+                                        <div class="product-type">{{ product.productType.name }}</div>
+                                    </div>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <span class="product-price">₱{{ product.price|number_format(2) }}</span>
+                                    {% if product.stock %}
+                                        <span class="stock-pill">{{ product.stock.quantity }} in stock</span>
+                                    {% endif %}
+                                </div>
+                                <div class="qty-row">
+                                    <input type="number" class="form-control product-qty"
+                                           value="0" min="0"
+                                           data-product-id="{{ product.id }}"
+                                           data-price="{{ product.price }}">
+                                    <button class="btn-add btn-add-to-cart" type="button"
+                                            data-product-id="{{ product.id }}"
+                                            data-product-name="{{ product.name }}">
+                                        <i class="bi bi-plus me-1"></i>Add
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            <div class="step-nav">
+                <a href="{{ path('admin_orders') }}" class="btn-cancel">
+                    <i class="bi bi-x-circle me-1"></i>Cancel
+                </a>
+                <button class="btn-next" onclick="goToStep(2)">
+                    Next: Shipping Address <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ STEP 2: ADDRESS ══ -->
+    <div class="checkout-step" id="stepAddress">
+        <div class="step-panel">
+            <div class="step-panel-header">
+                <div class="step-panel-icon"><i class="bi bi-geo-alt"></i></div>
+                <h5 class="step-panel-title">Shipping Address</h5>
+            </div>
+            <div class="step-panel-body">
+                <div class="address-info-card">
+                    <div class="address-info-header">
+                        <i class="bi bi-person-circle"></i> Your Address on File
+                    </div>
+                    <div class="row g-3">
                         <div class="col-md-6">
-                            <div class="card border h-100">
-                                <div class="card-body">
-                                    <div class="d-flex align-items-start mb-2">
-                                        {% if product.photoUrl %}
-                                            <img src="{{ product.photoUrl }}" alt="{{ product.name }}" 
-                                                 class="rounded me-3" style="width: 70px; height: 70px; object-fit: cover;">
-                                        {% else %}
-                                            <div class="bg-light rounded me-3 d-flex align-items-center justify-content-center"
-                                                 style="width: 70px; height: 70px;">
-                                                <i class="bi bi-image"></i>
-                                            </div>
-                                        {% endif %}
-                                        <div class="flex-grow-1">
-                                            <h6 class="mb-1">{{ product.name }}</h6>
-                                            <p class="text-muted mb-0 small">{{ product.productType.name }}</p>
-                                        </div>
-                                    </div>
+                            <div class="ai-label">Name</div>
+                            <div class="ai-value">{{ app.user.firstName }} {{ app.user.lastName }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="ai-label">Phone</div>
+                            <div class="ai-value">{{ app.user.phoneNumber|default('Not set') }}</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="ai-label">Address</div>
+                            {% if currentUser.userProfile and currentUser.userProfile.address %}
+                                <div class="ai-value">{{ currentUser.userProfile.address }}</div>
+                            {% else %}<div class="ai-empty">Not set</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="ai-label">City</div>
+                            {% if currentUser.userProfile and currentUser.userProfile.city %}
+                                <div class="ai-value">{{ currentUser.userProfile.city }}</div>
+                            {% else %}<div class="ai-empty">Not set</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="ai-label">State / Province</div>
+                            {% if currentUser.userProfile and currentUser.userProfile.state %}
+                                <div class="ai-value">{{ currentUser.userProfile.state }}</div>
+                            {% else %}<div class="ai-empty">Not set</div>{% endif %}
+                        </div>
+                        <div class="col-md-6">
+                            <div class="ai-label">Postal Code</div>
+                            {% if currentUser.userProfile and currentUser.userProfile.zipCode %}
+                                <div class="ai-value">{{ currentUser.userProfile.zipCode }}</div>
+                            {% else %}<div class="ai-empty">Not set</div>{% endif %}
+                        </div>
+                    </div>
+                </div>
 
-                                    <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <strong>₱{{ product.price|number_format(2) }}</strong>
-                                        {% if product.stock %}
-                                            <span class="badge bg-info">{{ product.stock.quantity }} stock</span>
-                                        {% endif %}
-                                    </div>
+                <div class="info-banner">
+                    <i class="bi bi-info-circle flex-shrink-0"></i>
+                    Select delivery type and fill in shipping details below.
+                </div>
 
-                                    <!-- Add to Cart -->
-                                    <div class="input-group input-group-sm">
-                                        <input type="number" class="form-control product-qty" value="1" min="1" 
-                                               data-product-id="{{ product.id }}" data-price="{{ product.price }}">
-                                        <button class="btn btn-success btn-add-to-cart" type="button" 
-                                                data-product-id="{{ product.id }}" data-product-name="{{ product.name }}">
-                                            <i class="bi bi-plus"></i>
-                                        </button>
+                <form id="addressForm">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="field-label">Delivery Type <span style="color:#dc2626">*</span></label>
+                            <select name="delivery_type" id="deliveryType" class="form-select"
+                                    onchange="updateDeliveryFields()" required>
+                                <option value="">-- Select delivery type --</option>
+                                <option value="pickup">Pickup</option>
+                                <option value="delivery">Delivery</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end pb-1">
+                            <div class="form-check form-switch">
+                                <input type="checkbox" name="is_urgent" id="isUrgent" class="form-check-input">
+                                <label class="form-check-label" for="isUrgent" style="font-size:0.875rem;font-weight:500;color:var(--text-secondary)">
+                                    <i class="bi bi-lightning me-1" style="color:var(--pink)"></i>Mark as urgent
+                                </label>
+                            </div>
+                        </div>
+
+                        <div id="deliveryAddressSection" style="display:none;" class="col-12">
+                            <div class="section-divider">Delivery Address</div>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label class="field-label">Recipient Name <span style="color:#dc2626">*</span></label>
+                                    <input type="text" name="recipient_name" class="form-control" placeholder="Full name of recipient" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Phone Number <span style="color:#dc2626">*</span></label>
+                                    <input type="tel" name="phone_number" class="form-control" placeholder="+63 9XX XXX XXXX" required>
+                                </div>
+                                <div class="col-md-6" id="deliveryFeeSection" style="display:none;">
+                                    <label class="field-label">Delivery Fee (₱)</label>
+                                    <input type="number" name="delivery_fee" class="form-control" step="0.01" min="0" value="100" onchange="updateTotal()">
+                                </div>
+                                <div class="col-12">
+                                    <label class="field-label">Street Address <span style="color:#dc2626">*</span></label>
+                                    <input type="text" name="street_address" class="form-control" placeholder="e.g., 123 Main Street, Apt 4B" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">City / Municipality <span style="color:#dc2626">*</span></label>
+                                    <input type="text" name="city" class="form-control" placeholder="City or municipality" required>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Postal Code <span style="color:#dc2626">*</span></label>
+                                    <input type="text" name="postal_code" class="form-control" placeholder="e.g., 1234" required>
+                                </div>
+
+
+
+
+                                <div class="col-md-6">
+                                    <label class="field-label">Barangay / District</label>
+                                    <input type="text" name="barangay" class="form-control" placeholder="Optional">
+                                </div>
+                                <div class="col-12">
+                                    <label class="field-label">Delivery Instructions <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+                                    <textarea name="delivery_instructions" class="form-control" rows="2"
+                                              placeholder="e.g., Leave at door, ring doorbell..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="step-nav">
+                <button class="btn-back" onclick="goToStep(1)">
+                    <i class="bi bi-arrow-left me-2"></i>Back
+                </button>
+                <button class="btn-next" onclick="goToStep(3)">
+                    Next: Payment Method <i class="bi bi-arrow-right ms-2"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ══ STEP 3: PAYMENT ══ -->
+    <div class="checkout-step" id="stepPayment">
+        <div class="step-panel">
+            <div class="step-panel-header">
+                <div class="step-panel-icon"><i class="bi bi-credit-card"></i></div>
+                <h5 class="step-panel-title">Payment Method</h5>
+            </div>
+            <div class="step-panel-body">
+                <div class="info-banner">
+                    <i class="bi bi-info-circle flex-shrink-0"></i>
+                    Select how you want to pay for this order.
+                </div>
+                <form id="paymentForm">
+                    <div class="col-12">
+
+                        <!-- Cash on Delivery -->
+                        <div class="payment-option">
+                            <div class="d-flex align-items-center gap-3">
+                                <input class="form-check-input mt-0" type="radio" name="payment_method" id="paymentCash" value="cash" required>
+                                <div class="payment-icon pi-cash"><i class="bi bi-cash-coin"></i></div>
+                                <div>
+                                    <div class="payment-option-label">Cash on Delivery</div>
+                                    <div class="payment-option-sub">Pay when you receive the item</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Credit/Debit Card -->
+                        <div class="payment-option">
+                            <div class="d-flex align-items-center gap-3">
+                                <input class="form-check-input mt-0" type="radio" name="payment_method" id="paymentCard" value="card">
+                                <div class="payment-icon pi-card"><i class="bi bi-credit-card"></i></div>
+                                <div>
+                                    <div class="payment-option-label">Credit / Debit Card</div>
+                                    <div class="payment-option-sub">Visa, Mastercard, JCB</div>
+                                </div>
+                            </div>
+                            <div id="cardDetails" style="display:none;" class="payment-details-box">
+                                <div class="demo-notice">
+                                    <i class="bi bi-shield-lock flex-shrink-0"></i>
+                                    <span><strong>Demo Mode:</strong> Enter any card details for simulation.
+                                    Amount: <strong>₱<span id="paymentAmountCard">0.00</span></strong></span>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="field-label">Card Number</label>
+                                        <input type="text" id="cardNumber" class="form-control" placeholder="1234 5678 9012 3456" maxlength="19">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="field-label">Expiry Date</label>
+                                        <input type="text" id="cardExpiry" class="form-control" placeholder="MM/YY" maxlength="5">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="field-label">CVV</label>
+                                        <input type="password" id="cardCvv" class="form-control" placeholder="123" maxlength="4">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="field-label">Cardholder Name</label>
+                                        <input type="text" id="cardholderName" class="form-control" placeholder="Name as shown on card">
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    {% endfor %}
-                </div>
 
-                <div class="btn-group-navigation">
-                    <a href="{{ path('admin_orders') }}" class="btn btn-secondary">
-                        <i class="bi bi-x-circle me-2"></i>Cancel
-                    </a>
-                    <button class="btn btn-primary" onclick="goToStep(2)">
-                        Next: Shipping Address <i class="bi bi-arrow-right ms-2"></i>
-                    </button>
-                </div>
-            </div>
+                        <!-- GCash / Maya -->
+                        <div class="payment-option">
+                            <div class="d-flex align-items-center gap-3">
+                                <input class="form-check-input mt-0" type="radio" name="payment_method" id="paymentGcash" value="gcash">
+                                <div class="payment-icon pi-gcash"><i class="bi bi-cash-stack"></i></div>
+                                <div>
+                                    <div class="payment-option-label">GCash / PayMaya</div>
+                                    <div class="payment-option-sub">Pay via mobile wallet</div>
+                                </div>
+                            </div>
+                            <div id="gcashDetails" style="display:none;" class="payment-details-box">
+                                <div class="demo-notice">
+                                    <i class="bi bi-phone flex-shrink-0"></i>
+                                    <span><strong>Demo Mode:</strong> Enter your GCash/Maya number.
+                                    Amount: <strong>₱<span id="paymentAmountGcash">0.00</span></strong></span>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <label class="field-label">GCash / Maya Number</label>
+                                        <input type="text" id="gcashNumber" class="form-control" placeholder="0912 345 6789">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="field-label">Account Name</label>
+                                        <input type="text" id="gcashName" class="form-control" placeholder="Full name as registered">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
 
-            <!-- Step 2: Shipping Address -->
-            <div class="checkout-step" id="stepAddress">
-           
-                <h2 class="step-title"><i class="bi bi-geo-alt me-2"></i>Shipping Address</h2>
-                
-                <!-- User's Current Address Information -->
-                <div class="card mb-4 border-primary">
-                    <div class="card-header bg-primary text-white">
-                        <h5 class="mb-0"><i class="bi bi-person-circle me-2"></i>Your Current Address Information</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-6">
-                                <p class="mb-2"><strong>Name:</strong><br>
-                                <span class="text-muted">{{ app.user.firstName }} {{ app.user.lastName }}</span></p>
-                                <p class="mb-2"><strong>Phone:</strong><br>
-                                <span class="text-muted">{{ app.user.phoneNumber|default('Not set') }}</span></p>
+                        <!-- Bank Transfer -->
+                        <div class="payment-option">
+                            <div class="d-flex align-items-center gap-3">
+                                <input class="form-check-input mt-0" type="radio" name="payment_method" id="paymentTransfer" value="transfer">
+                                <div class="payment-icon pi-bank"><i class="bi bi-bank"></i></div>
+                                <div>
+                                    <div class="payment-option-label">Bank Transfer</div>
+                                    <div class="payment-option-sub">BDO, BPI, UnionBank, Metrobank</div>
+                                </div>
                             </div>
-                            <div class="col-md-6">
-                                <p class="mb-2"><strong>Address:</strong><br>
-                                <span class="text-muted">{% if currentUser.userProfile and currentUser.userProfile.address %}{{ currentUser.userProfile.address }}{% else %}<em class="text-danger">Not set</em>{% endif %}</span></p>
-                                <p class="mb-0"><strong>City:</strong><br>
-                                <span class="text-muted">{% if currentUser.userProfile and currentUser.userProfile.city %}{{ currentUser.userProfile.city }}{% else %}<em class="text-danger">Not set</em>{% endif %}</span></p>
+                            <div id="bankDetails" style="display:none;" class="payment-details-box">
+                                <div class="demo-notice">
+                                    <i class="bi bi-bank flex-shrink-0"></i>
+                                    <span><strong>Demo Mode:</strong> Enter your bank details.
+                                    Amount: <strong>₱<span id="paymentAmountTransfer">0.00</span></strong></span>
+                                </div>
+                                <div class="row g-3">
+                                    <div class="col-md-6">
+                                        <label class="field-label">Bank Name</label>
+                                        <select id="bankName" class="form-select">
+                                            <option value="">Select Bank</option>
+                                            <option value="BDO">BDO Unibank</option>
+                                            <option value="BPI">BPI Bank</option>
+                                            <option value="UnionBank">UnionBank</option>
+                                            <option value="Metrobank">Metrobank</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="field-label">Account Number</label>
+                                        <input type="text" id="bankAccount" class="form-control" placeholder="Your account number">
+                                    </div>
+                                    <div class="col-12">
+                                        <label class="field-label">Account Name</label>
+                                        <input type="text" id="bankAccountName" class="form-control" placeholder="Account holder name">
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="row mt-2">
-                            <div class="col-md-6">
-                                <p class="mb-0"><strong>State/Province:</strong><br>
-                                <span class="text-muted">{% if currentUser.userProfile and currentUser.userProfile.state %}{{ currentUser.userProfile.state }}{% else %}<em class="text-danger">Not set</em>{% endif %}</span></p>
-                            </div>
-                            <div class="col-md-6">
-                                <p class="mb-0"><strong>Postal Code:</strong><br>
-                                <span class="text-muted">{% if currentUser.userProfile and currentUser.userProfile.zipCode %}{{ currentUser.userProfile.zipCode }}{% else %}<em class="text-danger">Not set</em>{% endif %}</span></p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>Select delivery type and fill in shipping details below.
-                </div>
 
-                <form id="addressForm" class="row g-3">
-                    <!-- Delivery Type -->
-                    <div class="col-md-6">
-                        <label class="form-label">Delivery Type <span class="text-danger">*</span></label>
-                        <select name="delivery_type" id="deliveryType" class="form-select" onchange="updateDeliveryFields()" required>
-                            <option value="">-- Select delivery type --</option>
-                            <option value="pickup">Pickup</option>
-                            <option value="delivery">Delivery</option>
-                        </select>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="form-check form-switch mt-4">
-                            <input type="checkbox" name="is_urgent" id="isUrgent" class="form-check-input">
-                            <label class="form-check-label" for="isUrgent">
-                                <i class="bi bi-lightning me-1"></i>Mark as urgent order
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <!-- Delivery Address Fields (Hidden until delivery is selected) -->
-                    <div id="deliveryAddressSection" style="display: none;" class="w-100">
-                        <h5 class="mb-3 mt-2"><i class="bi bi-house-door me-2"></i>Delivery Address Information</h5>
-                        
-                        <div class="row g-3">
-                            <!-- Recipient Name -->
-                            <div class="col-12">
-                                <label class="form-label">Recipient Name <span class="text-danger">*</span></label>
-                                <input type="text" name="recipient_name" class="form-control" placeholder="Full name of recipient" required>
-                            </div>
-                            
-                            <!-- Phone Number -->
-                            <div class="col-md-6">
-                                <label class="form-label">Phone Number <span class="text-danger">*</span></label>
-                                <input type="tel" name="phone_number" class="form-control" placeholder="+63 9XX XXX XXXX" required>
-                            </div>
-                            
-                            <!-- Street Address -->
-                            <div class="col-12">
-                                <label class="form-label">Street Address <span class="text-danger">*</span></label>
-                                <input type="text" name="street_address" class="form-control" placeholder="e.g., 123 Main Street, Apt 4B" required>
-                            </div>
-                            
-                            <!-- City/Municipality -->
-                            <div class="col-md-6">
-                                <label class="form-label">City/Municipality <span class="text-danger">*</span></label>
-                                <input type="text" name="city" class="form-control" placeholder="City or municipality" required>
-                            </div>
-                            
-                            <!-- Postal Code -->
-                            <div class="col-md-6">
-                                <label class="form-label">Postal Code <span class="text-danger">*</span></label>
-                                <input type="text" name="postal_code" class="form-control" placeholder="e.g., 1234" required>
-                            </div>
-                            
-                            <!-- Barangay/District -->
-                            <div class="col-md-6">
-                                <label class="form-label">Barangay/District</label>
-                                <input type="text" name="barangay" class="form-control" placeholder="Barangay or district (optional)">
-                            </div>
-                            
-                            <!-- Delivery Instructions -->
-                            <div class="col-12">
-                                <label class="form-label">Delivery Instructions <span class="text-muted">(optional)</span></label>
-                                <textarea name="delivery_instructions" class="form-control" rows="2" placeholder="e.g., Leave at door, ring doorbell, etc."></textarea>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Delivery Fee -->
-                    <div class="col-md-6" id="deliveryFeeSection" style="display: none;">
-                        <label class="form-label">Delivery Fee (₱)</label>
-                        <input type="number" name="delivery_fee" class="form-control" step="0.01" min="0" value="100" onchange="updateTotal()">
                     </div>
                 </form>
-
-                <div class="btn-group-navigation">
-                    <button class="btn btn-secondary" onclick="goToStep(1)">
-                        <i class="bi bi-arrow-left me-2"></i>Back
-                    </button>
-                    <button class="btn btn-primary" onclick="goToStep(3)">
-                        Next: Payment Method <i class="bi bi-arrow-right ms-2"></i>
-                    </button>
-                </div>
             </div>
+            <div class="step-nav">
+                <button class="btn-back" onclick="goToStep(2)">
+                    <i class="bi bi-arrow-left me-2"></i>Back
+                </button>
+                <button id="createOrderBtn" class="btn-create" onclick="processPayment()" disabled>
+                    <i class="bi bi-check-circle me-2"></i>Pay & Create Order
+                </button>
+            </div>
+        </div>
 
-            <!-- Step 3: Payment Method -->
-            <div class="checkout-step" id="stepPayment">
-                <h2 class="step-title"><i class="bi bi-credit-card me-2"></i>Payment Method</h2>
-                
-                <div class="alert alert-info">
-                    <i class="bi bi-info-circle me-2"></i>Select how you want to pay for this order.
-                </div>
-
-                <form id="paymentForm" class="row g-3">
-                    <div class="col-12">
-                        <label class="form-label">Choose Payment Method</label>
-                        <div class="payment-options">
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" id="paymentCash" value="cash" required>
-                                <label class="form-check-label" for="paymentCash">
-                                    <i class="bi bi-cash-coin me-2"></i>Cash on Delivery
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" id="paymentCard" value="card">
-                                <label class="form-check-label" for="paymentCard">
-                                    <i class="bi bi-credit-card me-2"></i>Debit/Credit Card
-                                </label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment_method" id="paymentTransfer" value="transfer">
-                                <label class="form-check-label" for="paymentTransfer">
-                                    <i class="bi bi-bank me-2"></i>Bank Transfer
-                                </label>
-                            </div>
+        <!-- Payment Processing Modal -->
+        <div class="modal fade" id="paymentModal" tabindex="-1" data-bs-backdrop="static">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center p-5">
+                        <div class="spinner-border mb-3" style="width:3rem;height:3rem;color:var(--pink)"></div>
+                        <h5 id="paymentModalTitle" style="font-weight:700;color:var(--text-primary)">Processing Payment...</h5>
+                        <p id="paymentModalMessage" style="font-size:0.875rem;color:var(--text-muted)">Please wait while we process your payment.</p>
+                        <div class="progress mt-3" style="height:4px;border-radius:4px;">
+                            <div id="paymentProgress" class="progress-bar"
+                                 style="width:0%;background:var(--pink);transition:width 0.3s"></div>
                         </div>
                     </div>
-                </form>
+                </div>
+            </div>
+        </div>
 
-                <div class="btn-group-navigation">
-                    <button class="btn btn-secondary" onclick="goToStep(2)">
-                        <i class="bi bi-arrow-left me-2"></i>Back
-                    </button>
-                    <button id="createOrderBtn" class="btn btn-success" onclick="placeOrder()" disabled>
-                        <i class="bi bi-check-circle me-2"></i>Create Order
-                    </button>
+        <!-- Payment Success Modal -->
+        <div class="modal fade" id="successModal" tabindex="-1">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content">
+                    <div class="modal-body text-center p-5">
+                        <div style="width:72px;height:72px;border-radius:50%;
+                                    background:#ecfdf3;border:2px solid #86efac;
+                                    display:flex;align-items:center;justify-content:center;
+                                    margin:0 auto 1.25rem;font-size:2rem;color:#16a34a">
+                            <i class="bi bi-check-lg"></i>
+                        </div>
+                        <h5 style="font-weight:700;color:var(--text-primary)">Payment Successful!</h5>
+                        <p id="successMessage" style="font-size:0.875rem;color:var(--text-muted)">Your payment has been processed.</p>
+                        <p style="font-size:0.78rem;color:var(--text-muted)">A confirmation email has been sent to your address.</p>
+                        <button class="btn-next mt-2" data-bs-dismiss="modal">Continue</button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Right: Order Summary -->
-    <div class="col-lg-4">
-        <div class="card admin-chart sticky-top" style="top: 20px;">
-            <div class="card-header bg-white border-0">
-                <h5 class="mb-0"><i class="bi bi-receipt me-2"></i>Order Summary</h5>
+</div>{# end col-lg-8 #}
+
+<!-- ══ ORDER SUMMARY ══ -->
+<div class="col-lg-4">
+    <div class="summary-card">
+        <div class="summary-header">
+            <div class="summary-brand">SMSol Studio</div>
+            <div class="summary-brand-sub">Order Summary</div>
+        </div>
+        <div class="summary-meta">
+            123 Fashion Street, Makati City<br>
+            Tel: (02) 1234-5678 &nbsp;|&nbsp; info@smsolstudio.com<br>
+            VAT Reg TIN: 123-456-789-000
+        </div>
+        <div class="summary-body">
+            <div class="s-row">
+                <span class="s-label">Order No.</span>
+                <span class="s-value" id="orderNumberValue" style="font-family:monospace;color:var(--pink)">
+                    ORD-{{ "now"|date("Ymd") }}-0000
+                </span>
             </div>
-            <div class="card-body">
-                <!-- Selected Customer -->
-                <div class="mb-3 pb-3 border-bottom">
-                    <p class="text-muted small">Customer</p>
-                    <p class="fw-600" style="font-size: 0.95rem;">
-                        <i class="bi bi-check-circle text-success"></i> {{ app.user.firstName }} {{ app.user.lastName }}
-                    </p>
-                </div>
+            <div class="s-row">
+                <span class="s-label">Customer</span>
+                <span class="s-value">
+                    <i class="bi bi-person-circle me-1" style="color:var(--pink)"></i>
+                    {{ app.user.firstName }} {{ app.user.lastName }}
+                </span>
+            </div>
 
-                <!-- Cart Items -->
-                <div class="mb-3">
-                    <p class="text-muted small">Items</p>
-                    <div id="cartItems" style="max-height: 250px; overflow-y: auto;">
-                        <p class="text-muted text-center small">No items added</p>
-                    </div>
-                </div>
+            <div class="s-items-header">
+                <span>Items</span><span>Total</span>
+            </div>
 
-                <!-- Delivery Information -->
-                <div class="mb-3 pb-3 border-bottom" id="deliverySection" style="display: none;">
-                    <p class="text-muted small">Delivery</p>
-                    <div style="font-size: 0.9rem;">
-                        <div class="mb-2">
-                            <small class="text-muted">Type:</small>
-                            <small class="fw-600" id="summaryDeliveryType">-</small>
-                        </div>
-                        <div class="mb-2" id="summaryAddressBlock" style="display: none;">
-                            <small class="text-muted">Address:</small>
-                            <small class="fw-600 d-block" id="summaryAddress">-</small>
-                        </div>
-                    </div>
-                </div>
+            <div id="cartItems" style="max-height:220px;overflow-y:auto;">
+                <p style="font-size:0.82rem;color:var(--text-muted);text-align:center;padding:1rem 0">No items added</p>
+            </div>
 
-                <!-- Payment Information -->
-                <div class="mb-3 pb-3 border-bottom" id="paymentSection" style="display: none;">
-                    <p class="text-muted small">Payment</p>
-                    <div style="font-size: 0.9rem;">
-                        <small class="text-muted">Method:</small>
-                        <small class="fw-600" id="summaryPaymentMethod">-</small>
-                    </div>
-                </div>
+            <div class="summary-divider"></div>
 
-                <!-- Pricing -->
-                <div class="mb-2">
-                    <div class="d-flex justify-content-between" style="font-size: 0.95rem;">
-                        <span class="text-muted">Subtotal</span>
-                        <span id="subtotal">₱0.00</span>
-                    </div>
+            <div id="deliverySection" style="display:none;">
+                <div class="s-row">
+                    <span class="s-label">Delivery Type</span>
+                    <span class="s-value" id="summaryDeliveryType">—</span>
                 </div>
+                <div class="s-row">
+                    <span class="s-label">Delivery Fee</span>
+                    <span class="s-value" id="deliveryFee">₱0.00</span>
+                </div>
+                <div id="summaryAddressBlock" style="display:none;" class="mb-2">
+                    <div style="font-size:0.72rem;color:var(--text-muted);margin-bottom:2px">Deliver to:</div>
+                    <div id="summaryAddress" style="font-size:0.8rem;color:var(--text-secondary)">—</div>
+                </div>
+                <div class="summary-divider"></div>
+            </div>
 
-                <div class="mb-3 pb-3 border-bottom">
-                    <div class="d-flex justify-content-between" style="font-size: 0.95rem;">
-                        <span class="text-muted">Delivery Fee</span>
-                        <span id="deliveryFee">₱0.00</span>
-                    </div>
-                </div>
+            <div class="s-row">
+                <span class="s-label">Subtotal</span>
+                <span class="s-value" id="subtotal">₱0.00</span>
+            </div>
 
-                <!-- Total -->
-                <div class="mb-4">
-                    <div class="d-flex justify-content-between">
-                        <span class="h6 mb-0">Total</span>
-                        <span class="h5 mb-0 text-primary" id="totalAmount">₱0.00</span>
-                    </div>
-                </div>
+            <div class="summary-total">
+                <span class="t-label">TOTAL</span>
+                <span class="t-value" id="totalAmount">₱0.00</span>
             </div>
         </div>
     </div>
 </div>
 
-
+</div>{# end row #}
 
 <script>
 let cartItems = {};
 let currentStep = 1;
-
-const customerId = document.getElementById('customerId');
-const deliveryType = document.getElementById('deliveryType');
+let paymentModal = null;
+let successModal = null;
+const customerId             = document.getElementById('customerId');
+const deliveryType           = document.getElementById('deliveryType');
 const deliveryAddressSection = document.getElementById('deliveryAddressSection');
-const deliveryFeeSection = document.getElementById('deliveryFeeSection');
-const deliveryFeeInput = document.querySelector('input[name="delivery_fee"]');
-
-// Add listener to delivery fee input
+const deliveryFeeSection     = document.getElementById('deliveryFeeSection');
+const deliveryFeeInput       = document.querySelector('input[name="delivery_fee"]');
+const userAddress = {
+    recipientName: '{{ app.user.firstName }} {{ app.user.lastName }}',
+    streetAddress: '{{ currentUser.userProfile.address|default('') }}',
+    city:          '{{ currentUser.userProfile.city|default('') }}',
+    postalCode:    '{{ currentUser.userProfile.zipCode|default('') }}',
+    phoneNumber:   '{{ app.user.phoneNumber|default('') }}'
+};
 if (deliveryFeeInput) {
     deliveryFeeInput.addEventListener('change', updateTotal);
     deliveryFeeInput.addEventListener('input', updateTotal);
 }
-
+document.addEventListener('DOMContentLoaded', function() {
+    paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+    successModal = new bootstrap.Modal(document.getElementById('successModal'));
+    updateTotal();
+    const fields = ['recipient_name','street_address','city','postal_code','phone_number'];
+    fields.forEach(field => {
+        const input = document.querySelector(`input[name="${field}"]`);
+        if (input) input.addEventListener('input', () => { updateDeliverySummary(); updateCreateButtonState(); });
+    });
+    deliveryType.addEventListener('change', updateCreateButtonState);
+    document.querySelectorAll('input[name="payment_method"]').forEach(r => {
+        r.addEventListener('change', () => { updatePaymentSummary(); updateCreateButtonState(); });
+    });
+    const map = {
+        'recipient_name': userAddress.recipientName, 'phone_number': userAddress.phoneNumber,
+        'street_address': userAddress.streetAddress, 'city': userAddress.city, 'postal_code': userAddress.postalCode
+    };
+    Object.entries(map).forEach(([name, val]) => {
+        const el = document.querySelector(`input[name="${name}"]`); if (el && val) el.value = val;
+    });
+    updateCreateButtonState();
+    filterProducts();
+});
 function updateDeliveryFields() {
     if (deliveryType.value === 'delivery') {
         deliveryAddressSection.style.display = 'block';
-        deliveryFeeSection.style.display = 'block';
+        deliveryFeeSection.style.display     = 'block';
         document.getElementById('deliverySection').style.display = 'block';
-
         fillAddressFields();
-
-
-    } 
-     
-
-    
-    
-    
-    
-    else {
+    } else {
         deliveryAddressSection.style.display = 'none';
-        deliveryFeeSection.style.display = 'none';
+        deliveryFeeSection.style.display     = 'none';
         document.getElementById('deliverySection').style.display = 'none';
-        deliveryFeeInput.value = 0;
+        if (deliveryFeeInput) deliveryFeeInput.value = 0;
     }
-    updateDeliverySummary();
-    updateTotal();
+    updateDeliverySummary(); updateTotal();
 }
-
-// Update delivery summary in sidebar
 function updateDeliverySummary() {
     const type = deliveryType.value;
-    document.getElementById('summaryDeliveryType').textContent = type === 'delivery' ? 'Delivery' : type === 'pickup' ? 'Pickup' : '-';
-
+    const el = document.getElementById('summaryDeliveryType');
+    if (el) el.textContent = type === 'delivery' ? 'Delivery' : type === 'pickup' ? 'Pickup' : '—';
     if (type === 'delivery') {
-        const recipientName = document.querySelector('input[name="recipient_name"]')?.value || '';
-        const streetAddress = document.querySelector('input[name="street_address"]')?.value || '';
-        const city = document.querySelector('input[name="city"]')?.value || '';
-        const postalCode = document.querySelector('input[name="postal_code"]')?.value || '';
-        
-        if (recipientName || streetAddress || city) {
-            const addressStr = [recipientName, streetAddress, city, postalCode].filter(Boolean).join(', ');
-            document.getElementById('summaryAddress').textContent = addressStr;
+        const parts = [
+            document.querySelector('input[name="recipient_name"]')?.value,
+            document.querySelector('input[name="street_address"]')?.value,
+            document.querySelector('input[name="city"]')?.value,
+            document.querySelector('input[name="postal_code"]')?.value
+        ].filter(Boolean);
+        if (parts.length) {
+            document.getElementById('summaryAddress').textContent = parts.join(', ');
             document.getElementById('summaryAddressBlock').style.display = 'block';
-        } else {
-            document.getElementById('summaryAddressBlock').style.display = 'none';
-        }
-    } else {
-        document.getElementById('summaryAddressBlock').style.display = 'none';
-    }
+        } else { document.getElementById('summaryAddressBlock').style.display = 'none'; }
+    } else { document.getElementById('summaryAddressBlock').style.display = 'none'; }
 }
-
-// Update payment summary in sidebar
 function updatePaymentSummary() {
-    const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
-    const paymentSection = document.getElementById('paymentSection');
-    const methodLabels = {
-        'cash': 'Cash on Delivery',
-        'card': 'Debit/Credit Card',
-        'transfer': 'Bank Transfer'
-    };
-
-    if (paymentMethod) {
-        document.getElementById('summaryPaymentMethod').textContent = methodLabels[paymentMethod.value] || paymentMethod.value;
-        paymentSection.style.display = 'block';
-    } else {
-        paymentSection.style.display = 'none';
-    }
+    const pm = document.querySelector('input[name="payment_method"]:checked');
+    const labels = { cash:'Cash on Delivery 💵', card:'Credit/Debit Card 💳', gcash:'GCash / PayMaya', transfer:'Bank Transfer 🏦' };
+    const el = document.getElementById('summaryPaymentMethod');
+    if (el) el.textContent = pm ? (labels[pm.value] || pm.value) : '—';
 }
-
 function goToStep(step) {
-    // Hide all steps
     document.querySelectorAll('.checkout-step').forEach(el => el.classList.remove('active'));
-    
-    // Update progress indicators
     for (let i = 1; i <= 3; i++) {
-        const circle = document.getElementById(`step${i}Item`);
-        const connector = document.getElementById(`connector${i-1}`);
-
-        circle.classList.remove('active', 'completed');
-
-        if (i < step) {
-            circle.classList.add('completed');
-            if (connector) connector.classList.add('completed', 'active');
-        } else if (i === step) {
-            circle.classList.add('active');
-        } else {
-            if (connector) connector.classList.remove('completed', 'active');
-        }
+        const item = document.getElementById(`step${i}Item`);
+        const circle = item?.querySelector('.step-circle');
+        item?.classList.remove('active','completed');
+        circle?.classList.remove('active','completed');
+        document.getElementById(`connector${i-1}`)?.classList.remove('active','completed');
     }
-
-    // Show active step content
-    if (step === 1) {
-        document.getElementById('stepCart').classList.add('active');
-    } else if (step === 2) {
-        document.getElementById('stepAddress').classList.add('active');
-    } else if (step === 3) {
-        document.getElementById('stepPayment').classList.add('active');
+    for (let i = 1; i < step; i++) {
+        const item = document.getElementById(`step${i}Item`);
+        item?.classList.add('completed');
+        item?.querySelector('.step-circle')?.classList.add('completed');
+        document.getElementById(`connector${i-1}`)?.classList.add('completed');
     }
-
+    const cur = document.getElementById(`step${step}Item`);
+    cur?.classList.add('active');
+    cur?.querySelector('.step-circle')?.classList.add('active');
+    if (step > 1) document.getElementById(`connector${step-1}`)?.classList.add('active');
+    const map = { 1:'stepCart', 2:'stepAddress', 3:'stepPayment' };
+    document.getElementById(map[step])?.classList.add('active');
     currentStep = step;
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
-
-// Add to cart
+(function() {
+    const s = parseInt(new URLSearchParams(window.location.search).get('step'), 10);
+    if (s >= 1 && s <= 3) goToStep(s);
+})();
 document.querySelectorAll('.btn-add-to-cart').forEach(btn => {
     btn.addEventListener('click', function() {
-        const productId = this.dataset.productId;
+        const productId   = this.dataset.productId;
         const productName = this.dataset.productName;
-        const qtyInput = document.querySelector(`.product-qty[data-product-id="${productId}"]`);
-        const quantity = parseInt(qtyInput.value) || 1;
+        const qtyInput    = document.querySelector(`.product-qty[data-product-id="${productId}"]`);
+        let quantity = parseInt(qtyInput.value) || 0;
+        if (quantity <= 0) { alert('Please enter a quantity greater than 0'); return; }
         const price = parseFloat(qtyInput.dataset.price);
-
-        if (cartItems[productId]) {
-            cartItems[productId].quantity += quantity;
-        } else {
-            cartItems[productId] = {
-                name: productName,
-                price: price,
-                quantity: quantity
-            };
-        }
-
-        updateCartDisplay();
-        qtyInput.value = 1;
+        if (cartItems[productId]) { cartItems[productId].quantity += quantity; }
+        else { cartItems[productId] = { name: productName, price, quantity }; }
+        updateCartDisplay(); qtyInput.value = 0;
     });
 });
-
-// Update cart display
 function updateCartDisplay() {
-    const cartHTML = Object.entries(cartItems).map(([id, item]) => `
-        <div class="d-flex justify-content-between align-items-center mb-2 pb-2 border-bottom" style="font-size: 0.9rem;">
+    const html = Object.entries(cartItems).map(([id, item]) => `
+        <div class="cart-item-row">
             <div>
-                <small class="fw-600">${item.name}</small>
-                <br>
-                <small class="text-muted">${item.quantity} × ₱${item.price.toFixed(2)}</small>
+                <div class="cart-item-name">${item.name}</div>
+                <div class="cart-item-qty">${item.quantity} × ₱${item.price.toFixed(2)}</div>
             </div>
-            <div class="text-end">
-                <small class="fw-600">₱${(item.quantity * item.price).toFixed(2)}</small>
-                <br>
-                <button class="btn btn-sm btn-outline-danger btn-remove-item" data-product-id="${id}" style="padding: 2px 6px;">
+            <div class="d-flex align-items-center gap-2">
+                <span class="cart-item-total">₱${(item.quantity * item.price).toFixed(2)}</span>
+                <button class="btn-remove-item" data-product-id="${id}"
+                        style="background:none;border:none;color:#dc2626;cursor:pointer;padding:2px 4px;font-size:0.8rem">
                     <i class="bi bi-trash"></i>
                 </button>
             </div>
-        </div>
-    `).join('');
-
-    document.getElementById('cartItems').innerHTML = cartHTML || '<p class="text-muted text-center small">No items added</p>';
-
-    // Attach remove handlers
+        </div>`).join('');
+    document.getElementById('cartItems').innerHTML = html ||
+        '<p style="font-size:0.82rem;color:var(--text-muted);text-align:center;padding:1rem 0">No items added</p>';
     document.querySelectorAll('.btn-remove-item').forEach(btn => {
         btn.addEventListener('click', function() {
-            delete cartItems[this.dataset.productId];
-            updateCartDisplay();
-            updateTotal();
+            delete cartItems[this.dataset.productId]; updateCartDisplay(); updateTotal();
         });
     });
-
     updateTotal();
 }
-
-// Update total
 function updateTotal() {
     let subtotal = 0;
-    Object.values(cartItems).forEach(item => {
-        subtotal += item.quantity * item.price;
-    });
-
-    let delivery = deliveryType.value === 'delivery' ? parseFloat(deliveryFeeInput.value) || 0 : 0;
-    let total = subtotal + delivery;
-
-    document.getElementById('subtotal').textContent = '₱' + subtotal.toFixed(2);
+    Object.values(cartItems).forEach(item => { subtotal += item.quantity * item.price; });
+    const delivery = deliveryType.value === 'delivery' ? parseFloat(deliveryFeeInput?.value) || 0 : 0;
+    const total    = subtotal + delivery;
+    document.getElementById('subtotal').textContent    = '₱' + subtotal.toFixed(2);
     document.getElementById('deliveryFee').textContent = '₱' + delivery.toFixed(2);
     document.getElementById('totalAmount').textContent = '₱' + total.toFixed(2);
-
-    // Enable/disable create button - check all required conditions
-    updateCreateButtonState();
-
-    updateDeliverySummary();
+    updatePaymentAmounts(); updateCreateButtonState(); updateDeliverySummary();
 }
-
-// Check if all required fields are filled to enable Create Order button
+function updatePaymentAmounts() {
+    const amount = document.getElementById('totalAmount').textContent.replace('₱','');
+    ['paymentAmountCard','paymentAmountGcash','paymentAmountTransfer'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.textContent = amount;
+    });
+}
 function updateCreateButtonState() {
-    const btn = document.getElementById('createOrderBtn');
-    const hasItems = Object.keys(cartItems).length > 0;
-    const deliverySelected = deliveryType.value !== '';
-    const paymentSelected = document.querySelector('input[name="payment_method"]:checked') !== null;
-    
-    let deliveryFieldsValid = true;
+    const btn        = document.getElementById('createOrderBtn');
+    const hasItems   = Object.keys(cartItems).length > 0;
+    const deliveryOk = deliveryType.value !== '';
+    const paymentOk  = !!document.querySelector('input[name="payment_method"]:checked');
+    let addressOk    = true;
     if (deliveryType.value === 'delivery') {
-        const recipientName = document.querySelector('input[name="recipient_name"]')?.value || '';
-        const phoneNumber = document.querySelector('input[name="phone_number"]')?.value || '';
-        const streetAddress = document.querySelector('input[name="street_address"]')?.value || '';
-        const city = document.querySelector('input[name="city"]')?.value || '';
-        const postalCode = document.querySelector('input[name="postal_code"]')?.value || '';
-        
-        deliveryFieldsValid = recipientName && phoneNumber && streetAddress && city && postalCode;
+        addressOk = ['recipient_name','phone_number','street_address','city','postal_code']
+            .every(f => document.querySelector(`input[name="${f}"]`)?.value?.trim());
     }
-    
-    // Enable button only if: items exist, delivery type selected, address fields valid (if delivery), and payment selected
-    btn.disabled = !(hasItems && deliverySelected && deliveryFieldsValid && paymentSelected);
+    let paymentFieldsOk = true;
+    const pm = document.querySelector('input[name="payment_method"]:checked');
+    if (pm?.value === 'card') {
+        paymentFieldsOk = ['cardNumber','cardExpiry','cardCvv','cardholderName'].every(id => document.getElementById(id)?.value);
+    } else if (pm?.value === 'gcash') {
+        paymentFieldsOk = ['gcashNumber','gcashName'].every(id => document.getElementById(id)?.value);
+    } else if (pm?.value === 'transfer') {
+        paymentFieldsOk = ['bankName','bankAccount','bankAccountName'].every(id => document.getElementById(id)?.value);
+    }
+    btn.disabled = !(hasItems && deliveryOk && addressOk && paymentOk && paymentFieldsOk);
 }
-
-// Create order
-function placeOrder() {
-
-     console.log('placeOrder called');
-console.log('Fetch URL: {{ path("admin_order_new") }}');
-    
-    const btn = document.getElementById('createOrderBtn');
-    
-    if (Object.keys(cartItems).length === 0) {
-        alert('Please add at least one product');
-        goToStep(1);
-        return;
-    }
-
-    // Validate delivery type is selected
-    if (!deliveryType.value) {
-        alert('Please select a delivery type');
-        goToStep(2);
-        return;
-    }
-
-    // Validate delivery fields if delivery is selected
+function fillAddressFields() {
+    const map = {
+        'recipient_name': userAddress.recipientName, 'phone_number': userAddress.phoneNumber,
+        'street_address': userAddress.streetAddress, 'city': userAddress.city, 'postal_code': userAddress.postalCode
+    };
+    Object.entries(map).forEach(([name, val]) => {
+        const el = document.querySelector(`input[name="${name}"]`); if (el && val) el.value = val;
+    });
+}
+const searchInput    = document.getElementById('productSearch');
+const categorySelect = document.getElementById('categoryFilter');
+function filterProducts() {
+    const term  = searchInput.value.toLowerCase().trim();
+    const catId = categorySelect.value;
+    const cards = document.querySelectorAll('#productGrid .col-md-6');
+    let visible = 0;
+    cards.forEach(card => {
+        const name    = card.querySelector('.product-name')?.textContent.toLowerCase() || '';
+        const cardCat = card.dataset.categoryId || '';
+        const show    = (!term || name.includes(term)) && (!catId || cardCat === catId);
+        card.style.display = show ? '' : 'none';
+        if (show) visible++;
+    });
+    let noMsg = document.getElementById('noResultsMessage');
+    if (visible === 0) {
+        if (!noMsg) {
+            noMsg = document.createElement('div');
+            noMsg.id = 'noResultsMessage'; noMsg.className = 'col-12';
+            noMsg.innerHTML = `<div class="info-banner" style="justify-content:center">
+                <i class="bi bi-search"></i> No products found.</div>`;
+            document.getElementById('productGrid').appendChild(noMsg);
+        } else noMsg.style.display = '';
+    } else if (noMsg) noMsg.style.display = 'none';
+}
+searchInput?.addEventListener('input', filterProducts);
+searchInput?.addEventListener('keyup', filterProducts);
+categorySelect?.addEventListener('change', filterProducts);
+document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        ['cardDetails','gcashDetails','bankDetails'].forEach(id => {
+            document.getElementById(id)?.setAttribute('style','display:none;');
+        });
+        const map = { card:'cardDetails', gcash:'gcashDetails', transfer:'bankDetails' };
+        if (map[this.value]) document.getElementById(map[this.value])?.setAttribute('style','display:block;');
+        updatePaymentSummary(); updateCreateButtonState();
+    });
+});
+['cardNumber','cardExpiry','cardCvv','cardholderName'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updateCreateButtonState);
+});
+['gcashNumber','gcashName'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updateCreateButtonState);
+});
+document.getElementById('bankName')?.addEventListener('change', updateCreateButtonState);
+['bankAccount','bankAccountName'].forEach(id => {
+    document.getElementById(id)?.addEventListener('input', updateCreateButtonState);
+});
+document.getElementById('cardNumber')?.addEventListener('input', function(e) {
+    let v = e.target.value.replace(/\s/g,'');
+    if (v.length > 16) v = v.slice(0,16);
+    e.target.value = v.replace(/(\d{4})/g,'$1 ').trim();
+});
+document.getElementById('cardExpiry')?.addEventListener('input', function(e) {
+    let v = e.target.value.replace(/\D/g,'');
+    if (v.length >= 2) v = v.slice(0,2) + '/' + v.slice(2,4);
+    e.target.value = v;
+});
+document.getElementById('gcashNumber')?.addEventListener('input', function(e) {
+    let v = e.target.value.replace(/\D/g,'');
+    if (v.length > 11) v = v.slice(0,11);
+    if (v.length >= 4) v = v.slice(0,4) + ' ' + v.slice(4,7) + ' ' + v.slice(7,11);
+    e.target.value = v.trim();
+});
+async function processPayment() {
+    const pm = document.querySelector('input[name="payment_method"]:checked');
+    if (!pm) { alert('Please select a payment method'); goToStep(3); return; }
+    if (Object.keys(cartItems).length === 0) { alert('Please add at least one product'); goToStep(1); return; }
+    if (!deliveryType.value) { alert('Please select a delivery type'); goToStep(2); return; }
     if (deliveryType.value === 'delivery') {
-        const recipientName = document.querySelector('input[name="recipient_name"]').value;
-        const phoneNumber = document.querySelector('input[name="phone_number"]').value;
-        const streetAddress = document.querySelector('input[name="street_address"]').value;
-        const city = document.querySelector('input[name="city"]').value;
-        const postalCode = document.querySelector('input[name="postal_code"]').value;
-
-        if (!recipientName || !phoneNumber || !streetAddress || !city || !postalCode) {
-            alert('Please fill in all required delivery address fields');
-            goToStep(2);
-            return;
-        }
+        const missing = ['recipient_name','phone_number','street_address','city','postal_code']
+            .some(f => !document.querySelector(`input[name="${f}"]`)?.value);
+        if (missing) { alert('Please fill in all required delivery address fields'); goToStep(2); return; }
     }
-
-    // Check payment method is selected
-    const paymentMethod = document.querySelector('input[name="payment_method"]:checked');
-    if (!paymentMethod) {
-        alert('Please select a payment method');
-        goToStep(3);
-        return;
+    const total = parseFloat(document.getElementById('totalAmount').textContent.replace('₱',''));
+    switch (pm.value) {
+        case 'cash':     await createOrder('pending', null, 'cash'); break;
+        case 'card':     await simulateCardPayment(total); break;
+        case 'gcash':    await simulateGCashPayment(total); break;
+        case 'transfer': await simulateBankTransfer(total); break;
+        default: alert('Invalid payment method');
     }
-
-    // Disable button and show loading state
-    btn.disabled = true;
-    const originalText = btn.innerHTML;
-    btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i>Processing...';
-
-    // Collect form data
+}
+async function simulateCardPayment(amount) {
+    const cardNumber     = document.getElementById('cardNumber')?.value;
+    const cardExpiry     = document.getElementById('cardExpiry')?.value;
+    const cardCvv        = document.getElementById('cardCvv')?.value;
+    const cardholderName = document.getElementById('cardholderName')?.value;
+    if (!cardNumber || !cardExpiry || !cardCvv || !cardholderName) { alert('Please fill in all card details'); return; }
+    const clean = cardNumber.replace(/\s/g,'');
+    if (clean.length !== 16) { alert('Please enter a valid 16-digit card number'); return; }
+    if (!cardExpiry.match(/^(0[1-9]|1[0-2])\/\d{2}$/)) { alert('Please enter valid expiry date (MM/YY)'); return; }
+    if (cardCvv.length < 3) { alert('Please enter valid CVV'); return; }
+    showPaymentModal('Processing Card Payment...', 'Please wait while we verify your card details.');
+    await runProgress();
+    paymentModal.hide();
+    showSuccessModal(`Payment of ₱${amount.toFixed(2)} successfully charged to card ending in ${clean.slice(-4)}.`);
+    await createOrder('paid', null, 'card', clean.slice(-4), cardholderName);
+}
+async function simulateGCashPayment(amount) {
+    const gcashNumber = document.getElementById('gcashNumber')?.value;
+    const gcashName   = document.getElementById('gcashName')?.value;
+    if (!gcashNumber || !gcashName) { alert('Please fill in GCash/Maya number and account name'); return; }
+    const clean = gcashNumber.replace(/\s/g,'');
+    if (!clean.match(/^09\d{9}$/)) { alert('Please enter a valid Philippine mobile number (e.g., 09123456789)'); return; }
+    showPaymentModal('Processing GCash Payment...', `Sending payment request to ${clean}.`);
+    await runProgress();
+    paymentModal.hide();
+    showSuccessModal(`₱${amount.toFixed(2)} deducted from GCash (${clean}). Ref: GCASH-${Date.now()}`);
+    await createOrder('paid', null, 'gcash', clean, gcashName);
+}
+async function simulateBankTransfer(amount) {
+    const bankName        = document.getElementById('bankName')?.value;
+    const bankAccount     = document.getElementById('bankAccount')?.value;
+    const bankAccountName = document.getElementById('bankAccountName')?.value;
+    if (!bankName || !bankAccount || !bankAccountName) { alert('Please fill in all bank transfer details'); return; }
+    showPaymentModal('Processing Bank Transfer...', `Transferring ₱${amount.toFixed(2)} from ${bankName}.`);
+    await runProgress();
+    paymentModal.hide();
+    showSuccessModal(`₱${amount.toFixed(2)} deducted from ${bankName} (${bankAccount}). Ref: TRANSFER-${Date.now()}`);
+    await createOrder('paid', null, 'transfer', bankAccount, bankAccountName);
+}
+async function runProgress() {
+    let p = 0;
+    const bar = document.getElementById('paymentProgress');
+    await new Promise(resolve => {
+        const iv = setInterval(() => {
+            p += 10; bar.style.width = p + '%';
+            if (p >= 100) { clearInterval(iv); resolve(); }
+        }, 300);
+    });
+}
+function showPaymentModal(title, message) {
+    document.getElementById('paymentModalTitle').textContent   = title;
+    document.getElementById('paymentModalMessage').textContent = message;
+    document.getElementById('paymentProgress').style.width     = '0%';
+    paymentModal.show();
+}
+function showSuccessModal(message) {
+    document.getElementById('successMessage').textContent = message;
+    successModal.show();
+}
+async function createOrder(paymentStatus, paymentId = null, paymentType = null, accountInfo = null, accountName = null) {
+    const pm       = document.querySelector('input[name="payment_method"]:checked');
     const formData = new FormData();
-    formData.append('customer_id', customerId.value);
-    formData.append('delivery_type', deliveryType.value);
-    formData.append('payment_method', paymentMethod.value);
-    formData.append('is_urgent', document.getElementById('isUrgent').checked ? 1 : 0);
-    formData.append('_csrf_token', document.querySelector('input[name="_csrf_token"]').value);
-    
-    // Add address fields if delivery
+    formData.append('customer_id',    customerId.value);
+    formData.append('delivery_type',  deliveryType.value);
+    formData.append('payment_method', pm.value);
+    formData.append('payment_status', paymentStatus);
+    formData.append('is_urgent',      document.getElementById('isUrgent').checked ? 1 : 0);
+    formData.append('_csrf_token',    document.querySelector('input[name="_csrf_token"]').value);
+    if (paymentId)   formData.append('payment_reference', paymentId);
+    if (accountInfo) formData.append('account_info',      accountInfo);
+    if (accountName) formData.append('account_name',      accountName);
     if (deliveryType.value === 'delivery') {
-        formData.append('recipient_name', document.querySelector('input[name="recipient_name"]').value);
-        formData.append('phone_number', document.querySelector('input[name="phone_number"]').value);
-        formData.append('street_address', document.querySelector('input[name="street_address"]').value);
-        formData.append('city', document.querySelector('input[name="city"]').value);
-        formData.append('postal_code', document.querySelector('input[name="postal_code"]').value);
-        formData.append('barangay', document.querySelector('input[name="barangay"]')?.value || '');
-        formData.append('delivery_instructions', document.querySelector('textarea[name="delivery_instructions"]')?.value || '');
-        formData.append('delivery_fee', deliveryFeeInput.value || 0);
+        ['recipient_name','phone_number','street_address','city','postal_code','barangay'].forEach(f => {
+            formData.append(f, document.querySelector(`input[name="${f}"]`)?.value || '');
+        });
+        formData.append('delivery_instructions',
+            document.querySelector('textarea[name="delivery_instructions"]')?.value || '');
+        formData.append('delivery_fee', deliveryFeeInput?.value || 0);
     } else {
         formData.append('delivery_fee', 0);
     }
-    
-    // Add items
-    let itemCount = 0;
+    let i = 0;
     Object.entries(cartItems).forEach(([id, item]) => {
-        formData.append(`items[${itemCount}][product_id]`, id);
-        formData.append(`items[${itemCount}][quantity]`, item.quantity);
-        itemCount++;
+        formData.append(`items[${i}][product_id]`, id);
+        formData.append(`items[${i}][quantity]`,   item.quantity);
+        i++;
     });
-
-    // Submit
-    fetch('/admin/orders/new', {
-    method: 'POST',
-    body: formData,
-    credentials: 'same-origin' 
-    })
-
-
-   .then(response => {
-    if (response.ok) {
-        alert('Order created successfully!');
-        window.location.href = '{{ path("admin_orders") }}';
-    } else {
-        // Read response as text, then try to parse JSON
-        response.text().then(text => {
-            try {
-                const data = JSON.parse(text);
-                alert('Error: ' + (data.error || data.message || 'Unknown error'));
-            } catch (e) {
-                alert('Server error: ' + text);
-            }
+    try {
+        const response = await fetch('/admin/orders/new', {
+            method: 'POST', body: formData, credentials: 'same-origin'
         });
-    }
-})
-    .catch(error => {
+        if (response.ok) {
+            const data = await response.json();
+            console.log('Order created:', data);
+            setTimeout(() => { window.location.href = '{{ path("admin_orders") }}'; }, 2000);
+        } else {
+            const text = await response.text();
+            try { const d = JSON.parse(text); alert('Error: ' + (d.error || d.message)); }
+            catch { alert('Server error: ' + text); }
+        }
+    } catch (error) {
         console.error('Error:', error);
         alert('Error creating order: ' + error.message);
-        btn.disabled = false;
-        btn.innerHTML = originalText;
-        updateCreateButtonState();
-    });
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-    updateTotal();
-
-    // Pre-populate address fields with user's data
-    if (userAddress.recipientName) {
-        const recipientInput = document.querySelector('input[name="recipient_name"]');
-        if (recipientInput) recipientInput.value = userAddress.recipientName;
-    }
-    if (userAddress.phoneNumber) {
-        const phoneInput = document.querySelector('input[name="phone_number"]');
-        if (phoneInput) phoneInput.value = userAddress.phoneNumber;
-    }
-    if (userAddress.streetAddress) {
-        const streetInput = document.querySelector('input[name="street_address"]');
-        if (streetInput) streetInput.value = userAddress.streetAddress;
-    }
-    if (userAddress.city) {
-        const cityInput = document.querySelector('input[name="city"]');
-        if (cityInput) cityInput.value = userAddress.city;
-    }
-    if (userAddress.postalCode) {
-        const postalInput = document.querySelector('input[name="postal_code"]');
-        if (postalInput) postalInput.value = userAddress.postalCode;
-    }
-
-    // Add listeners for address fields
-    const addressFields = ['recipient_name', 'street_address', 'city', 'postal_code', 'phone_number'];
-    addressFields.forEach(field => {
-        const input = document.querySelector(`input[name="${field}"]`);
-        if (input) {
-            input.addEventListener('input', function() {
-                updateDeliverySummary();
-                updateCreateButtonState();
-            });
-        }
-    });
-
-    // Add listener for delivery type
-    deliveryType.addEventListener('change', function() {
-        updateCreateButtonState();
-    });
-
-    // Add listeners for payment method radio buttons
-    document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
-        radio.addEventListener('change', function() {
-            updatePaymentSummary();
-            updateCreateButtonState();
-        });
-    });
-
-    // Update button state after pre-population
-    updateCreateButtonState();
-});
-function fillAddressFields() {
-    if (userAddress.streetAddress) {
-        const recipientInput = document.querySelector('input[name="recipient_name"]');
-        const phoneInput = document.querySelector('input[name="phone_number"]');
-        const streetInput = document.querySelector('input[name="street_address"]');
-        const cityInput = document.querySelector('input[name="city"]');
-        const postalInput = document.querySelector('input[name="postal_code"]');
-
-        if (recipientInput) recipientInput.value = userAddress.recipientName;
-        if (phoneInput) phoneInput.value = userAddress.phoneNumber;
-        if (streetInput) streetInput.value = userAddress.streetAddress;
-        if (cityInput) cityInput.value = userAddress.city;
-        if (postalInput) postalInput.value = userAddress.postalCode;
     }
 }
-
-const userAddress = {
-        recipientName: '{{ app.user.firstName }} {{ app.user.lastName }}',
-        streetAddress: '{{ currentUser.userProfile.address|default('') }}',
-        city: '{{ currentUser.userProfile.city|default('') }}',
-        postalCode: '{{ currentUser.userProfile.zipCode|default('') }}',
-        phoneNumber: '{{ app.user.phoneNumber|default('') }}'
-    };
 </script>
-
-
-<style>
-.sticky-top {
-    z-index: 10;
-}
-
-@media (max-width: 991px) {
-    .sticky-top {
-        position: relative;
-        top: 0 !important;
-        margin-top: 2rem;
-    }
-}
-</style>
 {% endblock %}
+
