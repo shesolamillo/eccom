@@ -50,17 +50,6 @@ Encore
     //     config.plugins.push('@babel/a-babel-plugin');
     // })
 
-    // .enableBabelLoader(() => {}, {
-    //     useBuiltIns: 'usage',
-    //     corejs: '3.38',
-    // })
-    .enableBabelLoader((babelConfig) => {
-        babelConfig.sourceType = 'module'; 
-    }, {
-        useBuiltIns: 'usage',
-        corejs: '3.38',
-    })
-
     // enables and configure @babel/preset-env polyfills
     .configureBabelPresetEnv((config) => {
         config.useBuiltIns = 'usage';
