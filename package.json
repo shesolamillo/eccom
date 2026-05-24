@@ -2,6 +2,7 @@
     "devDependencies": {
         "@babel/core": "^7.17.0",
         "@babel/preset-env": "^7.16.0",
+        "@symfony/stimulus-bridge": "^4.0.1",
         "@symfony/webpack-encore": "^5.3.1",
         "core-js": "^3.38.0",
         "jquery": "^3.7.1",
@@ -25,7 +26,10 @@
         "test": "tests"
     },
     "dependencies": {
+        "@hotwired/stimulus": "^3.2.2",
+        "@hotwired/turbo": "^8.0.23",
         "@popperjs/core": "^2.11.8",
+        "@symfony/ux-turbo": "^3.0.0",
         "acorn": "^8.15.0",
         "acorn-import-phases": "^1.0.4",
         "adjust-sourcemap-loader": "^4.0.0",
@@ -61,7 +65,7 @@
         "cross-spawn": "^7.0.6",
         "css-declaration-sorter": "^7.3.0",
         "css-loader": "^7.1.2",
-        "css-minimizer-webpack-plugin": "^7.0.4",
+        "css-minimizer-webpack-plugin": "^8.0.0",
         "css-select": "^4.3.0",
         "css-tree": "^3.1.0",
         "css-what": "^6.2.2",
@@ -201,7 +205,7 @@
         "sax": "^1.4.3",
         "schema-utils": "^4.3.3",
         "semver": "^6.3.1",
-        "serialize-javascript": "^6.0.2",
+        "serialize-javascript": "^7.0.5",
         "shallow-clone": "^3.0.1",
         "shebang-command": "^2.0.0",
         "shebang-regex": "^3.0.0",
@@ -240,6 +244,5 @@
         "yocto-queue": "^0.1.0"
     },
     "keywords": [],
-    "author": "",
-    "type": "commonjs"
+    "author": ""
 }
