@@ -50,7 +50,13 @@ Encore
     //     config.plugins.push('@babel/a-babel-plugin');
     // })
 
-    .enableBabelLoader(() => {}, {
+    // .enableBabelLoader(() => {}, {
+    //     useBuiltIns: 'usage',
+    //     corejs: '3.38',
+    // })
+    .enableBabelLoader((babelConfig) => {
+        babelConfig.sourceType = 'module'; 
+    }, {
         useBuiltIns: 'usage',
         corejs: '3.38',
     })
