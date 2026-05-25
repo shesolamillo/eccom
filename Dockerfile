@@ -50,6 +50,8 @@ RUN composer require symfony/redis-messenger --no-interaction --ignore-platform-
 # Warm the Symfony cache in production mode for faster startup.
 RUN php bin/console cache:warmup --env=prod --no-debug || true
 
+RUN install-php-extensions pdo_mysql intl zip
+
 
 FROM php:8.3-fpm AS runtime
 
