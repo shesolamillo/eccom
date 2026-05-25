@@ -51,8 +51,6 @@ RUN composer require symfony/redis-messenger --no-interaction --ignore-platform-
 RUN php bin/console cache:warmup --env=prod --no-debug || true
 
 
-
-
 FROM php:8.3-fpm AS runtime
 
 # Set the working directory inside the runtime container.
@@ -79,8 +77,6 @@ RUN mkdir -p /app/var && \
 
 # Use the main nginx configuration file for the Symfony app.
 COPY nginx-main.conf /etc/nginx/nginx.conf
-
-RUN docker-php-ext-install pdo pdo_mysql
 
 # Remove default nginx site configs and add the Symfony site configuration.
 RUN rm -rf /etc/nginx/conf.d/* /etc/nginx/sites-enabled /etc/nginx/sites-available
