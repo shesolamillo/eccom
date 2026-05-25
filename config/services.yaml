@@ -9,6 +9,7 @@
 parameters:
     # directory where uploaded product images are stored
     # adjust path or use an env variable if needed
+    uploads_directory: '%kernel.project_dir%/public/uploads'
     products_directory: '%kernel.project_dir%/public/uploads/products'
     profiles_directory: '%kernel.project_dir%/public/uploads/profiles'
 
