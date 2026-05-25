@@ -29,8 +29,8 @@ services:
       - mysql
     environment:
       APP_ENV: prod
-        APP_SECRET: ${APP_SECRET:-ChangeMeInProduction}
-        DATABASE_URL: "mysql://smsolstudio_user:smsolstudio_password@mysql:3306/smsolstudio_db?serverVersion=8.0&charset=utf8mb4"
+      APP_SECRET: ${APP_SECRET:-ChangeMeInProduction}
+      DATABASE_URL: "mysql://smsolstudio_user:smsolstudio_password@mysql:3306/smsolstudio_db?serverVersion=8.0&charset=utf8mb4"
       ports:
         - "8000:80"
 
