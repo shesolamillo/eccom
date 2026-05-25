@@ -16,6 +16,9 @@ fi
 # }
 # echo "$MIGRATION_OUTPUT"
 
+echo "Running database migrations..."
+php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration
+
 echo "Starting PHP-FPM..."
 # Redirect both stdout and stderr to the container log so PHP fatal errors are visible
 php-fpm -F 2>&1 &
