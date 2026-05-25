@@ -34,7 +34,7 @@ RUN composer install --no-interaction --no-scripts --optimize-autoloader && \
 COPY . .
 
 # Install frontend dependencies and build assets
-RUN npm install && npm run build
+#RUN npm install && npm run build
 
 # Create a default .env file if one does not already exist.
 RUN if [ ! -f /app/.env ]; then \
@@ -60,6 +60,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y \
     nginx \
     curl \
+    libmariadb-dev \
+    && docker-php-ext-install pdo pdo_mysql \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the prepared application from the builder stage.
