@@ -7,14 +7,18 @@ WORKDIR /app
 # Install required tools for Composer, Git, and frontend build assets.
 RUN apt-get update && apt-get install -y \
     git \
-    unzip \
+    nginx \
+    #unzip \
     curl \
     nodejs \
     npm \
     libpq-dev \
+    libzip-dev \
+    libicu-dev \
+    netcat-openbsd \
     && docker-php-ext-install pdo pdo_mysql bcmath \
-    && pecl install redis \
-    && docker-php-ext-enable redis \
+   # && pecl install redis \
+   # && docker-php-ext-enable redis \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Composer globally so Composer commands are available.
@@ -66,13 +70,13 @@ RUN apt-get update && apt-get install -y \
 COPY --from=builder /app /app
 
 # Safely extract extensions from builder
-COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
-COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
+#COPY --from=builder /usr/local/etc/php/conf.d/ /usr/local/etc/php/conf.d/
+#COPY --from=builder /usr/local/lib/php/extensions/ /usr/local/lib/php/extensions/
 
 # Create runtime directories and fix permissions for the web server user.
 RUN mkdir -p /app/var && \
     chown -R www-data:www-data /app && \
-    chmod -R 755 /app && \
+   # chmod -R 755 /app && \
     chmod -R 775 /app/var
 
 # Use the main nginx configuration file for the Symfony app.
