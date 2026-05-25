@@ -50,7 +50,7 @@ RUN composer require symfony/redis-messenger --no-interaction --ignore-platform-
 # Warm the Symfony cache in production mode for faster startup.
 RUN php bin/console cache:warmup --env=prod --no-debug || true
 
-RUN install-php-extensions pdo_mysql intl zip
+
 
 
 FROM php:8.3-fpm AS runtime
@@ -79,6 +79,8 @@ RUN mkdir -p /app/var && \
 
 # Use the main nginx configuration file for the Symfony app.
 COPY nginx-main.conf /etc/nginx/nginx.conf
+
+RUN docker-php-ext-install pdo pdo_mysql
 
 # Remove default nginx site configs and add the Symfony site configuration.
 RUN rm -rf /etc/nginx/conf.d/* /etc/nginx/sites-enabled /etc/nginx/sites-available
