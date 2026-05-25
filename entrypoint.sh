@@ -8,13 +8,13 @@ if [ ! -f /app/config/jwt/private.pem ]; then
 fi
 
 # Run production migrations automatically — capture stderr so failures are visible
-echo "Running database migrations..."
-MIGRATION_OUTPUT=$(php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration 2>&1) || {
-    echo "ERROR: Database migrations failed (exit code $?):"
-    echo "$MIGRATION_OUTPUT"
-    exit 1
-}
-echo "$MIGRATION_OUTPUT"
+# echo "Running database migrations..."
+# MIGRATION_OUTPUT=$(php bin/console doctrine:migrations:migrate --no-interaction --allow-no-migration 2>&1) || {
+#     echo "ERROR: Database migrations failed (exit code $?):"
+#     echo "$MIGRATION_OUTPUT"
+#     exit 1
+# }
+# echo "$MIGRATION_OUTPUT"
 
 echo "Starting PHP-FPM..."
 # Redirect both stdout and stderr to the container log so PHP fatal errors are visible
