@@ -126,11 +126,18 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
+use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
 
 class ApiAuthController extends AbstractController
 {
+    private $jwtManager;
+    public function __construct(JWTTokenManagerInterface $jwtManger)
+    {
+        $this->jwtManager = $jwtManger;
+    }
     private function findUserWithProfile(EntityManagerInterface $em, string $email): ?User
     {
+        
         return $em->getRepository(User::class)
             ->createQueryBuilder('u')
             ->leftJoin('u.userProfile', 'up')
