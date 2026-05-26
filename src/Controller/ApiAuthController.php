@@ -239,7 +239,12 @@ class ApiAuthController extends AbstractController
         $em->persist($user);
         $em->flush();
 
-        return $this->json(['message' => 'Registration successful'], 201);
+        return $this->json([
+            'message' => 'Registration successful',
+            'token'   => base64_encode($user->getId() . ':' . $user->getEmail()),
+            'user'    => $this->buildUserResponse($user),
+        ], 201);
+
     }
 
     #[Route('/api/google-login', name: 'api_google_login', methods: ['POST'])]
