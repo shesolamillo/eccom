@@ -293,5 +293,35 @@ class ApiAuthController extends AbstractController
     {
         return $this->json(['message' => 'Logged out successfully']);
     }
+
+
+    #[Route('/api/profile/upload', methods: ['POST'])]
+    public function upload(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $user = $this->getUser();
+
+        $file = $request->files->get('profilePicture');
+
+        if (!$file) {
+            return $this->json(['message' => 'No file uploaded'], 400);
+        }
+
+        $newFilename = uniqid().'.'.$file->guessExtension();
+
+        $file->move(
+            $this->getParameter('profiles_directory'),
+            $newFilename
+        );
+
+        $profile = $user->getUserProfile();
+        $profile->setProfilePicture($newFilename);
+
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Profile updated',
+            'profilePicture' => $newFilename
+        ]);
+    }
 }
 
