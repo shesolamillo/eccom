@@ -294,53 +294,103 @@ class ApiAuthController extends AbstractController
         return $this->json(['message' => 'Logged out successfully']);
     }
 
-#[Route('/api/profile/update', name: 'api_update_user', methods: ['POST'])]
-public function updateUser(
-    Request $request,
-    EntityManagerInterface $em
-): JsonResponse {
-    /** @var User|null $currentUser */
-    $currentUser = $this->getUser();
 
-    if (!$currentUser) {
-        return $this->json(['message' => 'Unauthorized'], 403);
-    }
+    #[Route('/api/profile/upload', methods: ['POST'])]
+    public function upload(Request $request, EntityManagerInterface $em): JsonResponse
+    {
+        $user = $this->getUser();
 
-    $user = $this->findUserById($em, $currentUser->getId());
-    if (!$user) {
-        return $this->json(['message' => 'User not found'], 404);
-    }
+        $file = $request->files->get('profilePicture');
 
-    $firstName   = $request->request->get('firstName');
-    $lastName    = $request->request->get('lastName');
-    $phoneNumber = $request->request->get('phoneNumber');
-
-    if ($firstName !== null)   $user->setFirstName($firstName);
-    if ($lastName !== null)    $user->setLastName($lastName);
-    if ($phoneNumber !== null) $user->setPhoneNumber($phoneNumber);
-
-    $file = $request->files->get('profilePicture');
-    if ($file) {
-        $newFilename = uniqid() . '.' . $file->guessExtension();
-        $file->move($this->getParameter('profiles_directory'), $newFilename);
-
-        $profile = $user->getUserProfile();
-        if (!$profile) {
-            $profile = new UserProfile();
-            $profile->setUser($user);
-            $em->persist($profile);
+        if (!$file) {
+            return $this->json(['message' => 'No file uploaded'], 400);
         }
 
+        $newFilename = uniqid().'.'.$file->guessExtension();
+
+        $file->move(
+            $this->getParameter('profiles_directory'),
+            $newFilename
+        );
+
+        $profile = $user->getUserProfile();
         $profile->setProfilePicture($newFilename);
+
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Profile updated',
+            'profilePicture' => $newFilename
+        ]);
     }
 
-    $em->flush();
+    #[Route('/api/profile/update', name: 'api_update_user', methods: ['POST'])]
+    public function updateUser(
+        Request $request,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        // ✅ CHANGED — decode base64 token manually instead of $this->getUser()
+        $authHeader = $request->headers->get('Authorization', '');
 
-    return $this->json([
-        'message' => 'Profile updated successfully',
-        'user'    => $this->buildUserResponse($user),
-    ]);
-}
+        if (!str_starts_with($authHeader, 'Bearer ')) {
+            return $this->json(['message' => 'Unauthorized'], 403);
+        }
 
+        $token   = substr($authHeader, 7);
+        $decoded = base64_decode($token, true);
+
+        if (!$decoded || !str_contains($decoded, ':')) {
+            return $this->json(['message' => 'Invalid token'], 403);
+        }
+
+        // Token format: base64(id:email) → decode → split by : → get ID
+        $userId = (int) explode(':', $decoded, 2)[0];
+
+        if ($userId <= 0) {
+            return $this->json(['message' => 'Invalid user ID'], 403);
+        }
+
+        $user = $this->findUserById($em, $userId);
+        if (!$user) {
+            return $this->json(['message' => 'User not found'], 404);
+        }
+
+        $firstName   = $request->request->get('firstName');
+        $lastName    = $request->request->get('lastName');
+        $phoneNumber = $request->request->get('phoneNumber');
+
+        if ($firstName !== null)   $user->setFirstName($firstName);
+        if ($lastName !== null)    $user->setLastName($lastName);
+        if ($phoneNumber !== null) $user->setPhoneNumber($phoneNumber);
+
+        // Handle profile picture upload
+        $file = $request->files->get('profilePicture');
+        if ($file) {
+            $newFilename = uniqid() . '.' . $file->guessExtension();
+            $file->move($this->getParameter('profiles_directory'), $newFilename);
+
+            $profile = $user->getUserProfile();
+            if (!$profile) {
+                // ✅ CHANGED — use fully qualified class or import at top
+                $profile = new UserProfile();
+                $profile->setUser($user);
+                $em->persist($profile);
+            }
+
+            $profile->setProfilePicture($newFilename);
+        }
+
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Profile updated successfully',
+            'user'    => $this->buildUserResponse($user),
+        ]);
+    }
+
+
+    
+
+    
 }
 
