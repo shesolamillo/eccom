@@ -294,34 +294,53 @@ class ApiAuthController extends AbstractController
         return $this->json(['message' => 'Logged out successfully']);
     }
 
+#[Route('/api/profile/update', name: 'api_update_user', methods: ['POST'])]
+public function updateUser(
+    Request $request,
+    EntityManagerInterface $em
+): JsonResponse {
+    /** @var User|null $currentUser */
+    $currentUser = $this->getUser();
 
-    #[Route('/api/profile/upload', methods: ['POST'])]
-    public function upload(Request $request, EntityManagerInterface $em): JsonResponse
-    {
-        $user = $this->getUser();
+    if (!$currentUser) {
+        return $this->json(['message' => 'Unauthorized'], 403);
+    }
 
-        $file = $request->files->get('profilePicture');
+    $user = $this->findUserById($em, $currentUser->getId());
+    if (!$user) {
+        return $this->json(['message' => 'User not found'], 404);
+    }
 
-        if (!$file) {
-            return $this->json(['message' => 'No file uploaded'], 400);
-        }
+    $firstName   = $request->request->get('firstName');
+    $lastName    = $request->request->get('lastName');
+    $phoneNumber = $request->request->get('phoneNumber');
 
-        $newFilename = uniqid().'.'.$file->guessExtension();
+    if ($firstName !== null)   $user->setFirstName($firstName);
+    if ($lastName !== null)    $user->setLastName($lastName);
+    if ($phoneNumber !== null) $user->setPhoneNumber($phoneNumber);
 
-        $file->move(
-            $this->getParameter('profiles_directory'),
-            $newFilename
-        );
+    $file = $request->files->get('profilePicture');
+    if ($file) {
+        $newFilename = uniqid() . '.' . $file->guessExtension();
+        $file->move($this->getParameter('profiles_directory'), $newFilename);
 
         $profile = $user->getUserProfile();
+        if (!$profile) {
+            $profile = new UserProfile();
+            $profile->setUser($user);
+            $em->persist($profile);
+        }
+
         $profile->setProfilePicture($newFilename);
-
-        $em->flush();
-
-        return $this->json([
-            'message' => 'Profile updated',
-            'profilePicture' => $newFilename
-        ]);
     }
+
+    $em->flush();
+
+    return $this->json([
+        'message' => 'Profile updated successfully',
+        'user'    => $this->buildUserResponse($user),
+    ]);
+}
+
 }
 
