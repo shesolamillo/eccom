@@ -120,6 +120,7 @@
 namespace App\Controller;
 
 use App\Entity\User;
+use App\Entity\UserProfile;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
@@ -387,6 +388,18 @@ class ApiAuthController extends AbstractController
             'user'    => $this->buildUserResponse($user),
         ]);
     }
+    private function findUserById(EntityManagerInterface $em, int $id): ?User
+{
+    return $em->getRepository(User::class)
+        ->createQueryBuilder('u')
+        ->leftJoin('u.userProfile', 'up')
+        ->addSelect('up')
+        ->where('u.id = :id')
+        ->setParameter('id', $id)
+        ->getQuery()
+        ->getOneOrNullResult();
+}
+
 
 
     
