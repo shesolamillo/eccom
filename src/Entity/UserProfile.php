@@ -37,48 +37,48 @@ class UserProfile
 
     #[ORM\OneToOne(inversedBy: 'userProfile', cascade: ['persist', 'remove'])]
     #[ORM\JoinColumn(nullable: false)]
-    #[Groups(['user_profile:read'])]
+    #[Groups(['user_profile:read','user_profile:write'])]
     private ?User $user = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user_profile:read'])]
+    #[Groups(['user_profile:read','user_profile:write'])]
     private ?string $profilePicture = null;
 
     #[ORM\Column(length: 255, nullable: true)]
-    #[Groups(['user_profile:read'])]
+    #[Groups(['user_profile:read','user_profile:write'])]
     #[Assert\Length(max: 255)]
     private ?string $address = null;
 
     #[ORM\Column(length: 100, nullable: true)]
-    #[Groups(['user_profile:read'])]
+    #[Groups(['user_profile:read','user_profile:write'])]
     #[Assert\Length(max: 100)]
     private ?string $city = null;
 
     #[ORM\Column(length: 100, nullable: true)]
-    #[Groups(['user_profile:read'])]
+    #[Groups(['user_profile:read','user_profile:write'])]
     #[Assert\Length(max: 100)]
     private ?string $state = null;
 
     #[ORM\Column(length: 20, nullable: true)]
-    #[Groups(['user_profile:read'])]
+    #[Groups(['user_profile:read','user_profile:write'])]
     #[Assert\Length(max: 20)]
     private ?string $zipCode = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['user_profile:read'])]
+    #[Groups(['user_profile:read','user_profile:write'])]
     private ?\DateTimeImmutable $dateOfBirth = null;
 
     #[ORM\Column(length: 10, nullable: true)]
-    #[Groups(['user_profile:read'])]
+    #[Groups(['user_profile:read','user_profile:write'])]
     #[Assert\Choice(['male', 'female', 'other'])]
     private ?string $gender = null;
 
     #[ORM\Column]
-    #[Groups(['user_profile:read'])]
+    #[Groups(['user_profile:read','user_profile:write'])]
     private ?\DateTimeImmutable $createdAt = null;
 
     #[ORM\Column(nullable: true)]
-    #[Groups(['user_profile:read'])]
+    #[Groups(['user_profile:read','user_profile:write'])]
     private ?\DateTimeImmutable $updatedAt = null;
 
     public function __construct()
