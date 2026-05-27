@@ -112,5 +112,21 @@
         "symfony/maker-bundle": "^1.67",
         "symfony/stopwatch": "7.4.*",
         "symfony/web-profiler-bundle": "7.4.*"
-    }
+    },
+
+    "post-install-cmd": [
+    "@auto-scripts",
+    "mkdir -p public/uploads/profiles",
+    "mkdir -p public/uploads/products",
+    "mkdir -p public/uploads/images"
+    ],
+    
+    "post-update-cmd": [
+        "@auto-scripts",
+        "mkdir -p public/uploads/profiles",
+        "mkdir -p public/uploads/products",
+        "mkdir -p public/uploads/images"
+    ]
+
+    
 }
