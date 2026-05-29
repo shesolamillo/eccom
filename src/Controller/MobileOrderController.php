@@ -111,5 +111,61 @@ class MobileOrderController extends AbstractController
             $em->rollback();
             return $this->json(['message' => 'Failed to place order: ' . $e->getMessage()], 500);
         }
+
+
+
+        
     }
+
+    #[Route('/api/mobile/order/{id}/status', name: 'api_mobile_order_update_status', methods: ['PATCH'])]
+    public function updateOrderStatus(
+        int $id,
+        Request $request,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        // Auth: expect Bearer token = base64(id:email)
+        $authHeader = $request->headers->get('Authorization', '');
+        $token      = str_replace('Bearer ', '', $authHeader);
+        $decoded    = base64_decode($token);
+        [$userId]   = explode(':', $decoded, 2);
+
+        $user = $em->getRepository(\App\Entity\User::class)->find((int)$userId);
+        if (!$user) {
+            return $this->json(['message' => 'Unauthorized'], 401);
+        }
+
+        // Only admins can update status
+        if (!in_array('ROLE_ADMIN', $user->getRoles())) {
+            return $this->json(['message' => 'Forbidden'], 403);
+        }
+
+        $order = $em->getRepository(Order::class)->find($id);
+        if (!$order) {
+            return $this->json(['message' => 'Order not found'], 404);
+        }
+
+        $data   = json_decode($request->getContent(), true);
+        $status = $data['status'] ?? null;
+
+        $allowed = [
+            Order::STATUS_PENDING,
+            Order::STATUS_PROCESSING,
+            Order::STATUS_COMPLETED,
+            Order::STATUS_CANCELLED,
+        ];
+
+        if (!$status || !in_array($status, $allowed)) {
+            return $this->json(['message' => 'Invalid status value'], 400);
+        }
+
+        $order->setStatus($status);
+        $em->flush();
+
+        return $this->json([
+            'success' => true,
+            'message' => 'Order status updated',
+            'status'  => $order->getStatus(),
+        ]);
+    }
+
 }
