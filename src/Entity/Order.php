@@ -30,6 +30,7 @@ use Symfony\Component\Serializer\Attribute\Groups;
         ),
         new Post(),
         new Put(),
+        new Patch(),
         new Delete()
     ]
 )]
