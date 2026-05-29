@@ -152,6 +152,8 @@ class MobileOrderController extends AbstractController
             Order::STATUS_PROCESSING,
             Order::STATUS_COMPLETED,
             Order::STATUS_CANCELLED,
+            Order::STATUS_ACCEPTED,   // ← added
+            Order::STATUS_DECLINED,   // ← added
         ];
 
         if (!$status || !in_array($status, $allowed)) {
@@ -161,11 +163,160 @@ class MobileOrderController extends AbstractController
         $order->setStatus($status);
         $em->flush();
 
+        $customer     = $order->getCustomer();
+        $deviceTokens = $em->getRepository(\App\Entity\DeviceToken::class)
+            ->findBy(['user' => $customer]);
+
+        foreach ($deviceTokens as $dt) {
+            $this->sendFcmPushV1(
+                $dt->getToken(),
+                '📦 Order Status Updated',
+                "Your order #{$order->getOrderNumber()} is now " . strtoupper($status),
+                (string) $order->getId()
+            );
+        }
+
         return $this->json([
             'success' => true,
             'message' => 'Order status updated',
             'status'  => $order->getStatus(),
         ]);
     }
+
+    #[Route('/api/mobile/save-device-token', name: 'api_mobile_save_device_token', methods: ['POST'])]
+public function saveDeviceToken(
+    Request $request,
+    EntityManagerInterface $em
+): JsonResponse {
+    $authHeader = $request->headers->get('Authorization', '');
+    $token      = str_replace('Bearer ', '', $authHeader);
+    $decoded    = base64_decode($token);
+    [$userId]   = explode(':', $decoded, 2);
+
+    $user = $em->getRepository(\App\Entity\User::class)->find((int)$userId);
+    if (!$user) {
+        return $this->json(['message' => 'Unauthorized'], 401);
+    }
+
+    $data     = json_decode($request->getContent(), true);
+    $fcmToken = $data['deviceToken'] ?? null;
+
+    if (!$fcmToken) {
+        return $this->json(['message' => 'deviceToken is required'], 400);
+    }
+
+    // Check if token already exists for this user — avoid duplicates
+    $existing = $em->getRepository(\App\Entity\DeviceToken::class)
+        ->findOneBy(['user' => $user, 'token' => $fcmToken]);
+
+    if (!$existing) {
+        $deviceToken = new \App\Entity\DeviceToken();
+        $deviceToken->setUser($user);
+        $deviceToken->setToken($fcmToken);
+        $em->persist($deviceToken);
+        $em->flush();
+    }
+
+    return $this->json(['success' => true]);
+}
+
+
+
+private function loadServiceAccount(): array
+{
+    $json = $_ENV['GOOGLE_SERVICE_ACCOUNT_JSON'] ?? '';
+    if (!$json) {
+        throw new \RuntimeException('Missing GOOGLE_SERVICE_ACCOUNT_JSON');
+    }
+    return json_decode($json, true);
+}
+
+private function getFcmAccessToken(array $serviceAccount): string
+{
+    $now = time();
+    $header = ['alg' => 'RS256', 'typ' => 'JWT'];
+    $claims = [
+        'iss' => $serviceAccount['client_email'],
+        'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+        'aud' => 'https://oauth2.googleapis.com/token',
+        'iat' => $now,
+        'exp' => $now + 3600,
+    ];
+
+    $base64Url = function (string $data): string {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    };
+
+    $jwtHeader = $base64Url(json_encode($header));
+    $jwtClaims = $base64Url(json_encode($claims));
+    $unsignedJwt = "{$jwtHeader}.{$jwtClaims}";
+
+    openssl_sign($unsignedJwt, $signature, $serviceAccount['private_key'], OPENSSL_ALGO_SHA256);
+    $signedJwt = $unsignedJwt . '.' . $base64Url($signature);
+
+    $response = json_decode(file_get_contents('https://oauth2.googleapis.com/token', false, stream_context_create([
+        'http' => [
+            'method' => 'POST',
+            'header' => "Content-Type: application/x-www-form-urlencoded\r\n",
+            'content' => http_build_query([
+                'grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer',
+                'assertion' => $signedJwt,
+            ]),
+        ],
+    ])), true);
+
+    if (!isset($response['access_token'])) {
+        throw new \RuntimeException('Unable to obtain FCM access token: ' . json_encode($response));
+    }
+
+    return $response['access_token'];
+}
+
+private function sendFcmPushV1(
+    string $deviceToken,
+    string $title,
+    string $body,
+    string $orderId
+): void {
+    $serviceAccount = $this->loadServiceAccount();
+    $accessToken = $this->getFcmAccessToken($serviceAccount);
+    $projectId = $serviceAccount['project_id'];
+
+    $payload = [
+        'message' => [
+            'token' => $deviceToken,
+            'notification' => [
+                'title' => $title,
+                'body' => $body,
+            ],
+            'data' => [
+                'orderId' => $orderId,
+            ],
+            'android' => [
+                'priority' => 'HIGH',
+            ],
+        ],
+    ];
+
+    $ch = curl_init("https://fcm.googleapis.com/v1/projects/{$projectId}/messages:send");
+    curl_setopt_array($ch, [
+        CURLOPT_POST => true,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_HTTPHEADER => [
+            'Authorization: Bearer ' . $accessToken,
+            'Content-Type: application/json; charset=UTF-8',
+        ],
+        CURLOPT_POSTFIELDS => json_encode($payload),
+    ]);
+    $result = curl_exec($ch);
+    $info = curl_getinfo($ch);
+    curl_close($ch);
+
+    if (($info['http_code'] ?? 0) !== 200) {
+        error_log('FCM send failed: ' . $result);
+    }
+}
+  
+    
 
 }
