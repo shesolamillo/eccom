@@ -280,6 +280,9 @@ public function checkout(Request $request, EntityManagerInterface $em): Response
         $this->cartService->clearCart();
 
         $this->addFlash('success', 'Order placed successfully! Please wait for processing.');
+        $this->addFlash('new_order_id', (string)$order->getId());
+        $this->addFlash('new_order_number', $order->getOrderNumber());
+        $this->addFlash('new_order_total', (string)$order->getTotalAmount());
         return $this->redirectToRoute('app_user_order_show', ['id' => $order->getId()]);
 
     } catch (\Exception $e) {

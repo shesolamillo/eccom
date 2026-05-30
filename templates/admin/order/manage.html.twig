@@ -693,6 +693,15 @@ function updateStatus(status) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
+                // ── Emit Socket.io notification to customer ──
+                if (typeof window.emitOrderStatusChanged === 'function') {
+                    window.emitOrderStatusChanged(
+                        {{ order.id }},
+                        '{{ order.orderNumber }}',
+                        {{ order.customer.id }},
+                        status
+                    );
+                }
                 location.reload();
             } else {
                 alert('Error: ' + data.message);

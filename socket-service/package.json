@@ -1,0 +1,15 @@
+{
+  "name": "smsol-socket-server",
+  "version": "1.0.0",
+  "description": "Socket.io notification server for SMSol Studio",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "socket.io": "^4.7.5"
+  }
+}

@@ -1,5 +1,10 @@
 twig:
     file_name_pattern: '*.twig'
+    globals:
+        socket_url: '%env(default:socket_url_default:SOCKET_URL)%'
+
+parameters:
+    socket_url_default: 'http://localhost:3001'
 
 when@test:
     twig:
